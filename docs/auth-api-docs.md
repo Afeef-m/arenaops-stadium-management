@@ -550,11 +550,32 @@ curl -X POST http://localhost:5170/api/auth/stadium-manager \
     "role": "StadiumOwner",
     "message": "Stadium Manager account created. Temporary password sent to their email."
   },
-  "message": "Stadium Manager created successfully"
+  "message": "Account created successfully"
 }
 ```
 
 **Errors:** `401 Unauthorized` · `403 Forbidden` · `409 EMAIL_EXISTS`
+
+**What happens server-side:**
+1. A new user is created with role `StadiumOwner`
+2. A **temporary password** (12 chars, mixed case + digits + special) is generated
+3. The temp password is hashed with BCrypt and stored as the user's `PasswordHash`
+4. The **plain-text temp password** is emailed to the manager
+5. **No time limit** — the temp password never expires (unlike OTPs)
+
+### Stadium Manager Onboarding Flow
+
+```
+[Admin creates manager] → POST /stadium-manager → Temp password emailed
+[Manager logs in]       → POST /login (email + temp password)
+[Manager changes pwd]   → POST /change-password (temp → new password)
+                          — OR —
+                          POST /forgot-password → POST /reset-password (OTP flow)
+```
+
+> 🔑 The temp password works as a normal password — no special setup step needed.
+> The manager simply logs in with `POST /login` and then changes their password.
+> In dev mode, the temp password is printed to the console (MockEmailService).
 
 ---
 

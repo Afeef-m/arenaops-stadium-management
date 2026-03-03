@@ -4,7 +4,7 @@ namespace ArenaOps.AuthService.Core.DTOs;
 
 /// <summary>
 /// Request to create a Stadium Manager account (Admin-only).
-/// A temporary password is generated and sent via email.
+/// A password-reset OTP is generated and sent via email.
 /// </summary>
 public class CreateStadiumManagerRequest
 {

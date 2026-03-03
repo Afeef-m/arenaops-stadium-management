@@ -11,6 +11,8 @@ using ArenaOps.CoreService.Application.Models;
 using ArenaOps.CoreService.Infrastructure.Repositories;
 using ArenaOps.CoreService.Infrastructure.Services;
 using ArenaOps.Shared.Middleware;
+using ArenaOps.Shared.Interfaces;
+using ArenaOps.Shared.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +64,9 @@ builder.Services.AddScoped<ICacheService, RedisCacheService>();
 // Rate Limiting — Redis-backed, config-driven
 builder.Services.Configure<ArenaOps.Shared.Models.RateLimitSettings>(
     builder.Configuration.GetSection("RateLimiting"));
+
+// Token Blacklist — Redis-backed, shared with AuthService
+builder.Services.AddSingleton<ITokenBlacklistService, RedisTokenBlacklistService>();
 
 // 3a. Register EF Core DbContext
 builder.Services.AddDbContext<CoreDbContext>(options =>
@@ -185,6 +190,10 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseAuthentication();
+
+// Token blacklist check — shared Redis blacklist, AFTER auth BEFORE authorization
+app.UseMiddleware<ArenaOps.Shared.Middleware.TokenBlacklistMiddleware>();
+
 app.UseAuthorization();
 
 // 7. Map Endpoints

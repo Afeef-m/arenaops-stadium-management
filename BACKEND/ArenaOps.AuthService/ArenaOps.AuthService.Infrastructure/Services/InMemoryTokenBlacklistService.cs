@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using ArenaOps.AuthService.Core.Interfaces;
+using ArenaOps.Shared.Interfaces;
 
 namespace ArenaOps.AuthService.Infrastructure.Services;
 

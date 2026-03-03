@@ -1,15 +1,16 @@
 using System.IdentityModel.Tokens.Jwt;
-using ArenaOps.AuthService.Core.Interfaces;
+using Microsoft.AspNetCore.Http;
+using ArenaOps.Shared.Interfaces;
 using ArenaOps.Shared.Models;
-using ArenaOps.AuthService.Core.Models;
 
-namespace ArenaOps.AuthService.API.Middleware;
+namespace ArenaOps.Shared.Middleware;
 
 /// <summary>
-/// Middleware that checks every authenticated request against the token blacklist.
+/// Middleware that checks every authenticated request against the Redis token blacklist.
 /// If the JWT's JTI is blacklisted (user logged out), returns 401 immediately.
-/// 
+///
 /// Pipeline position: after UseAuthentication(), before UseAuthorization().
+/// Used by ALL microservices (AuthService, CoreService, etc.)
 /// </summary>
 public class TokenBlacklistMiddleware
 {
@@ -22,7 +23,6 @@ public class TokenBlacklistMiddleware
 
     public async Task InvokeAsync(HttpContext context, ITokenBlacklistService blacklistService)
     {
-        // Only check authenticated requests with a Bearer token
         if (context.User.Identity?.IsAuthenticated == true)
         {
             var jti = context.User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;

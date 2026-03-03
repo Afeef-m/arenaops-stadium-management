@@ -198,13 +198,14 @@ public class AuthService : IAuthService
         if (existingUser != null)
             return ApiResponse<CreateStadiumManagerResponse>.Fail("EMAIL_EXISTS", "An account with this email already exists.");
 
+        // Generate a temporary password (no time limit — manager can log in anytime)
         var tempPassword = GenerateTemporaryPassword();
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(tempPassword);
 
         var user = new User
         {
             Email = request.Email,
-            PasswordHash = passwordHash,
+            PasswordHash = passwordHash, // Temp password set directly — no OTP, no expiry
             FullName = request.FullName,
             PhoneNumber = request.PhoneNumber,
             AuthProvider = "Local",

@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using ArenaOps.AuthService.Core.DTOs;
 using ArenaOps.AuthService.Core.Interfaces;
+using ArenaOps.Shared.Interfaces;
 using ArenaOps.Shared.Models;
 using ArenaOps.AuthService.Core.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -207,7 +208,8 @@ public class AuthController : ControllerBase
 
     /// <summary>
     /// Admin-only: Create a Stadium Manager account with a temporary password.
-    /// The temporary password is sent to the manager's email.
+    /// The temp password is emailed to the manager for initial login. No expiry.
+    /// The manager should change it via change-password or forgot-password.
     /// </summary>
     [HttpPost("stadium-manager")]
     [Authorize(Roles = "Admin")]

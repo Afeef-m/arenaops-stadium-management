@@ -16,19 +16,19 @@ public class MockEmailService : IEmailService
         _logger = logger;
     }
 
-    public Task SendStadiumManagerCredentialsAsync(string email, string fullName, string temporaryPassword)
+    public Task SendStadiumManagerCredentialsAsync(string email, string fullName, string tempPassword)
     {
         _logger.LogInformation(
             "═══════════════════════════════════════════════════════════════\n" +
-            "  📧 STADIUM MANAGER CREDENTIALS (Mock Email)\n" +
+            "  📧 STADIUM MANAGER ONBOARDING (Mock Email)\n" +
             "  ───────────────────────────────────────────────────────────\n" +
-            "  To:       {Email}\n" +
-            "  Name:     {FullName}\n" +
-            "  Password: {TempPassword}\n" +
+            "  To:             {Email}\n" +
+            "  Name:           {FullName}\n" +
+            "  Temp Password:  {TempPassword}\n" +
             "  ───────────────────────────────────────────────────────────\n" +
-            "  ⚠️  Please change your password after first login.\n" +
+            "  ⚠️  Log in with this password and change it immediately.\n" +
             "═══════════════════════════════════════════════════════════════",
-            email, fullName, temporaryPassword);
+            email, fullName, tempPassword);
 
         return Task.CompletedTask;
     }

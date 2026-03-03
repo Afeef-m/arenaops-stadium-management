@@ -8,9 +8,10 @@ namespace ArenaOps.AuthService.Core.Interfaces;
 public interface IEmailService
 {
     /// <summary>
-    /// Sends Stadium Manager credentials (email + temporary password).
+    /// Sends Stadium Manager onboarding email with a temporary password.
+    /// The manager uses this to log in, then changes it via change-password or forgot-password.
     /// </summary>
-    Task SendStadiumManagerCredentialsAsync(string email, string fullName, string temporaryPassword);
+    Task SendStadiumManagerCredentialsAsync(string email, string fullName, string tempPassword);
 
     /// <summary>
     /// Sends a password reset link/token.

@@ -1,7 +1,9 @@
 namespace ArenaOps.AuthService.Core.DTOs;
 
 /// <summary>
-/// Response returned after successfully creating a Stadium Manager account.
+/// Response after creating a Stadium Manager account.
+/// The manager receives a temporary password via email to log in.
+/// They should change it using change-password or forgot-password.
 /// </summary>
 public class CreateStadiumManagerResponse
 {

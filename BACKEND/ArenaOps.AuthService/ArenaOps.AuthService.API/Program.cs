@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using ArenaOps.AuthService.Core.Interfaces;
+using ArenaOps.Shared.Interfaces;
+using ArenaOps.Shared.Services;
 using ArenaOps.Shared.Models;
 using ArenaOps.AuthService.Core.Models;
 using ArenaOps.AuthService.Infrastructure.Data;
@@ -77,11 +79,12 @@ builder.Services.AddSingleton<ArenaOps.AuthService.Core.Interfaces.IDapperContex
 builder.Services.AddHealthChecks()
     .AddSqlServer(builder.Configuration.GetConnectionString("AuthDb")!, name: "Auth SQL Server");
 
-// Email Service (Mock — logs to console)
-builder.Services.AddSingleton<IEmailService, MockEmailService>();
+// Email Service
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
-// Token Blacklist (in-memory — for immediate JWT invalidation on logout)
-builder.Services.AddSingleton<ITokenBlacklistService, InMemoryTokenBlacklistService>();
+// Token Blacklist — Redis-backed so it's shared across all microservices
+builder.Services.AddSingleton<ArenaOps.Shared.Interfaces.ITokenBlacklistService, RedisTokenBlacklistService>();
 
 // Google OAuth
 builder.Services.Configure<GoogleAuthSettings>(builder.Configuration.GetSection("GoogleAuth"));
@@ -206,7 +209,7 @@ app.UseMiddleware<RedisRateLimitMiddleware>();
 app.UseAuthentication();
 
 // Token blacklist check — must be AFTER authentication, BEFORE authorization
-app.UseMiddleware<ArenaOps.AuthService.API.Middleware.TokenBlacklistMiddleware>();
+app.UseMiddleware<ArenaOps.Shared.Middleware.TokenBlacklistMiddleware>();
 
 app.UseAuthorization();
 
