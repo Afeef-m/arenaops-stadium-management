@@ -13,6 +13,11 @@ public class CoreDbContext : DbContext
     public DbSet<Seat> Seats => Set<Seat>();
     public DbSet<Landmark> Landmarks => Set<Landmark>();
 
+    // ─── Event Layout Tables (cloned from templates) ────────────
+    public DbSet<EventSeatingPlan> EventSeatingPlans => Set<EventSeatingPlan>();
+    public DbSet<EventSection> EventSections => Set<EventSection>();
+    public DbSet<EventLandmark> EventLandmarks => Set<EventLandmark>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -112,6 +117,86 @@ public class CoreDbContext : DbContext
             entity.Property(e => e.Type).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Label).HasMaxLength(100);
             entity.HasIndex(e => e.SeatingPlanId);
+        });
+
+        // ─── EventSeatingPlan (Event-specific clone of SeatingPlan) ──
+        // WHY Restrict on SourceSeatingPlan FK?
+        // Deleting a template should NOT cascade-delete all event layouts
+        // that were cloned from it. Event layouts are independent copies.
+        modelBuilder.Entity<EventSeatingPlan>(entity =>
+        {
+            entity.HasKey(e => e.EventSeatingPlanId);
+            entity.Property(e => e.EventSeatingPlanId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.IsLocked).HasDefaultValue(false);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            // Indexes — EventId is the primary lookup key (from route parameter)
+            entity.HasIndex(e => e.EventId);
+            entity.HasIndex(e => e.SourceSeatingPlanId);
+
+            // FK to source SeatingPlan template — Restrict prevents cascade delete
+            entity.HasOne(e => e.SourceSeatingPlan)
+                  .WithMany()
+                  .HasForeignKey(e => e.SourceSeatingPlanId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // Children — Cascade: deleting a layout removes its sections + landmarks
+            entity.HasMany(e => e.EventSections)
+                  .WithOne(es => es.EventSeatingPlan)
+                  .HasForeignKey(es => es.EventSeatingPlanId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.EventLandmarks)
+                  .WithOne(el => el.EventSeatingPlan)
+                  .HasForeignKey(el => el.EventSeatingPlanId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ─── EventSection (Event-specific clone of Section) ─────────
+        // WHY SetNull on SourceSection FK?
+        // If a template section is deleted, the event copies should survive.
+        // SetNull preserves the cloned records (SourceSectionId becomes NULL).
+        modelBuilder.Entity<EventSection>(entity =>
+        {
+            entity.HasKey(e => e.EventSectionId);
+            entity.Property(e => e.EventSectionId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Type).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.SeatType).HasMaxLength(50);
+            entity.Property(e => e.Color).HasMaxLength(20);
+
+            entity.HasIndex(e => e.EventSeatingPlanId);
+            entity.HasIndex(e => e.SourceSectionId);
+
+            // Nullable FK — NULL means organizer added this section manually
+            entity.HasOne(e => e.SourceSection)
+                  .WithMany()
+                  .HasForeignKey(e => e.SourceSectionId)
+                  .OnDelete(DeleteBehavior.SetNull)
+                  .IsRequired(false);
+        });
+
+        // ─── EventLandmark (Event-specific clone of Landmark) ──────
+        modelBuilder.Entity<EventLandmark>(entity =>
+        {
+            entity.HasKey(e => e.EventLandmarkId);
+            entity.Property(e => e.EventLandmarkId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.Type).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Label).HasMaxLength(100);
+
+            entity.HasIndex(e => e.EventSeatingPlanId);
+            entity.HasIndex(e => e.SourceFeatureId);
+
+            // Nullable FK — same pattern as EventSection
+            entity.HasOne(e => e.SourceLandmark)
+                  .WithMany()
+                  .HasForeignKey(e => e.SourceFeatureId)
+                  .OnDelete(DeleteBehavior.SetNull)
+                  .IsRequired(false);
         });
     }
 }
