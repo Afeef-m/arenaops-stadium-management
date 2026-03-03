@@ -36,6 +36,7 @@ builder.Services.AddScoped<ISeatingPlanRepository, SeatingPlanRepository>();
 builder.Services.AddScoped<ISectionRepository, SectionRepository>();
 builder.Services.AddScoped<ISeatRepository, SeatRepository>();
 builder.Services.AddScoped<ILandmarkRepository, LandmarkRepository>();
+builder.Services.AddScoped<IEventLayoutRepository, EventLayoutRepository>();
 
 // Services
 builder.Services.AddScoped<IStadiumService, StadiumService>();
@@ -43,6 +44,7 @@ builder.Services.AddScoped<ISeatingPlanService, SeatingPlanService>();
 builder.Services.AddScoped<ISectionService, SectionService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<ILandmarkService, LandmarkService>();
+builder.Services.AddScoped<IEventLayoutService, EventLayoutService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 
 // 3a-redis. Redis Cache
