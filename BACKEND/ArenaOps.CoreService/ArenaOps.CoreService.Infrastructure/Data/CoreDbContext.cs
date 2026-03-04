@@ -18,6 +18,9 @@ public class CoreDbContext : DbContext
     public DbSet<EventSection> EventSections => Set<EventSection>();
     public DbSet<EventLandmark> EventLandmarks => Set<EventLandmark>();
 
+    // ─── Ticketing & Pricing ────────────────────────────────────
+    public DbSet<TicketType> TicketTypes => Set<TicketType>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -197,6 +200,19 @@ public class CoreDbContext : DbContext
                   .HasForeignKey(e => e.SourceFeatureId)
                   .OnDelete(DeleteBehavior.SetNull)
                   .IsRequired(false);
+        });
+
+        // ─── TicketType (Pricing per Event) ─────────────────────────
+        modelBuilder.Entity<TicketType>(entity =>
+        {
+            entity.HasKey(e => e.TicketTypeId);
+            entity.Property(e => e.TicketTypeId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.SalePLU).HasMaxLength(50);
+            entity.Property(e => e.Price).HasPrecision(10, 2);
+
+            entity.HasIndex(e => e.EventId);
         });
     }
 }
