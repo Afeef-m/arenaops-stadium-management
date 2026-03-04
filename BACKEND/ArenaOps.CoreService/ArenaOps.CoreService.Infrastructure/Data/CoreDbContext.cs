@@ -22,6 +22,9 @@ public class CoreDbContext : DbContext
     // ─── Ticketing & Pricing ────────────────────────────────────
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
 
+    // ─── Organizer Profiles ──────────────────────────────────────
+    public DbSet<OrganizerProfile> OrganizerProfiles => Set<OrganizerProfile>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -224,6 +227,32 @@ public class CoreDbContext : DbContext
                   .HasForeignKey(e => e.SourceFeatureId)
                   .OnDelete(DeleteBehavior.SetNull)
                   .IsRequired(false);
+        });
+
+        // ─── OrganizerProfile ─────────────────────────────────────────
+        // WHY UNIQUE index on OrganizerId?
+        // One organizer can have exactly one business profile.
+        // The UNIQUE index enforces this at the DB level — the service layer
+        // also checks via ExistsByOrganizerIdAsync before inserting (belt + suspenders).
+        //
+        // WHY no FK to Event.OrganizerId?
+        // OrganizerId is a cross-service reference to Auth.Users.UserId.
+        // Same pattern as Stadium.OwnerId — logical reference, not a DB FK.
+        modelBuilder.Entity<OrganizerProfile>(entity =>
+        {
+            entity.HasKey(e => e.OrganizerProfileId);
+            entity.Property(e => e.OrganizerProfileId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.OrganizationName).HasMaxLength(200);
+            entity.Property(e => e.GstNumber).HasMaxLength(20);
+            entity.Property(e => e.Designation).HasMaxLength(100);
+            entity.Property(e => e.Website).HasMaxLength(300);
+            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            // One organizer → one profile. Enforced at DB + service layer.
+            entity.HasIndex(e => e.OrganizerId).IsUnique();
         });
 
         // ─── TicketType (Pricing per Event) ─────────────────────────

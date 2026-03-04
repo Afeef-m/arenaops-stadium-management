@@ -547,10 +547,13 @@
 | Dev | Task | Deliverable |
 |-----|------|-------------|
 | **BE1** | Design layout cloning data flow: SeatingPlan → EventSeatingPlan, Section → EventSection, Landmark → EventLandmark | Design documented |
+| **BE1** | Implement Event Manager self-registration: `OrganizerProfile` entity + migration + `POST/GET/PUT /api/organizer-profile` endpoints (GST, org name, designation, website — all optional) | Organizer can create business profile after registration |
 | **BE2** | Implement Event CRUD APIs (POST/GET/PUT) with status workflow (Draft → Live → Completed → Cancelled) | Event CRUD works |
 | **BE3** | Implement TicketType APIs (POST/GET) — create ticket types per event | TicketType endpoints work |
 | **FE1** | Build event listing page with filters (status, city) | Events list renders |
 | **FE2** | Build event creation form (name, stadium selector, date pickers) | Event form submits |
+| **FE2** | Build Organizer registration page at `/register/organizer` (footer link → form with required: name, email, password + optional: org name, GST, designation, website) — uses existing `POST /api/auth/register` with `role:"Organizer"` | Registration form works end-to-end |
+
 
 ### Day 2 (Tuesday)
 
