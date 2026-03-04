@@ -22,4 +22,8 @@ public static class CacheKeys
     public const string EventPrefix = "event:";
     public static string Event(Guid id) => $"event:{id}";
     public static string EventLayout(Guid eventId) => $"event:{eventId}:layout";
+    public const string EventList = "events:list";
+    public static string EventsByStatus(string status) => $"events:list:status:{status.ToLowerInvariant()}";
+    public static string EventsByOrganizer(Guid organizerId) => $"events:list:organizer:{organizerId}";
+    public static string EventsByStadium(Guid stadiumId) => $"events:list:stadium:{stadiumId}";
 }

@@ -12,6 +12,7 @@ public class CoreDbContext : DbContext
     public DbSet<Section> Sections => Set<Section>();
     public DbSet<Seat> Seats => Set<Seat>();
     public DbSet<Landmark> Landmarks => Set<Landmark>();
+    public DbSet<Event> Events => Set<Event>();
 
     // ─── Event Layout Tables (cloned from templates) ────────────
     public DbSet<EventSeatingPlan> EventSeatingPlans => Set<EventSeatingPlan>();
@@ -120,6 +121,29 @@ public class CoreDbContext : DbContext
             entity.Property(e => e.Type).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Label).HasMaxLength(100);
             entity.HasIndex(e => e.SeatingPlanId);
+        });
+
+        // ─── Event ──────────────────────────────────────────────────
+        modelBuilder.Entity<Event>(entity =>
+        {
+            entity.HasKey(e => e.EventId);
+            entity.Property(e => e.EventId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
+            entity.Property(e => e.Status).HasMaxLength(20).IsRequired().HasDefaultValue("Draft");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasIndex(e => e.StadiumId);
+            entity.HasIndex(e => e.OrganizerId);
+            entity.HasIndex(e => e.Status);
+
+            entity.HasOne(e => e.Stadium)
+                  .WithMany()
+                  .HasForeignKey(e => e.StadiumId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ─── EventSeatingPlan (Event-specific clone of SeatingPlan) ──
