@@ -1,0 +1,7 @@
+﻿Build started...
+Build succeeded.
+20260219082748_InitialCoreSchema
+20260303095058_SyncEventEntity
+20260303111810_AddTicketType (Pending)
+20260304045032_MergeSync (Pending)
+20260304061125_AddEventSlotAndSectionTicketType (Pending)

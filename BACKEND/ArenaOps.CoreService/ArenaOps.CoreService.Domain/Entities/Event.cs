@@ -14,6 +14,7 @@ public class Event
 
     // Navigation Properties
     public Stadium Stadium { get; set; } = null!;
+    public ICollection<EventSlot> EventSlots { get; set; } = new List<EventSlot>();
 }
 
 /// <summary>

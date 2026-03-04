@@ -21,6 +21,10 @@ public class CoreDbContext : DbContext
 
     // ─── Ticketing & Pricing ────────────────────────────────────
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
+    public DbSet<SectionTicketType> SectionTicketTypes => Set<SectionTicketType>();
+
+    // ─── Event Time Slots ───────────────────────────────────────
+    public DbSet<EventSlot> EventSlots => Set<EventSlot>();
 
     // ─── Organizer Profiles ──────────────────────────────────────
     public DbSet<OrganizerProfile> OrganizerProfiles => Set<OrganizerProfile>();
@@ -266,6 +270,50 @@ public class CoreDbContext : DbContext
             entity.Property(e => e.Price).HasPrecision(10, 2);
 
             entity.HasIndex(e => e.EventId);
+
+            // FK to Event — Restrict prevents cascade cycle
+            entity.HasOne(e => e.Event)
+                  .WithMany()
+                  .HasForeignKey(e => e.EventId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ─── EventSlot (Time slots per Event) ───────────────────────
+        modelBuilder.Entity<EventSlot>(entity =>
+        {
+            entity.HasKey(e => e.EventSlotId);
+            entity.Property(e => e.EventSlotId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.StartTime).IsRequired();
+            entity.Property(e => e.EndTime).IsRequired();
+
+            entity.HasIndex(e => e.EventId);
+
+            // FK to Event — Cascade: deleting an event removes its time slots
+            entity.HasOne(e => e.Event)
+                  .WithMany(ev => ev.EventSlots)
+                  .HasForeignKey(e => e.EventId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ─── SectionTicketType (Many-to-many: EventSection ↔ TicketType) ─
+        // WHY composite PK? This is a pure join table — no surrogate key needed.
+        // WHY Cascade from EventSection but Restrict from TicketType?
+        //   - Deleting a section should clean up its mappings.
+        //   - Deleting a ticket type should be blocked if sections reference it.
+        modelBuilder.Entity<SectionTicketType>(entity =>
+        {
+            entity.HasKey(e => new { e.EventSectionId, e.TicketTypeId });
+
+            entity.HasOne(e => e.EventSection)
+                  .WithMany(es => es.SectionTicketTypes)
+                  .HasForeignKey(e => e.EventSectionId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.TicketType)
+                  .WithMany(tt => tt.SectionTicketTypes)
+                  .HasForeignKey(e => e.TicketTypeId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

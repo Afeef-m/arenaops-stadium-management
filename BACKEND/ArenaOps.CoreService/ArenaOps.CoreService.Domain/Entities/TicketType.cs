@@ -14,4 +14,8 @@ public class TicketType
     public string Name { get; set; } = string.Empty;
     public string? SalePLU { get; set; }
     public decimal Price { get; set; }
+
+    // Navigation Properties
+    public Event Event { get; set; } = null!;
+    public ICollection<SectionTicketType> SectionTicketTypes { get; set; } = new List<SectionTicketType>();
 }
