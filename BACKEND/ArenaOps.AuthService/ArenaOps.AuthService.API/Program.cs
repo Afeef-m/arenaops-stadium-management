@@ -185,14 +185,11 @@ app.UseSerilogRequestLogging();
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ArenaOps Auth Service v1");
-    });
-}
+    options.SwaggerEndpoint("v1/swagger.json", "ArenaOps Auth Service v1");
+});
 
 // Only redirect to HTTPS in production (dev uses HTTP only)
 if (!app.Environment.IsDevelopment())

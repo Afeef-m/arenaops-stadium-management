@@ -192,15 +192,11 @@ app.UseCors("AllowFrontend");
 // Rate limiting — Redis-backed, before Auth
 app.UseMiddleware<ArenaOps.Shared.Middleware.RedisRateLimitMiddleware>();
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ArenaOps Core Service v1");
-    });
-}
+    options.SwaggerEndpoint("v1/swagger.json", "ArenaOps Core Service v1");
+});
 
 app.UseHttpsRedirection();
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
