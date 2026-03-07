@@ -4,7 +4,6 @@ import { useState } from "react";
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import {
     Home,
-    Building2,
     Trophy,
     Ticket,
     User,
@@ -22,7 +21,6 @@ import { logoutUser } from "@/app/store/authSlice";
 
 const navItems = [
     { icon: Home, label: "Home", href: "/" },
-    { icon: Building2, label: "Stadiums", href: "/stadiums" },
     { icon: Trophy, label: "Matches", href: "/matches" },
     { icon: Ticket, label: "Bookings", href: "/bookings" },
     { icon: User, label: "Profile", href: "/profile" },
