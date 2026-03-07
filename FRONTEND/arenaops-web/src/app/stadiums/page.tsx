@@ -1,9 +1,5 @@
-import { SeatMapDemo } from "@/components/seat-map/SeatMapDemo";
+import { redirect } from "next/navigation";
 
-export default function SeatMapPage() {
-  return (
-    <div className="container mx-auto py-8">
-      <SeatMapDemo />
-    </div>
-  );
+export default function LegacyStadiumsPage() {
+  redirect("/manager/stadiums");
 }

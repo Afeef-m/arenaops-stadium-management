@@ -12,6 +12,7 @@ public class CoreDbContext : DbContext
     public DbSet<Section> Sections => Set<Section>();
     public DbSet<Seat> Seats => Set<Seat>();
     public DbSet<Landmark> Landmarks => Set<Landmark>();
+    public DbSet<Event> Events => Set<Event>();
 
     // ─── Event Layout Tables (cloned from templates) ────────────
     public DbSet<EventSeatingPlan> EventSeatingPlans => Set<EventSeatingPlan>();
@@ -20,6 +21,13 @@ public class CoreDbContext : DbContext
 
     // ─── Ticketing & Pricing ────────────────────────────────────
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
+    public DbSet<SectionTicketType> SectionTicketTypes => Set<SectionTicketType>();
+
+    // ─── Event Time Slots ───────────────────────────────────────
+    public DbSet<EventSlot> EventSlots => Set<EventSlot>();
+
+    // ─── Organizer Profiles ──────────────────────────────────────
+    public DbSet<OrganizerProfile> OrganizerProfiles => Set<OrganizerProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -122,6 +130,29 @@ public class CoreDbContext : DbContext
             entity.HasIndex(e => e.SeatingPlanId);
         });
 
+        // ─── Event ──────────────────────────────────────────────────
+        modelBuilder.Entity<Event>(entity =>
+        {
+            entity.HasKey(e => e.EventId);
+            entity.Property(e => e.EventId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
+            entity.Property(e => e.Status).HasMaxLength(20).IsRequired().HasDefaultValue("Draft");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasIndex(e => e.StadiumId);
+            entity.HasIndex(e => e.OrganizerId);
+            entity.HasIndex(e => e.Status);
+
+            entity.HasOne(e => e.Stadium)
+                  .WithMany()
+                  .HasForeignKey(e => e.StadiumId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
         // ─── EventSeatingPlan (Event-specific clone of SeatingPlan) ──
         // WHY Restrict on SourceSeatingPlan FK?
         // Deleting a template should NOT cascade-delete all event layouts
@@ -202,6 +233,32 @@ public class CoreDbContext : DbContext
                   .IsRequired(false);
         });
 
+        // ─── OrganizerProfile ─────────────────────────────────────────
+        // WHY UNIQUE index on OrganizerId?
+        // One organizer can have exactly one business profile.
+        // The UNIQUE index enforces this at the DB level — the service layer
+        // also checks via ExistsByOrganizerIdAsync before inserting (belt + suspenders).
+        //
+        // WHY no FK to Event.OrganizerId?
+        // OrganizerId is a cross-service reference to Auth.Users.UserId.
+        // Same pattern as Stadium.OwnerId — logical reference, not a DB FK.
+        modelBuilder.Entity<OrganizerProfile>(entity =>
+        {
+            entity.HasKey(e => e.OrganizerProfileId);
+            entity.Property(e => e.OrganizerProfileId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.OrganizationName).HasMaxLength(200);
+            entity.Property(e => e.GstNumber).HasMaxLength(20);
+            entity.Property(e => e.Designation).HasMaxLength(100);
+            entity.Property(e => e.Website).HasMaxLength(300);
+            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            // One organizer → one profile. Enforced at DB + service layer.
+            entity.HasIndex(e => e.OrganizerId).IsUnique();
+        });
+
         // ─── TicketType (Pricing per Event) ─────────────────────────
         modelBuilder.Entity<TicketType>(entity =>
         {
@@ -213,6 +270,50 @@ public class CoreDbContext : DbContext
             entity.Property(e => e.Price).HasPrecision(10, 2);
 
             entity.HasIndex(e => e.EventId);
+
+            // FK to Event — Restrict prevents cascade cycle
+            entity.HasOne(e => e.Event)
+                  .WithMany()
+                  .HasForeignKey(e => e.EventId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ─── EventSlot (Time slots per Event) ───────────────────────
+        modelBuilder.Entity<EventSlot>(entity =>
+        {
+            entity.HasKey(e => e.EventSlotId);
+            entity.Property(e => e.EventSlotId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.StartTime).IsRequired();
+            entity.Property(e => e.EndTime).IsRequired();
+
+            entity.HasIndex(e => e.EventId);
+
+            // FK to Event — Cascade: deleting an event removes its time slots
+            entity.HasOne(e => e.Event)
+                  .WithMany(ev => ev.EventSlots)
+                  .HasForeignKey(e => e.EventId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ─── SectionTicketType (Many-to-many: EventSection ↔ TicketType) ─
+        // WHY composite PK? This is a pure join table — no surrogate key needed.
+        // WHY Cascade from EventSection but Restrict from TicketType?
+        //   - Deleting a section should clean up its mappings.
+        //   - Deleting a ticket type should be blocked if sections reference it.
+        modelBuilder.Entity<SectionTicketType>(entity =>
+        {
+            entity.HasKey(e => new { e.EventSectionId, e.TicketTypeId });
+
+            entity.HasOne(e => e.EventSection)
+                  .WithMany(es => es.SectionTicketTypes)
+                  .HasForeignKey(e => e.EventSectionId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.TicketType)
+                  .WithMany(tt => tt.SectionTicketTypes)
+                  .HasForeignKey(e => e.TicketTypeId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

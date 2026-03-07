@@ -25,4 +25,5 @@ public class EventSection
     // Navigation Properties
     public EventSeatingPlan EventSeatingPlan { get; set; } = null!;
     public Section? SourceSection { get; set; }
+    public ICollection<SectionTicketType> SectionTicketTypes { get; set; } = new List<SectionTicketType>();
 }
