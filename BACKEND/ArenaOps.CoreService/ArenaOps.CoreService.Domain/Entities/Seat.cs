@@ -12,6 +12,13 @@ public class Seat
     public bool IsActive { get; set; } = true;
     public bool IsAccessible { get; set; }
 
+    /// <summary>
+    /// Price assigned to this seat from SectionTicketType at generation time.
+    /// Null when no SectionTicketType mapping exists for the parent section's EventSection.
+    /// Read from: EventSection (SourceSectionId = SectionId) → SectionTicketType → TicketType.Price
+    /// </summary>
+    public decimal? Price { get; set; }
+
     // Navigation Properties
     public Section Section { get; set; } = null!;
 }

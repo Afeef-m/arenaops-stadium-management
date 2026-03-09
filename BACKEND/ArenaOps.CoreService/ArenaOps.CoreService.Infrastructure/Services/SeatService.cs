@@ -45,6 +45,9 @@ public class SeatService : ISeatService
         if (section.Type != "Seated")
             return ApiResponse<SeatResponse>.Fail("INVALID_SECTION_TYPE", "Seats can only be added to Seated sections. This section is of type 'Standing'.");
 
+        // Look up price from SectionTicketType via EventSection chain (null if no mapping yet)
+        var price = await _repository.GetPriceBySourceSectionIdAsync(request.SectionId, cancellationToken);
+
         // Auto-generate seat label if not provided
         var seatLabel = request.SeatLabel ?? $"{request.RowLabel}{request.SeatNumber}";
 
@@ -58,7 +61,8 @@ public class SeatService : ISeatService
             PosX = request.PosX,
             PosY = request.PosY,
             IsActive = request.IsActive,
-            IsAccessible = request.IsAccessible
+            IsAccessible = request.IsAccessible,
+            Price = price
         };
 
         var created = await _repository.CreateAsync(seat, cancellationToken);
@@ -74,6 +78,11 @@ public class SeatService : ISeatService
 
         if (section.Type != "Seated")
             return ApiResponse<IEnumerable<SeatResponse>>.Fail("INVALID_SECTION_TYPE", "Bulk seat generation is only available for Seated sections. This section is of type 'Standing'.");
+
+        // Look up price from SectionTicketType via EventSection chain.
+        // Traverses: EventSection (SourceSectionId = sectionId) → SectionTicketType → TicketType.Price
+        // Returns null when no EventSection/SectionTicketType mapping exists yet — seats will have Price = null.
+        var price = await _repository.GetPriceBySourceSectionIdAsync(request.SectionId, cancellationToken);
 
         // Generate row labels starting from the provided label or "A"
         var startRow = request.StartRowLabel ?? "A";
@@ -97,7 +106,8 @@ public class SeatService : ISeatService
                     PosX = request.StartPosX + ((seatNum - 1) * request.SpacingX),
                     PosY = request.StartPosY + (row * request.SpacingY),
                     IsActive = true,
-                    IsAccessible = false
+                    IsAccessible = false,
+                    Price = price
                 });
             }
         }
@@ -145,7 +155,8 @@ public class SeatService : ISeatService
             PosX = seat.PosX,
             PosY = seat.PosY,
             IsActive = seat.IsActive,
-            IsAccessible = seat.IsAccessible
+            IsAccessible = seat.IsAccessible,
+            Price = seat.Price
         };
     }
 
