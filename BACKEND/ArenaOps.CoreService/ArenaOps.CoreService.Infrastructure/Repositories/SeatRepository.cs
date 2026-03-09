@@ -96,4 +96,23 @@ public class SeatRepository : ISeatRepository
             .Include(s => s.SeatingPlan)
             .FirstOrDefaultAsync(s => s.SectionId == sectionId, cancellationToken);
     }
+
+    /// <summary>
+    /// Traverses: Section (SectionId) ← EventSection (SourceSectionId) → SectionTicketType → TicketType.Price
+    /// Returns the minimum price found, or null when no mapping exists yet.
+    ///
+    /// Chain:
+    ///   1. EventSections where SourceSectionId = sectionId  (template → event copies)
+    ///   2. Expand SectionTicketTypes for each EventSection   (event section → ticket mappings)
+    ///   3. Project to TicketType.Price                       (the actual price)
+    ///   4. Min() — safe default when multiple events share the same template section
+    /// </summary>
+    public async Task<decimal?> GetPriceBySourceSectionIdAsync(Guid sectionId, CancellationToken cancellationToken = default)
+    {
+        return await _context.EventSections
+            .Where(es => es.SourceSectionId == sectionId)
+            .SelectMany(es => es.SectionTicketTypes)
+            .Select(stt => (decimal?)stt.TicketType.Price)
+            .MinAsync(cancellationToken);
+    }
 }

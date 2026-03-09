@@ -114,6 +114,10 @@ public class CoreDbContext : DbContext
             entity.Property(e => e.RowLabel).HasMaxLength(5);
             entity.Property(e => e.SeatLabel).HasMaxLength(10);
 
+            // Price is nullable — assigned from SectionTicketType at seat generation time.
+            // Precision matches TicketType.Price (10, 2) for consistency.
+            entity.Property(e => e.Price).HasPrecision(10, 2).IsRequired(false);
+
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsAccessible).HasDefaultValue(false);
             entity.HasIndex(e => e.SectionId);
