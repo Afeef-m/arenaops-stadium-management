@@ -52,7 +52,7 @@ public class EventLayoutService : IEventLayoutService
     /// TOTAL: 3 DB round trips (check exists + load template + save) — optimal.
     /// </summary>
     public async Task<ApiResponse<EventLayoutResponse>> CloneLayoutAsync(
-        Guid eventId, Guid seatingPlanId, Guid organizerId, CancellationToken cancellationToken = default)
+        Guid eventId, Guid seatingPlanId, Guid eventManagerId, CancellationToken cancellationToken = default)
     {
         // ── STEP 1: Validate — fail fast ───────────────────────────
 
@@ -103,7 +103,7 @@ public class EventLayoutService : IEventLayoutService
             EventId = eventId,
             SourceSeatingPlanId = sourcePlan.SeatingPlanId,
             Name = sourcePlan.Name,
-            IsLocked = false,   // Organizer can customize before locking
+            IsLocked = false,   // Event Manager can customize before locking
             CreatedAt = DateTime.UtcNow
         };
 
@@ -184,7 +184,7 @@ public class EventLayoutService : IEventLayoutService
     /// be out of sync with the layout. Locking prevents this inconsistency.
     /// </summary>
     public async Task<ApiResponse<EventLayoutResponse>> LockLayoutAsync(
-        Guid eventId, Guid organizerId, CancellationToken cancellationToken = default)
+        Guid eventId, Guid eventManagerId, CancellationToken cancellationToken = default)
     {
         var layout = await _eventLayoutRepo.GetByEventIdAsync(eventId, cancellationToken);
         if (layout == null)

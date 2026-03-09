@@ -26,8 +26,9 @@ public class CoreDbContext : DbContext
     // ─── Event Time Slots ───────────────────────────────────────
     public DbSet<EventSlot> EventSlots => Set<EventSlot>();
 
-    // ─── Organizer Profiles ──────────────────────────────────────
-    public DbSet<OrganizerProfile> OrganizerProfiles => Set<OrganizerProfile>();
+    // ─── Event Manager Profiles ──────────────────────────────────────
+    public DbSet<EventManagerProfile> EventManagerProfiles => Set<EventManagerProfile>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -144,7 +145,7 @@ public class CoreDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 
             entity.HasIndex(e => e.StadiumId);
-            entity.HasIndex(e => e.OrganizerId);
+            entity.HasIndex(e => e.EventManagerId);
             entity.HasIndex(e => e.Status);
 
             entity.HasOne(e => e.Stadium)
@@ -233,30 +234,31 @@ public class CoreDbContext : DbContext
                   .IsRequired(false);
         });
 
-        // ─── OrganizerProfile ─────────────────────────────────────────
-        // WHY UNIQUE index on OrganizerId?
-        // One organizer can have exactly one business profile.
+        // ─── EventManagerProfile ─────────────────────────────────────────
+        // WHY UNIQUE index on EventManagerId?
+        // One event manager can have exactly one business profile.
         // The UNIQUE index enforces this at the DB level — the service layer
-        // also checks via ExistsByOrganizerIdAsync before inserting (belt + suspenders).
+        // also checks via ExistsByEventManagerIdAsync before inserting (belt + suspenders).
         //
-        // WHY no FK to Event.OrganizerId?
-        // OrganizerId is a cross-service reference to Auth.Users.UserId.
+        // WHY no FK to Event.EventManagerId?
+        // EventManagerId is a cross-service reference to Auth.Users.UserId.
         // Same pattern as Stadium.OwnerId — logical reference, not a DB FK.
-        modelBuilder.Entity<OrganizerProfile>(entity =>
+        modelBuilder.Entity<EventManagerProfile>(entity =>
         {
-            entity.HasKey(e => e.OrganizerProfileId);
-            entity.Property(e => e.OrganizerProfileId).HasDefaultValueSql("NEWSEQUENTIALID()");
+            entity.HasKey(e => e.EventManagerProfileId);
+            entity.Property(e => e.EventManagerProfileId).HasDefaultValueSql("NEWSEQUENTIALID()");
 
             entity.Property(e => e.OrganizationName).HasMaxLength(200);
             entity.Property(e => e.GstNumber).HasMaxLength(20);
             entity.Property(e => e.Designation).HasMaxLength(100);
             entity.Property(e => e.Website).HasMaxLength(300);
+            entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 
-            // One organizer → one profile. Enforced at DB + service layer.
-            entity.HasIndex(e => e.OrganizerId).IsUnique();
+            // One event manager → one profile. Enforced at DB + service layer.
+            entity.HasIndex(e => e.EventManagerId).IsUnique();
         });
 
         // ─── TicketType (Pricing per Event) ─────────────────────────

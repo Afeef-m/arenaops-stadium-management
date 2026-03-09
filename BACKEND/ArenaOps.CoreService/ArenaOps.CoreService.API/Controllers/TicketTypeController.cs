@@ -39,7 +39,7 @@ public class TicketTypeController : ControllerBase
     /// Create a ticket type for an event
     /// </summary>
     [HttpPost("api/events/{eventId:guid}/ticket-types")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> Create(Guid eventId, [FromBody] CreateTicketTypeRequest request, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)

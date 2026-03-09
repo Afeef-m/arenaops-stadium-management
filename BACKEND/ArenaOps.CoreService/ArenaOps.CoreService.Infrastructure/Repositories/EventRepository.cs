@@ -40,12 +40,12 @@ public class EventRepository : IEventRepository
             .FirstOrDefaultAsync(e => e.EventId == id);
     }
 
-    public async Task<IEnumerable<Event>> GetByOrganizerAsync(Guid organizerId)
+    public async Task<IEnumerable<Event>> GetByEventManagerAsync(Guid eventManagerId)
     {
         return await _context.Events
             .Include(e => e.Stadium)
             .AsNoTracking()
-            .Where(e => e.OrganizerId == organizerId)
+            .Where(e => e.EventManagerId == eventManagerId)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
     }

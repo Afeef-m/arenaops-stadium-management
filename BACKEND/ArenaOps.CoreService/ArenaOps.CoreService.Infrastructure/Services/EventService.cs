@@ -63,9 +63,9 @@ public class EventService : IEventService
         return ApiResponse<EventDto>.Ok(MapToDto(eventEntity));
     }
 
-    public async Task<ApiResponse<IEnumerable<EventDto>>> GetEventsByOrganizerAsync(Guid organizerId)
+    public async Task<ApiResponse<IEnumerable<EventDto>>> GetEventsByEventManagerAsync(Guid eventManagerId)
     {
-        var events = await _eventRepository.GetByOrganizerAsync(organizerId);
+        var events = await _eventRepository.GetByEventManagerAsync(eventManagerId);
         var dtos = events.Select(MapToDto);
         return ApiResponse<IEnumerable<EventDto>>.Ok(dtos);
     }
@@ -83,7 +83,7 @@ public class EventService : IEventService
 
     // ─── Create ───────────────────────────────────────────────────
 
-    public async Task<ApiResponse<EventDto>> CreateEventAsync(Guid organizerId, CreateEventDto dto)
+    public async Task<ApiResponse<EventDto>> CreateEventAsync(Guid eventManagerId, CreateEventDto dto)
     {
         // Validate stadium exists and is approved
         var stadium = await _stadiumRepository.GetByIdAsync(dto.StadiumId);
@@ -98,7 +98,7 @@ public class EventService : IEventService
 
         var eventEntity = new Event
         {
-            OrganizerId = organizerId,
+            EventManagerId = eventManagerId,
             StadiumId = dto.StadiumId,
             Name = dto.Name.Trim(),
             Description = dto.Description?.Trim(),
@@ -114,27 +114,27 @@ public class EventService : IEventService
         var created = await _eventRepository.GetByIdAsync(eventEntity.EventId);
 
         _logger.LogInformation(
-            "Event '{EventName}' (ID: {EventId}) created by organizer {OrganizerId} at stadium {StadiumId}",
-            eventEntity.Name, eventEntity.EventId, organizerId, dto.StadiumId);
+            "Event '{EventName}' (ID: {EventId}) created by event manager {EventManagerId} at stadium {StadiumId}",
+            eventEntity.Name, eventEntity.EventId, eventManagerId, dto.StadiumId);
 
-        // Notify Stadium Manager and get Organizer Email
+        // Notify Stadium Manager and get Event Manager Email
         try
         {
             var stadiumOwnerDetails = await _dapperService.QueryFirstOrDefaultAsync<dynamic>(
                 "SELECT Email, FullName FROM Users WHERE UserId = @OwnerId",
                 new { OwnerId = stadium.OwnerId });
 
-            var organizerDetails = await _dapperService.QueryFirstOrDefaultAsync<dynamic>(
-                "SELECT Email, FullName FROM Users WHERE UserId = @OrganizerId",
-                new { OrganizerId = organizerId });
+            var eventManagerDetails = await _dapperService.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT Email, FullName FROM Users WHERE UserId = @EventManagerId",
+                new { EventManagerId = eventManagerId });
 
-            if (stadiumOwnerDetails != null && organizerDetails != null)
+            if (stadiumOwnerDetails != null && eventManagerDetails != null)
             {
                 await _emailService.SendEventApprovalRequestAsync(
                     stadiumOwnerDetails.Email,
                     stadium.Name,
                     eventEntity.Name,
-                    organizerDetails.FullName);
+                    eventManagerDetails.FullName);
             }
         }
         catch (Exception ex)
@@ -147,15 +147,15 @@ public class EventService : IEventService
 
     // ─── Update ───────────────────────────────────────────────────
 
-    public async Task<ApiResponse<EventDto>> UpdateEventAsync(Guid id, Guid organizerId, UpdateEventDto dto)
+    public async Task<ApiResponse<EventDto>> UpdateEventAsync(Guid id, Guid eventManagerId, UpdateEventDto dto)
     {
         var eventEntity = await _eventRepository.GetByIdAsync(id);
         if (eventEntity == null)
             return ApiResponse<EventDto>.Fail("NOT_FOUND", "Event not found");
 
         // Ownership check
-        if (eventEntity.OrganizerId != organizerId)
-            return ApiResponse<EventDto>.Fail("FORBIDDEN", "You are not the organizer of this event");
+        if (eventEntity.EventManagerId != eventManagerId)
+            return ApiResponse<EventDto>.Fail("FORBIDDEN", "You are not the event manager of this event");
 
         // Only Draft or PendingApproval events can be edited
         if (eventEntity.Status != EventStatuses.Draft && eventEntity.Status != EventStatuses.PendingApproval)
@@ -174,23 +174,23 @@ public class EventService : IEventService
         await _eventRepository.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Event '{EventName}' (ID: {EventId}) updated by organizer {OrganizerId}",
-            eventEntity.Name, id, organizerId);
+            "Event '{EventName}' (ID: {EventId}) updated by event manager {EventManagerId}",
+            eventEntity.Name, id, eventManagerId);
 
         return ApiResponse<EventDto>.Ok(MapToDto(eventEntity), "Event updated successfully");
     }
 
     // ─── Status Workflow ──────────────────────────────────────────
 
-    public async Task<ApiResponse<EventDto>> UpdateEventStatusAsync(Guid id, Guid organizerId, UpdateEventStatusDto dto)
+    public async Task<ApiResponse<EventDto>> UpdateEventStatusAsync(Guid id, Guid eventManagerId, UpdateEventStatusDto dto)
     {
         var eventEntity = await _eventRepository.GetByIdAsync(id);
         if (eventEntity == null)
             return ApiResponse<EventDto>.Fail("NOT_FOUND", "Event not found");
 
         // Ownership check
-        if (eventEntity.OrganizerId != organizerId)
-            return ApiResponse<EventDto>.Fail("FORBIDDEN", "You are not the organizer of this event");
+        if (eventEntity.EventManagerId != eventManagerId)
+            return ApiResponse<EventDto>.Fail("FORBIDDEN", "You are not the event manager of this event");
 
         var newStatus = dto.Status.Trim();
 
@@ -223,8 +223,8 @@ public class EventService : IEventService
         await _eventRepository.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Event '{EventName}' (ID: {EventId}) status changed: {PreviousStatus} → {NewStatus} by organizer {OrganizerId}",
-            eventEntity.Name, id, previousStatus, newStatus, organizerId);
+            "Event '{EventName}' (ID: {EventId}) status changed: {PreviousStatus} → {NewStatus} by event manager {EventManagerId}",
+            eventEntity.Name, id, previousStatus, newStatus, eventManagerId);
 
         return ApiResponse<EventDto>.Ok(
             MapToDto(eventEntity),
@@ -260,22 +260,22 @@ public class EventService : IEventService
         _logger.LogInformation("Event '{EventName}' (ID: {EventId}) {Decision} by Stadium Owner {OwnerId}",
             eventEntity.Name, id, isApproved ? "APPROVED" : "REJECTED/CANCELLED", stadiumOwnerId);
 
-        // Notify Organizer Document
+        // Notify Event Manager Document
         try
         {
-            var organizerDetails = await _dapperService.QueryFirstOrDefaultAsync<dynamic>(
-                "SELECT Email, FullName FROM Users WHERE UserId = @OrganizerId",
-                new { OrganizerId = eventEntity.OrganizerId });
+            var eventManagerDetails = await _dapperService.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT Email, FullName FROM Users WHERE UserId = @EventManagerId",
+                new { EventManagerId = eventEntity.EventManagerId });
 
-            if (organizerDetails != null)
+            if (eventManagerDetails != null)
             {
                 if (isApproved)
                 {
-                    await _emailService.SendEventApprovedNotificationAsync(organizerDetails.Email, eventEntity.Name, stadium.Name);
+                    await _emailService.SendEventApprovedNotificationAsync(eventManagerDetails.Email, eventEntity.Name, stadium.Name);
                 }
                 else
                 {
-                    await _emailService.SendEventCancelledNotificationAsync(organizerDetails.Email, eventEntity.Name, stadium.Name, reason ?? "Rejected by Stadium Owner");
+                    await _emailService.SendEventCancelledNotificationAsync(eventManagerDetails.Email, eventEntity.Name, stadium.Name, reason ?? "Rejected by Stadium Owner");
                 }
             }
         }
@@ -296,7 +296,7 @@ public class EventService : IEventService
             EventId = eventEntity.EventId,
             StadiumId = eventEntity.StadiumId,
             StadiumName = eventEntity.Stadium?.Name ?? string.Empty,
-            OrganizerId = eventEntity.OrganizerId,
+            EventManagerId = eventEntity.EventManagerId,
             Name = eventEntity.Name,
             Description = eventEntity.Description,
             ImageUrl = eventEntity.ImageUrl,

@@ -4,7 +4,7 @@ public class Event
 {
     public Guid EventId { get; set; }
     public Guid StadiumId { get; set; }
-    public Guid OrganizerId { get; set; } // Reference to Auth.Users (NOT a local FK)
+    public Guid EventManagerId { get; set; } // Reference to Auth.Users (NOT a local FK)
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? ImageUrl { get; set; }

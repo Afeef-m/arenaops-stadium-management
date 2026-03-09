@@ -9,7 +9,7 @@ public class EventDto
     public Guid EventId { get; set; }
     public Guid StadiumId { get; set; }
     public string StadiumName { get; set; } = string.Empty;
-    public Guid OrganizerId { get; set; }
+    public Guid EventManagerId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? ImageUrl { get; set; }

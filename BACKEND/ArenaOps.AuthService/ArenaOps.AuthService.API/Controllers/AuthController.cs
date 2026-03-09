@@ -95,7 +95,7 @@ public class AuthController : ControllerBase
 
     /// <summary>
     /// Register a new user with email/password.
-    /// Accepts optional Role: "User" (default) or "Organizer".
+    /// Accepts optional Role: "User" (default) or "EventManager".
     /// Admin/StadiumOwner roles are blocked from self-registration.
     /// Sets accessToken and refreshToken cookies automatically.
     /// </summary>

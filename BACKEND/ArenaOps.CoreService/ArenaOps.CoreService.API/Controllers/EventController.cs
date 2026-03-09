@@ -12,13 +12,13 @@ namespace ArenaOps.CoreService.API.Controllers;
 /// Event CRUD APIs with status workflow.
 /// 
 /// Routes per API docs (04-Api-Documentation.md, Section C):
-///   POST  /api/events              → Organizer → Create event (defaults to Draft)
+///   POST  /api/events              → EventManager → Create event (defaults to Draft)
 ///   GET   /api/events              → Any       → List events (filter: ?status=Live)
 ///   GET   /api/events/{id}         → Any       → Get event details
-///   GET   /api/events/my           → Organizer → Get my events
+///   GET   /api/events/my           → EventManager → Get my events
 ///   GET   /api/events/stadium/{id} → Any       → Get events by stadium
-///   PUT   /api/events/{id}         → Organizer → Update event (409 if not Draft)
-///   PATCH /api/events/{id}/status  → Organizer → Change event status (workflow validated)
+///   PUT   /api/events/{id}         → EventManager → Update event (409 if not Draft)
+///   PATCH /api/events/{id}/status  → EventManager → Change event status (workflow validated)
 /// 
 /// Status Workflow:
 ///   Draft → Live → Completed
@@ -62,14 +62,14 @@ public class EventController : ControllerBase
     }
 
     /// <summary>
-    /// Get current organizer's events
+    /// Get current event manager's events
     /// </summary>
     [HttpGet("my")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> GetMyEvents(CancellationToken cancellationToken)
     {
         var userId = GetUserId();
-        var response = await _eventService.GetEventsByOrganizerAsync(userId);
+        var response = await _eventService.GetEventsByEventManagerAsync(userId);
         return Ok(response);
     }
 
@@ -87,11 +87,11 @@ public class EventController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new event (Organizer only). Defaults to Draft status.
-    /// The organizer is inferred from the JWT token.
+    /// Create a new event (EventManager only). Defaults to Draft status.
+    /// The event manager is inferred from the JWT token.
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> Create([FromBody] CreateEventDto dto, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
@@ -110,11 +110,11 @@ public class EventController : ControllerBase
     }
 
     /// <summary>
-    /// Update event details (Organizer only).
+    /// Update event details (EventManager only).
     /// Returns 409 if event is not in Draft status.
     /// </summary>
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEventDto dto, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
@@ -138,13 +138,13 @@ public class EventController : ControllerBase
     }
 
     /// <summary>
-    /// Change event status (Organizer only).
+    /// Change event status (EventManager only).
     /// Validates allowed transitions:
     ///   Draft → Live, Cancelled
     ///   Live  → Completed, Cancelled
     /// </summary>
     [HttpPatch("{id:guid}/status")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateEventStatusDto dto, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
