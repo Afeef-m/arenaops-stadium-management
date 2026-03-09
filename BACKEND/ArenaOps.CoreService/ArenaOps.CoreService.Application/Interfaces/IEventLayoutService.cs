@@ -18,7 +18,7 @@ public interface IEventLayoutService
     /// Clone a base SeatingPlan template into an event-specific layout.
     /// Creates EventSeatingPlan + EventSections + EventLandmarks in one transaction.
     /// </summary>
-    Task<ApiResponse<EventLayoutResponse>> CloneLayoutAsync(Guid eventId, Guid seatingPlanId, Guid organizerId, CancellationToken cancellationToken = default);
+    Task<ApiResponse<EventLayoutResponse>> CloneLayoutAsync(Guid eventId, Guid seatingPlanId, Guid eventManagerId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get the full event layout with all sections and landmarks.
@@ -29,5 +29,5 @@ public interface IEventLayoutService
     /// Lock the event layout — prevents further edits.
     /// Must be locked before generating EventSeats.
     /// </summary>
-    Task<ApiResponse<EventLayoutResponse>> LockLayoutAsync(Guid eventId, Guid organizerId, CancellationToken cancellationToken = default);
+    Task<ApiResponse<EventLayoutResponse>> LockLayoutAsync(Guid eventId, Guid eventManagerId, CancellationToken cancellationToken = default);
 }

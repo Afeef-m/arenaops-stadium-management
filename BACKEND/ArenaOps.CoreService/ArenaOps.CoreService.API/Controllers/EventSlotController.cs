@@ -10,7 +10,7 @@ namespace ArenaOps.CoreService.API.Controllers;
 /// EventSlot APIs — manage time slots for events.
 ///
 /// Routes (per 04-Api-Documentation.md, Section C):
-///   POST  /api/events/{eventId}/slots   → Organizer → Add time slot
+///   POST  /api/events/{eventId}/slots   → EventManager → Add time slot
 ///   GET   /api/events/{eventId}/slots    → Any       → List time slots
 /// </summary>
 [ApiController]
@@ -43,7 +43,7 @@ public class EventSlotController : ControllerBase
     /// Validates: event exists, event is editable, EndTime > StartTime, no overlapping slots.
     /// </summary>
     [HttpPost("api/events/{eventId:guid}/slots")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> Create(Guid eventId, [FromBody] CreateEventSlotRequest request, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)

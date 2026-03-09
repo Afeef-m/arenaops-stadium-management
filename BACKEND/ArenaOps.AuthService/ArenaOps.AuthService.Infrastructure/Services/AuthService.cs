@@ -49,8 +49,8 @@ public class AuthService : IAuthService
         await _repo.AddUserAsync(user);
         await _repo.SaveChangesAsync();
 
-        // SECURITY: Only "User" and "Organizer" are allowed via self-registration.
-        var allowedSelfRegisterRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "User", "Organizer" };
+        // SECURITY: Only "User" and "EventManager" are allowed via self-registration.
+        var allowedSelfRegisterRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "User", "EventManager" };
         var roleName = !string.IsNullOrEmpty(request.Role) && allowedSelfRegisterRoles.Contains(request.Role)
             ? request.Role
             : "User";

@@ -10,9 +10,9 @@ namespace ArenaOps.CoreService.API.Controllers;
 /// SectionTicketType mapping APIs — map ticket types to event sections.
 ///
 /// Routes (per 04-Api-Documentation.md, Section E):
-///   POST    /api/events/{eventId}/sections/{sectionId}/map-ticket     → Organizer → Map ticket type
+///   POST    /api/events/{eventId}/sections/{sectionId}/map-ticket     → EventManager → Map ticket type
 ///   GET     /api/events/{eventId}/sections/{sectionId}/ticket-types   → Any       → List mapped ticket types
-///   DELETE  /api/events/{eventId}/sections/{sectionId}/ticket-types/{ticketTypeId} → Organizer → Remove mapping
+///   DELETE  /api/events/{eventId}/sections/{sectionId}/ticket-types/{ticketTypeId} → EventManager → Remove mapping
 ///
 /// These mappings determine pricing during EventSeat generation (Week 3, Day 3).
 /// </summary>
@@ -52,11 +52,12 @@ public class SectionTicketTypeController : ControllerBase
     }
 
     /// <summary>
-    /// Map a ticket type to an event section (Organizer only).
-    /// Both the section and ticket type must belong to the same event.
+    /// Map a ticket type to an event section (EventManager only).
+    /// Used during layout mapping step or dynamically later.
+    /// Returns 409 Conflict if this specific ticket type is already mapped to this section.
     /// </summary>
     [HttpPost("api/events/{eventId:guid}/sections/{sectionId:guid}/map-ticket")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> MapTicketToSection(
         Guid eventId, Guid sectionId, [FromBody] MapTicketToSectionRequest request, CancellationToken cancellationToken)
     {
@@ -86,10 +87,10 @@ public class SectionTicketTypeController : ControllerBase
     }
 
     /// <summary>
-    /// Remove a ticket type mapping from an event section (Organizer only).
+    /// Remove a ticket type mapping from a section (EventManager only).
     /// </summary>
     [HttpDelete("api/events/{eventId:guid}/sections/{sectionId:guid}/ticket-types/{ticketTypeId:guid}")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> UnmapTicketFromSection(
         Guid eventId, Guid sectionId, Guid ticketTypeId, CancellationToken cancellationToken)
     {

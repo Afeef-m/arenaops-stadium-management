@@ -47,7 +47,7 @@ public class EventLayoutController : ControllerBase
     /// Error:  409 if event already has a layout.
     /// </summary>
     [HttpPost("api/events/{eventId:guid}/layout/clone")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> CloneLayout(Guid eventId, [FromBody] CloneLayoutRequest request, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
