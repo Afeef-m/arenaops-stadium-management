@@ -610,14 +610,33 @@ export function LayoutEditor() {
       }
 
       const payload = parsed.payload;
-      const restoredLayoutSettings = "layoutSettings" in payload ? payload.layoutSettings : undefined;
+      const restoredLayoutSettings =
+  "layoutSettings" in payload &&
+  payload.layoutSettings &&
+  typeof payload.layoutSettings === "object"
+    ? payload.layoutSettings
+    : undefined;
       const restoredLayoutType =
         "layoutType" in payload ? payload.layoutType : undefined;
       const stadiumLayout =
         "stadiumLayout" in payload ? payload.stadiumLayout : undefined;
-      const restoredSections = stadiumLayout?.sections ?? payload.sections;
-      const restoredRows = stadiumLayout?.rows ?? payload.rows;
-      const restoredSeats = stadiumLayout?.seats ?? payload.seats;
+      const restoredSections =
+  stadiumLayout?.sections ??
+  ("sections" in payload && Array.isArray(payload.sections)
+    ? payload.sections
+    : undefined);
+
+const restoredRows =
+  stadiumLayout?.rows ??
+  ("rows" in payload && Array.isArray(payload.rows)
+    ? payload.rows
+    : undefined);
+
+const restoredSeats =
+  stadiumLayout?.seats ??
+  ("seats" in payload && Array.isArray(payload.seats)
+    ? payload.seats
+    : undefined);
 
       if (!Array.isArray(restoredSections) || restoredSections.length === 0) {
         showActionMessage("Draft is missing sections.");
@@ -659,7 +678,9 @@ export function LayoutEditor() {
           setRows(restoredRows);
         }
         if (restoredSeats) {
-          const pricing = restoredLayoutSettings?.pricing ?? layoutSettings.pricing;
+          const pricing =
+  (restoredLayoutSettings as LayoutSettings | undefined)?.pricing ??
+  layoutSettings.pricing;
           setSeats(
             restoredSeats.map((seat) => ({
               ...seat,

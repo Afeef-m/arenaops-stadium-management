@@ -58,6 +58,10 @@ interface RightPanelProps {
   actionMessage?: string | null;
 }
 
+type NumericLayoutSettingsKeys = {
+  [K in keyof LayoutSettings]: LayoutSettings[K] extends number ? K : never
+}[keyof LayoutSettings];
+
 export function RightPanel({
   section,
   savedPayload,
@@ -109,14 +113,15 @@ export function RightPanel({
     onUpdateSection(section.id, { [field]: parsed });
   };
 
-  const updateLayoutField = <K extends keyof LayoutSettings>(field: K, value: string) => {
-    const parsed = Number(value);
-    if (Number.isNaN(parsed)) {
-      return;
-    }
+  const updateLayoutField = <K extends NumericLayoutSettingsKeys>(
+  field: K,
+  value: string
+) => {
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) return;
 
-    onLayoutSettingChange(field, parsed);
-  };
+  onLayoutSettingChange(field, parsed);
+};
 
   const seatTypeOptions: LayoutSeat["type"][] = SEAT_TYPES;
   const selectedSeatCount = selectedSeatIds.size;

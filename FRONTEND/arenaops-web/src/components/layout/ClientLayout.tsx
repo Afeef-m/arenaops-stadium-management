@@ -5,18 +5,23 @@ import Navbar from "@/components/navfooter/Navbar";
 import Footer from "@/components/navfooter/Footer";
 
 export default function ClientLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    const pathname = usePathname();
-    const isAuthPage = pathname === "/login" || pathname === "/register";
+  const pathname = usePathname();
+  const isAuthPage = pathname === "/login" || pathname === "/register";
 
-    return (
-        <>
-            {!isAuthPage && <Navbar />}
-            {children}
-            {!isAuthPage && <Footer />}
-        </>
-    );
+  return (
+    <>
+      {!isAuthPage && <Navbar />}
+
+      {/* push page below navbar */}
+      <main className={!isAuthPage ? "pt-20" : ""}>
+        {children}
+      </main>
+
+      {!isAuthPage && <Footer />}
+    </>
+  );
 }
