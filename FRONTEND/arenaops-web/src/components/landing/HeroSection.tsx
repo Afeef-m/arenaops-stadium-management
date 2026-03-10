@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import styles from "./HeroSection.module.scss";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";

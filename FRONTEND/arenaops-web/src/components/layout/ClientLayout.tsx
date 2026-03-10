@@ -15,8 +15,6 @@ export default function ClientLayout({
   return (
     <>
       {!isAuthPage && <Navbar />}
-
-      {/* push page below navbar */}
       <main className={!isAuthPage ? "pt-20" : ""}>
         {children}
       </main>

@@ -1,33 +1,45 @@
+//src\app\(dashboard)\manager\layout.tsx
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Sidebar from "@/components/dashboard/sideBar";
 
-export default function ManagerLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-
+export default function ManagerLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <div className="min-h-screen flex">
-      <aside className="w-64 bg-gray-900 text-white p-4">
-        <h2 className="text-lg font-semibold mb-4">Manager Panel</h2>
+    <div className="h-screen flex bg-black overflow-hidden">
 
-        <nav className="space-y-2">
-          <Link
-            href="/manager/stadiums"
-            className={`block px-3 py-2 rounded-md transition ${
-              pathname === "/manager/stadiums"
-                ? "bg-green-500 text-black"
-                : "hover:text-green-400"
-            }`}
-          >
-            Stadium Generator
-          </Link>
-        </nav>
-      </aside>
+      <Sidebar />
 
-      <main className="flex-1 p-6 bg-gray-100 h-[calc(100vh-72px)] overflow-hidden">
-  {children}
-</main>
+      <main className="flex-1 bg-gray-100 lg:rounded-l-3xl overflow-hidden">
+        {children}
+      </main>
+
     </div>
   );
 }
+  
+  
+
+
+  // "use client";
+    
+    // import Sidebar from "@/components/dashboard/sideBar";
+    
+    // export default function ManagerLayout({
+    //   children,
+    // }: {
+    //   children: React.ReactNode;
+    // }) {
+    //   return (
+    //     <div className="min-h-screen flex">
+    //       <Sidebar/>
+    //       <main className="flex-1 p-6 bg-gray-100 h-[calc(100vh-72px)] overflow-hidden rounded-tl-3xl">
+    //         {children}
+    //       </main>
+    //     </div>
+    //   );
+    // }
+    

@@ -182,7 +182,7 @@ var app = builder.Build();
 app.UseSerilogRequestLogging();
 
 // Global exception handler — must be first in pipeline
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+// app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();
