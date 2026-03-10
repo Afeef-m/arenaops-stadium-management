@@ -4,6 +4,7 @@ using ArenaOps.CoreService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArenaOps.CoreService.Infrastructure.Migrations
 {
     [DbContext(typeof(CoreDbContext))]
-    partial class CoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260309101913_ARENA-78_AddEventSeatsTable")]
+    partial class ARENA78_AddEventSeatsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -175,9 +178,6 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("NEWSEQUENTIALID()");
 
-                    b.Property<Guid>("EventId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("EventSectionId")
                         .HasColumnType("uniqueidentifier");
 
@@ -190,12 +190,6 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
-
-                    b.Property<Guid?>("LockedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("LockedUntil")
-                        .HasColumnType("datetime2");
 
                     b.Property<double>("PosX")
                         .HasColumnType("float");
@@ -218,11 +212,6 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                     b.Property<int>("SeatNumber")
                         .HasColumnType("int");
 
-                    b.Property<string>("SectionType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<Guid?>("SourceSeatId")
                         .HasColumnType("uniqueidentifier");
 
@@ -235,16 +224,11 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
 
                     b.HasKey("EventSeatId");
 
-                    b.HasIndex("EventId");
-
                     b.HasIndex("EventSectionId");
-
-                    b.HasIndex("LockedUntil")
-                        .HasFilter("[Status] = 'Held'");
 
                     b.HasIndex("SourceSeatId");
 
-                    b.HasIndex("EventId", "Status");
+                    b.HasIndex("Status");
 
                     b.ToTable("EventSeats");
                 });

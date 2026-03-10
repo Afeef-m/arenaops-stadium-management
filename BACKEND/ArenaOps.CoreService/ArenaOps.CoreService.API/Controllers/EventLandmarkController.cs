@@ -14,9 +14,9 @@ namespace ArenaOps.CoreService.API.Controllers;
 /// 
 /// Routes per API docs (04-Api-Documentation.md), Section D:
 ///   GET    /api/events/{eventId}/layout/landmarks          → Get all landmarks for event
-///   POST   /api/events/{eventId}/layout/landmarks          → Add new landmark (Organizer only)
-///   PUT    /api/events/{eventId}/layout/landmarks/{id}     → Update landmark (Organizer only)
-///   DELETE /api/events/{eventId}/layout/landmarks/{id}     → Delete landmark (Organizer only)
+///   POST   /api/events/{eventId}/layout/landmarks          → Add new landmark (EventManager only)
+///   PUT    /api/events/{eventId}/layout/landmarks/{id}     → Update landmark (EventManager only)
+///   DELETE /api/events/{eventId}/layout/landmarks/{id}     → Delete landmark (EventManager only)
 /// 
 /// KEY VALIDATION: All edit operations (POST, PUT, DELETE) check if the layout is locked.
 /// If IsLocked = true, the operation is rejected with 409 Conflict (LAYOUT_LOCKED).
@@ -45,11 +45,11 @@ public class EventLandmarkController : ControllerBase
 
     /// <summary>
     /// Add a new landmark to the event layout.
-    /// Organizer or Admin only.
+    /// EventManager or Admin only.
     /// Returns 409 Conflict if layout is locked.
     /// </summary>
     [HttpPost("api/events/{eventId:guid}/layout/landmarks")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> CreateLandmark(
         Guid eventId, 
         [FromBody] CreateEventLandmarkRequest request, 
@@ -97,11 +97,11 @@ public class EventLandmarkController : ControllerBase
 
     /// <summary>
     /// Update an existing landmark.
-    /// Organizer or Admin only.
+    /// EventManager or Admin only.
     /// Returns 409 Conflict if layout is locked.
     /// </summary>
     [HttpPut("api/events/{eventId:guid}/layout/landmarks/{id:guid}")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> UpdateLandmark(
         Guid eventId, 
         Guid id, 
@@ -131,11 +131,11 @@ public class EventLandmarkController : ControllerBase
 
     /// <summary>
     /// Delete a landmark from the event layout.
-    /// Organizer or Admin only.
+    /// EventManager or Admin only.
     /// Returns 409 Conflict if layout is locked.
     /// </summary>
     [HttpDelete("api/events/{eventId:guid}/layout/landmarks/{id:guid}")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> DeleteLandmark(Guid eventId, Guid id, CancellationToken cancellationToken)
     {
         var userId = GetUserId();

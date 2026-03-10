@@ -14,9 +14,9 @@ namespace ArenaOps.CoreService.API.Controllers;
 /// 
 /// Routes per API docs (04-Api-Documentation.md), Section D:
 ///   GET    /api/events/{eventId}/layout/sections           → Get all sections for event
-///   POST   /api/events/{eventId}/layout/sections           → Add new section (Organizer only)
-///   PUT    /api/events/{eventId}/layout/sections/{id}      → Update section (Organizer only)
-///   DELETE /api/events/{eventId}/layout/sections/{id}      → Delete section (Organizer only)
+///   POST   /api/events/{eventId}/layout/sections           → Add new section (EventManager only)
+///   PUT    /api/events/{eventId}/layout/sections/{id}      → Update section (EventManager only)
+///   DELETE /api/events/{eventId}/layout/sections/{id}      → Delete section (EventManager only)
 /// 
 /// KEY VALIDATION: All edit operations (POST, PUT, DELETE) check if the layout is locked.
 /// If IsLocked = true, the operation is rejected with 409 Conflict (LAYOUT_LOCKED).
@@ -45,11 +45,11 @@ public class EventSectionController : ControllerBase
 
     /// <summary>
     /// Add a new section to the event layout.
-    /// Organizer or Admin only.
+    /// EventManager or Admin only.
     /// Returns 409 Conflict if layout is locked.
     /// </summary>
     [HttpPost("api/events/{eventId:guid}/layout/sections")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> CreateSection(
         Guid eventId, 
         [FromBody] CreateEventSectionRequest request, 
@@ -97,11 +97,11 @@ public class EventSectionController : ControllerBase
 
     /// <summary>
     /// Update an existing section.
-    /// Organizer or Admin only.
+    /// EventManager or Admin only.
     /// Returns 409 Conflict if layout is locked.
     /// </summary>
     [HttpPut("api/events/{eventId:guid}/layout/sections/{id:guid}")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> UpdateSection(
         Guid eventId, 
         Guid id, 
@@ -131,11 +131,11 @@ public class EventSectionController : ControllerBase
 
     /// <summary>
     /// Delete a section from the event layout.
-    /// Organizer or Admin only.
+    /// EventManager or Admin only.
     /// Returns 409 Conflict if layout is locked.
     /// </summary>
     [HttpDelete("api/events/{eventId:guid}/layout/sections/{id:guid}")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> DeleteSection(Guid eventId, Guid id, CancellationToken cancellationToken)
     {
         var userId = GetUserId();
