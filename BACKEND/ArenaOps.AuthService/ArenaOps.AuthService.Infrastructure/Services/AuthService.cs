@@ -246,9 +246,14 @@ public class AuthService : IAuthService
 
     private async Task AuditFailedLoginAsync(string email, string? ipAddress, string? userAgent, Guid? userId = null)
     {
+        // Only audit if we have a valid user — inserting with no UserId
+        // would violate the FK constraint on AuthAuditLogs.
+        if (userId == null)
+            return;
+
         await _repo.AddAuthAuditLogAsync(new AuthAuditLog
         {
-            UserId = userId ?? Guid.Empty,
+            UserId = userId.Value,
             Action = "FailedLogin",
             IpAddress = ipAddress,
             UserAgent = userAgent
