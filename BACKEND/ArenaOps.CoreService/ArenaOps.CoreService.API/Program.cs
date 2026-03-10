@@ -199,7 +199,7 @@ app.UseSwaggerUI(options =>
 });
 
 app.UseHttpsRedirection();
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+// app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseAuthentication();
 
 // Token blacklist check — shared Redis blacklist, AFTER auth BEFORE authorization
