@@ -1,7 +1,0 @@
-2026-02-20 15:39:25.687 +05:30 [INF] Starting ArenaOps AuthService API...
-2026-02-20 15:43:22.340 +05:30 [INF] HTTP POST /api/auth/google responded 200 in 6990.6120 ms
-2026-02-20 16:42:09.734 +05:30 [INF] Starting ArenaOps AuthService API...
-2026-02-20 17:08:30.190 +05:30 [ERR] Health check Auth SQL Server with status "Unhealthy" completed after 1784.8663ms with message 'null'
-System.Threading.Tasks.TaskCanceledException: A task was canceled.
-   at HealthChecks.SqlServer.SqlServerHealthCheck.CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken) in /home/runner/work/AspNetCore.Diagnostics.HealthChecks/AspNetCore.Diagnostics.HealthChecks/src/HealthChecks.SqlServer/SqlServerHealthCheck.cs:line 28
-2026-02-20 17:08:30.275 +05:30 [ERR] HTTP GET /health responded 503 in 2038.2440 ms
