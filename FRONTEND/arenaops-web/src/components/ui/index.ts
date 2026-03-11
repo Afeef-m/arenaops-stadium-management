@@ -1,7 +1,7 @@
 // ── Core UI Components ──────────────────────────────────────────────────────
 
 export { Button } from "./button";
-export { Card } from "./card";
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "./card";
 
 // ── Loading Components ───────────────────────────────────────────────────────
 
