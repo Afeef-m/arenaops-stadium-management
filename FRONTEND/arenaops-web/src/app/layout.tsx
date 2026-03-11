@@ -3,7 +3,6 @@ import { Inter, Outfit, Geist } from "next/font/google";
 import "@/styles/tailwind.css";
 import "@/styles/globals.scss";
 import Providers from "../providers/providers";
-import ClientLayout from "@/components/layout/ClientLayout";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
@@ -30,17 +29,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <body
         className={`${inter.variable} ${outfit.variable} font-sans antialiased bg-background text-foreground`}
       >
-        <Providers>
-          <ClientLayout>{children}</ClientLayout>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -3,8 +3,8 @@
 import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { googleLoginUser, loginFailure } from "@/app/store/authSlice";
-import { RootState } from "@/app/store/store";
+import { googleLoginUser, loginFailure } from "@/store/authSlice";
+import { RootState } from "@/store/store";
 import { useToastActions } from "@/components/ui/toast";
 
 export default function AuthCallbackClient() {

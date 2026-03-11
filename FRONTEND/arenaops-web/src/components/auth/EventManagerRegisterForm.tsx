@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/app/store/store";
-import { registerUser } from "@/app/store/authSlice";
+import { RootState } from "@/store/store";
+import { registerUser } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, Variants } from "framer-motion";

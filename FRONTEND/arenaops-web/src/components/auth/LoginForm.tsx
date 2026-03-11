@@ -2,8 +2,8 @@
 
 import { useRef, useLayoutEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/app/store/store";
-import { loginUser } from "@/app/store/authSlice";
+import { RootState } from "@/store/store";
+import { loginUser } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import Link from "next/link";

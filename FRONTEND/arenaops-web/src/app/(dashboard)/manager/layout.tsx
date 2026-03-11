@@ -10,17 +10,14 @@ export default function ManagerLayout({
 }) {
   return (
     <div className="h-screen flex bg-black overflow-hidden">
-
       <Sidebar />
 
       <main className="flex-1 bg-gray-100 lg:rounded-l-3xl overflow-hidden">
         {children}
       </main>
-
     </div>
   );
 }
-  
   
 
 

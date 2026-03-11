@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { resetPassword } from "@/app/store/authSlice";
-import { RootState } from "@/app/store/store";
+import { resetPassword } from "@/store/authSlice";
+import { RootState } from "@/store/store";
 import Link from "next/link";
 import { Key, Eye, EyeOff, Lock, Hash } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";

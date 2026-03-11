@@ -7,8 +7,8 @@ import {
   useEffect,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/app/store/store";
-import { registerUser } from "@/app/store/authSlice";
+import { RootState } from "@/store/store";
+import { registerUser } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import Link from "next/link";

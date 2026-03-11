@@ -1,3 +1,4 @@
+//src\app\(public)\page.tsx
 import { HeroSection } from "@/components/landing/HeroSection";
 import { EventDiscovery } from "@/components/landing/EventDiscovery";
 import { Event } from "@/types/event";

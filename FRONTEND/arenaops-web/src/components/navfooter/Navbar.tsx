@@ -16,8 +16,8 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/app/store/store";
-import { logoutUser } from "@/app/store/authSlice";
+import { RootState } from "@/store/store";
+import { logoutUser } from "@/store/authSlice";
 
 const navItems = [
     { icon: Home, label: "Home", href: "/" },

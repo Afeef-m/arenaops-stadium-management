@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { forgotPassword } from "@/app/store/authSlice";
-import { RootState } from "@/app/store/store";
+import { forgotPassword } from "@/store/authSlice";
+import { RootState } from "@/store/store";
 import Link from "next/link";
 import { Mail, ArrowLeft } from "lucide-react";
 import { useToastActions } from "@/components/ui/toast";

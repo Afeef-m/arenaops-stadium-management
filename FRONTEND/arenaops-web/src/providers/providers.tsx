@@ -1,9 +1,11 @@
+//src/providers/providers.tsx
+
 "use client";
 
 import { Provider } from "react-redux";
-import { store } from "@/app/store/store";
+import { store } from "@/store/store";
 import { useEffect } from "react";
-import { initializeAuth } from "@/app/store/authSlice";
+import { initializeAuth } from "@/store/authSlice";
 import { ToastProvider, ToastContainer, ErrorBoundary } from "@/components/ui";
 
 function AuthInitializer({ children }: { children: React.ReactNode }) {
