@@ -31,13 +31,19 @@ async function handleProxy(request: NextRequest, slug: string[]) {
 
         const responseBody = await response.text();
 
-        return new NextResponse(responseBody, {
+        const proxiedResponse = new NextResponse(responseBody, {
             status: response.status,
             statusText: response.statusText,
             headers: {
                 'Content-Type': response.headers.get('Content-Type') || 'application/json',
             },
         });
+
+        // Forward all Set-Cookie headers so the browser receives the HttpOnly auth cookies
+        const setCookies = response.headers.getSetCookie?.() ?? [];
+        setCookies.forEach((cookie) => proxiedResponse.headers.append('Set-Cookie', cookie));
+
+        return proxiedResponse;
     } catch (error) {
         console.error(`[BFF Auth Proxy Error]:`, error);
         return NextResponse.json({ error: 'Failed to proxy request to Auth Service' }, { status: 502 });

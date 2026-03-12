@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { registerUser } from "@/store/authSlice";
@@ -28,7 +28,7 @@ interface FormState {
 export default function EventManagerRegisterForm() {
     const dispatch = useDispatch<any>();
     const router = useRouter();
-    const { loading, isAuthenticated, error } = useSelector(
+    const { loading, error } = useSelector(
         (state: RootState) => state.auth
     );
 
@@ -40,13 +40,6 @@ export default function EventManagerRegisterForm() {
     const [phone, setPhone] = useState("");
     const [formErrors, setFormErrors] = useState<FormState["errors"]>({});
     const [activeField, setActiveField] = useState<string | null>(null);
-
-    // Redirect if not authenticated
-    useEffect(() => {
-        if (!isAuthenticated) {
-            router.push("/login");
-        }
-    }, [isAuthenticated, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -64,7 +57,7 @@ export default function EventManagerRegisterForm() {
         setFormErrors({});
 
         const result = await dispatch(
-            registerUser({ email, password, fullName })
+            registerUser({ email, password, fullName, role: "EventManager" })
         );
 
         if (registerUser.fulfilled.match(result)) {
@@ -76,7 +69,7 @@ export default function EventManagerRegisterForm() {
                     registeredAsOrganizer: true,
                 })
             );
-            router.push("/dashboard");
+            router.push("/manager");
         }
     };
 
