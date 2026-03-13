@@ -62,19 +62,65 @@ if (-not $AuthOnly) {
 
 # ---- STEP 5: RSA KEYS ----
 Write-Host "[DEPLOY] Ensuring RSA keys..." -ForegroundColor Yellow
-$authKey = "$backendDir\ArenaOps.AuthService\ArenaOps.AuthService.API\Keys\rsa-private.key"
-$coreKey = "$backendDir\ArenaOps.CoreService\ArenaOps.CoreService.API\Keys\rsa-public.key"
+$coreKeyDir = "$iisDir\CoreService\Keys"
+if (-not (Test-Path $coreKeyDir)) { New-Item -ItemType Directory -Path $coreKeyDir -Force | Out-Null }
 
-if (Test-Path $authKey) {
-    Copy-Item -Path $authKey -Destination "$iisDir\AuthService\Keys\" -Force
-    Write-Host "  rsa-private.key -> AuthService/Keys/" -ForegroundColor Green
-}
-if (Test-Path $coreKey) {
-    Copy-Item -Path $coreKey -Destination "$iisDir\CoreService\Keys\" -Force
+$sourceKey = "$backendDir\ArenaOps.CoreService\ArenaOps.CoreService.API\Keys\rsa-public.key"
+if (Test-Path $sourceKey) {
+    Copy-Item -Path $sourceKey -Destination "$coreKeyDir\rsa-public.key" -Force
     Write-Host "  rsa-public.key  -> CoreService/Keys/" -ForegroundColor Green
+} else {
+    Write-Host "  WARNING: Source RSA key not found at $sourceKey" -ForegroundColor Yellow
 }
 
-# ---- STEP 6: START IIS ----
+# ---- STEP 6: PATCH WEB.CONFIG (Development Mode) ----
+Write-Host "[DEPLOY] Patching web.config for Development..." -ForegroundColor Yellow
+
+if (-not $CoreOnly) {
+    $authWebConfig = @"
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore processPath="dotnet" arguments=".\ArenaOps.AuthService.API.dll" stdoutLogEnabled="true" stdoutLogFile=".\logs\stdout" hostingModel="inprocess">
+        <environmentVariables>
+          <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Development" />
+        </environmentVariables>
+      </aspNetCore>
+    </system.webServer>
+  </location>
+</configuration>
+"@
+    $authWebConfig | Set-Content -Path "$iisDir\AuthService\web.config" -Force
+    Write-Host "  AuthService web.config patched." -ForegroundColor Green
+}
+
+if (-not $AuthOnly) {
+    $coreWebConfig = @"
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore processPath="dotnet" arguments=".\ArenaOps.CoreService.API.dll" stdoutLogEnabled="true" stdoutLogFile=".\logs\stdout" hostingModel="inprocess">
+        <environmentVariables>
+          <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Development" />
+        </environmentVariables>
+      </aspNetCore>
+    </system.webServer>
+  </location>
+</configuration>
+"@
+    $coreWebConfig | Set-Content -Path "$iisDir\CoreService\web.config" -Force
+    Write-Host "  CoreService web.config patched." -ForegroundColor Green
+}
+
+# ---- STEP 7: START IIS ----
 Write-Host "`n[DEPLOY] Starting IIS..." -ForegroundColor Yellow
 iisreset /start | Out-Null
 

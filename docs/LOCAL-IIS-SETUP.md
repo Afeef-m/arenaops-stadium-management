@@ -186,6 +186,63 @@ Start-WebSite -Name "ArenaOps-CoreService"
 
 ---
 
+## 5. Getting a Permanent URL (Without Ngrok)
+
+If you want a link that never changes, you have two options depending on where you are:
+
+### Option A: Within your Home/Office Wi-Fi (Local Network)
+You don't need the internet at all.
+1. **Find your Local IP**: Run `ipconfig` in PowerShell. Look for "IPv4 Address" (e.g., `192.168.1.15`).
+2. **Use the IP**: Anyone on your Wi-Fi can go to `http://192.168.1.15:5001`.
+3. **Make it Permanent**: Go to your Router Settings and set a "DHCP Reservation" for your laptop so the IP never changes.
+
+### Option B: From the Public Internet (True Permanent URL)
+This "pokes a hole" in your router to let the world in directly.
+1. **Port Forwarding**: In your Router Settings, forward ports **80** and **443** to your laptop's Local IP.
+2. **Dynamic DNS (DDNS)**: Since your Home IP changes, use a service like [No-IP](https://www.noip.com/) or [DuckDNS](https://www.duckdns.org/).
+   - They give you a link like `arenaops.ddns.net`.
+   - You run a small app on your laptop that tells them whenever your IP changes.
+3. **Security Warning**: Doing this exposes your computer directly to the internet. Ensure your Windows Firewall is strictly configured.
+
+---
+
+## External Testing with Ngrok (Optional)
+
+To test webhooks or allow external access (mobile devices, teammates) to your local IIS or dev server:
+
+### 1. Configure Ngrok
+1. **Ensure ngrok is up to date**:
+   ```powershell
+   ngrok update
+   ```
+   (Must be version **3.20.0** or higher for your account).
+2. **Get your authtoken**:
+   - Go to [ngrok Dashboard](https://dashboard.ngrok.com/get-started/your-authtoken) (Sign up for a free account if you haven't).
+   - Copy the "Your Authtoken" string.
+2. Ensure `ngrok` is installed: `ngrok --version`
+3. Add your token to the local config:
+   ```powershell
+   ngrok config add-authtoken <your-token>
+   ```
+
+### 2. Start Tunnels
+Run the provided script from the **root of the project directory** (`ARENAOPS`):
+```powershell
+# Open terminal in C:\Users\aflah\OneDrive\Desktop\ARENAOPS
+.\start-tunnels.ps1
+```
+This will open three tunnels:
+- **Auth Service**: `https://[id].ngrok-free.app` -> `localhost:5001`
+- **Core Service**: `https://[id].ngrok-free.app` -> `localhost:5007`
+- **Frontend**: `https://[id].ngrok-free.app` -> `localhost:3000`
+
+### 3. Update Redirect URIs (Google OAuth)
+If you are testing Google Login via ngrok, add the ngrok frontend URL to your Google Cloud Console:
+- Authorized JavaScript origins: `https://[frontend-id].ngrok-free.app`
+- Authorized redirect URIs: `https://[frontend-id].ngrok-free.app/auth/callback`
+
+---
+
 ## Architecture Summary
 
 ```
