@@ -122,7 +122,6 @@ public class AuthService : IAuthService
         await _repo.AddEventManagerDetailsAsync(new EventManagerDetails
         {
             UserId = user.UserId,
-            PhoneNumber = request.PhoneNumber,
             OrganizationName = request.OrganizationName,
             GstNumber = request.GstNumber,
             Designation = request.Designation,
@@ -416,6 +415,91 @@ public class AuthService : IAuthService
         await _repo.SaveChangesAsync();
         return ApiResponse<object>.Ok(new { }, "Password changed successfully");
     }
+
+    public async Task<ApiResponse<UserProfileResponse>> GetMyProfileAsync(Guid userId)
+    {
+        var user = await _repo.GetUserProfileAsync(userId);
+        if (user == null)
+            return ApiResponse<UserProfileResponse>.Fail("USER_NOT_FOUND", "User not found.");
+
+        var roles = user.UserRoles.Select(ur => ur.Role.Name).ToArray();
+
+        var profile = new UserProfileResponse
+        {
+            UserId = user.UserId,
+            FullName = user.FullName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            ProfilePictureUrl = user.ProfilePictureUrl,
+            Roles = roles,
+            IsEmailVerified = user.IsEmailVerified,
+            CreatedAt = user.CreatedAt,
+            EventManagerDetails = user.EventManagerDetails == null ? null : new EventManagerDetailsResponse
+            {
+                OrganizationName = user.EventManagerDetails.OrganizationName,
+                GstNumber = user.EventManagerDetails.GstNumber,
+                Designation = user.EventManagerDetails.Designation,
+                Website = user.EventManagerDetails.Website
+            }
+        };
+
+        return ApiResponse<UserProfileResponse>.Ok(profile);
+    }
+
+    public async Task<ApiResponse<UserProfileResponse>> GetProfileByIdAsync(Guid userId)
+    {
+        var user = await _repo.GetUserProfileAsync(userId);
+        if (user == null)
+            return ApiResponse<UserProfileResponse>.Fail("USER_NOT_FOUND", "User not found.");
+
+        return ApiResponse<UserProfileResponse>.Ok(MapToProfileResponse(user));
+    }
+
+    public async Task<ApiResponse<UserProfileResponse>> UpdateMyProfileAsync(Guid userId, UpdateProfileRequest request)
+    {
+        var user = await _repo.GetUserProfileAsync(userId);
+        if (user == null)
+            return ApiResponse<UserProfileResponse>.Fail("USER_NOT_FOUND", "User not found.");
+
+        // Update common fields — only if provided (null = leave unchanged)
+        if (request.FullName != null) user.FullName = request.FullName;
+        if (request.PhoneNumber != null) user.PhoneNumber = request.PhoneNumber;
+        if (request.ProfilePictureUrl != null) user.ProfilePictureUrl = request.ProfilePictureUrl;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        // Update EventManager org details — only if this user is an EventManager
+        if (user.EventManagerDetails != null)
+        {
+            if (request.OrganizationName != null) user.EventManagerDetails.OrganizationName = request.OrganizationName;
+            if (request.GstNumber != null) user.EventManagerDetails.GstNumber = request.GstNumber;
+            if (request.Designation != null) user.EventManagerDetails.Designation = request.Designation;
+            if (request.Website != null) user.EventManagerDetails.Website = request.Website;
+        }
+
+        await _repo.SaveChangesAsync();
+        return ApiResponse<UserProfileResponse>.Ok(MapToProfileResponse(user), "Profile updated successfully.");
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────────────
+
+    private static UserProfileResponse MapToProfileResponse(User user) => new()
+    {
+        UserId = user.UserId,
+        FullName = user.FullName,
+        Email = user.Email,
+        PhoneNumber = user.PhoneNumber,
+        ProfilePictureUrl = user.ProfilePictureUrl,
+        Roles = user.UserRoles.Select(ur => ur.Role.Name).ToArray(),
+        IsEmailVerified = user.IsEmailVerified,
+        CreatedAt = user.CreatedAt,
+        EventManagerDetails = user.EventManagerDetails == null ? null : new EventManagerDetailsResponse
+        {
+            OrganizationName = user.EventManagerDetails.OrganizationName,
+            GstNumber = user.EventManagerDetails.GstNumber,
+            Designation = user.EventManagerDetails.Designation,
+            Website = user.EventManagerDetails.Website
+        }
+    };
 
     private static string GenerateTemporaryPassword()
     {
