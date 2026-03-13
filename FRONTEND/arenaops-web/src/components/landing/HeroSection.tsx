@@ -128,6 +128,24 @@ export function HeroSection() {
               <PlayCircle className="ml-2 h-5 w-5 transition-colors group-hover:text-current" />
             </Button>
           </Link>
+          
+          <Link href={"/event-manager"}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="
+  h-14 px-10 text-lg font-medium
+  border border-white/20 bg-black/40 backdrop-blur-md
+  text-white
+  hover:bg-white
+  hover:text-black
+  transition-all duration-300
+  rounded-full group cursor-pointer
+  "
+            >
+              Become an Event Manager
+            </Button>
+          </Link>
         </div>
       </div>
       <div className={styles.footerFade} />
