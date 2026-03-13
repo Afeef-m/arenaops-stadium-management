@@ -91,6 +91,75 @@ public class AuthService : IAuthService
         };
     }
 
+    public async Task<AuthResponse> RegisterEventManagerAsync(
+        RegisterEventManagerRequest request, string? ipAddress, string? userAgent)
+    {
+        var existingUser = await _repo.GetUserByEmailAsync(request.Email);
+        if (existingUser != null)
+            throw new ConflictException("EMAIL_EXISTS", "An account with this email already exists.");
+
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+        var user = new User
+        {
+            Email = request.Email,
+            PasswordHash = passwordHash,
+            FullName = request.FullName,
+            PhoneNumber = request.PhoneNumber,
+            AuthProvider = "Local",
+            IsEmailVerified = false,
+            IsActive = true
+        };
+
+        await _repo.AddUserAsync(user);
+        await _repo.SaveChangesAsync();
+
+        var role = await _repo.GetRoleByNameAsync("EventManager");
+        if (role == null) throw new Exception("ROLE_NOT_FOUND: EventManager role not found");
+
+        await _repo.AddUserRoleAsync(new UserRole { UserId = user.UserId, RoleId = role.RoleId });
+
+        await _repo.AddEventManagerDetailsAsync(new EventManagerDetails
+        {
+            UserId = user.UserId,
+            OrganizationName = request.OrganizationName,
+            GstNumber = request.GstNumber,
+            Designation = request.Designation,
+            Website = request.Website
+        });
+
+        await _repo.SaveChangesAsync();
+
+        var roles = new List<string> { "EventManager" };
+        var tokenResult = _tokenService.GenerateTokens(user, roles);
+
+        await _repo.AddRefreshTokenAsync(new RefreshToken
+        {
+            UserId = user.UserId,
+            Token = tokenResult.RefreshToken,
+            ExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiryDays)
+        });
+
+        await _repo.AddAuthAuditLogAsync(new AuthAuditLog
+        {
+            UserId = user.UserId,
+            Action = "EventManagerRegister",
+            IpAddress = ipAddress,
+            UserAgent = userAgent
+        });
+
+        await _repo.SaveChangesAsync();
+
+        return new AuthResponse
+        {
+            AccessToken = tokenResult.AccessToken,
+            RefreshToken = tokenResult.RefreshToken,
+            UserId = user.UserId,
+            Roles = roles.ToArray(),
+            IsNewUser = true
+        };
+    }
+
     public async Task<AuthResponse> LoginAsync(LoginRequest request, string? ipAddress, string? userAgent)
     {
         var user = await _repo.GetUserByEmailAsync(request.Email);
@@ -346,6 +415,91 @@ public class AuthService : IAuthService
         await _repo.SaveChangesAsync();
         return ApiResponse<object>.Ok(new { }, "Password changed successfully");
     }
+
+    public async Task<ApiResponse<UserProfileResponse>> GetMyProfileAsync(Guid userId)
+    {
+        var user = await _repo.GetUserProfileAsync(userId);
+        if (user == null)
+            return ApiResponse<UserProfileResponse>.Fail("USER_NOT_FOUND", "User not found.");
+
+        var roles = user.UserRoles.Select(ur => ur.Role.Name).ToArray();
+
+        var profile = new UserProfileResponse
+        {
+            UserId = user.UserId,
+            FullName = user.FullName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            ProfilePictureUrl = user.ProfilePictureUrl,
+            Roles = roles,
+            IsEmailVerified = user.IsEmailVerified,
+            CreatedAt = user.CreatedAt,
+            EventManagerDetails = user.EventManagerDetails == null ? null : new EventManagerDetailsResponse
+            {
+                OrganizationName = user.EventManagerDetails.OrganizationName,
+                GstNumber = user.EventManagerDetails.GstNumber,
+                Designation = user.EventManagerDetails.Designation,
+                Website = user.EventManagerDetails.Website
+            }
+        };
+
+        return ApiResponse<UserProfileResponse>.Ok(profile);
+    }
+
+    public async Task<ApiResponse<UserProfileResponse>> GetProfileByIdAsync(Guid userId)
+    {
+        var user = await _repo.GetUserProfileAsync(userId);
+        if (user == null)
+            return ApiResponse<UserProfileResponse>.Fail("USER_NOT_FOUND", "User not found.");
+
+        return ApiResponse<UserProfileResponse>.Ok(MapToProfileResponse(user));
+    }
+
+    public async Task<ApiResponse<UserProfileResponse>> UpdateMyProfileAsync(Guid userId, UpdateProfileRequest request)
+    {
+        var user = await _repo.GetUserProfileAsync(userId);
+        if (user == null)
+            return ApiResponse<UserProfileResponse>.Fail("USER_NOT_FOUND", "User not found.");
+
+        // Update common fields — only if provided (null = leave unchanged)
+        if (request.FullName != null) user.FullName = request.FullName;
+        if (request.PhoneNumber != null) user.PhoneNumber = request.PhoneNumber;
+        if (request.ProfilePictureUrl != null) user.ProfilePictureUrl = request.ProfilePictureUrl;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        // Update EventManager org details — only if this user is an EventManager
+        if (user.EventManagerDetails != null)
+        {
+            if (request.OrganizationName != null) user.EventManagerDetails.OrganizationName = request.OrganizationName;
+            if (request.GstNumber != null) user.EventManagerDetails.GstNumber = request.GstNumber;
+            if (request.Designation != null) user.EventManagerDetails.Designation = request.Designation;
+            if (request.Website != null) user.EventManagerDetails.Website = request.Website;
+        }
+
+        await _repo.SaveChangesAsync();
+        return ApiResponse<UserProfileResponse>.Ok(MapToProfileResponse(user), "Profile updated successfully.");
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────────────
+
+    private static UserProfileResponse MapToProfileResponse(User user) => new()
+    {
+        UserId = user.UserId,
+        FullName = user.FullName,
+        Email = user.Email,
+        PhoneNumber = user.PhoneNumber,
+        ProfilePictureUrl = user.ProfilePictureUrl,
+        Roles = user.UserRoles.Select(ur => ur.Role.Name).ToArray(),
+        IsEmailVerified = user.IsEmailVerified,
+        CreatedAt = user.CreatedAt,
+        EventManagerDetails = user.EventManagerDetails == null ? null : new EventManagerDetailsResponse
+        {
+            OrganizationName = user.EventManagerDetails.OrganizationName,
+            GstNumber = user.EventManagerDetails.GstNumber,
+            Designation = user.EventManagerDetails.Designation,
+            Website = user.EventManagerDetails.Website
+        }
+    };
 
     private static string GenerateTemporaryPassword()
     {

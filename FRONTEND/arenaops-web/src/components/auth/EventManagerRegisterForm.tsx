@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import { registerUser } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -26,7 +26,7 @@ interface FormState {
 }
 
 export default function EventManagerRegisterForm() {
-    const dispatch = useDispatch<any>();
+    const dispatch = useDispatch<AppDispatch>();
     const router = useRouter();
     const { loading, error } = useSelector(
         (state: RootState) => state.auth
@@ -40,7 +40,8 @@ export default function EventManagerRegisterForm() {
     const [phone, setPhone] = useState("");
     const [formErrors, setFormErrors] = useState<FormState["errors"]>({});
     const [activeField, setActiveField] = useState<string | null>(null);
-
+    // Redirect if not authenticated
+   
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const errors: FormState["errors"] = {};

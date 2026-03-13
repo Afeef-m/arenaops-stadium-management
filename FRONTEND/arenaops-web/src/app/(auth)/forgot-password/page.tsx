@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { forgotPassword } from "@/store/authSlice";
-import { RootState } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import Link from "next/link";
 import { Mail, ArrowLeft } from "lucide-react";
 import { useToastActions } from "@/components/ui/toast";
 
 export default function ForgotPasswordPage() {
-    const dispatch = useDispatch<any>();
+    const dispatch = useDispatch<AppDispatch>();
     const { loading } = useSelector((state: RootState) => state.auth);
     const [email, setEmail] = useState("");
     const [submitted, setSubmitted] = useState(false);

@@ -16,7 +16,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import { logoutUser } from "@/store/authSlice";
 
 const navItems = [
@@ -29,7 +29,7 @@ const navItems = [
 export default function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
-    const dispatch = useDispatch<any>();
+    const dispatch = useDispatch<AppDispatch>();
     const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -195,7 +195,7 @@ export default function Navbar() {
                     >
                         {navItems.map((item, index) => {
                             const Icon = item.icon;
-                            let isActive = pathname === item.href;
+                            const isActive = pathname === item.href;
 
                             // Special handling for Profile link in navItems if we want to show it differently or not
                             if (item.label === "Profile" && !isAuthenticated) return null;

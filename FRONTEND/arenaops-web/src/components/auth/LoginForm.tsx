@@ -2,7 +2,7 @@
 
 import { useRef, useLayoutEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import { loginUser } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
@@ -12,7 +12,7 @@ import { useToastActions } from "@/components/ui/toast";
 
 interface FormState {
   errors: {
-    email?: string; // changed from username
+    email?: string; 
     password?: string;
   };
 }
@@ -21,7 +21,7 @@ export default function LoginForm() {
 const { success, error: showError } = useToastActions();
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const dispatch = useDispatch<any>(); 
+  const dispatch = useDispatch<AppDispatch>(); 
   const router = useRouter();
   const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
 
