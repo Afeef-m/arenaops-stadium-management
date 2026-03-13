@@ -28,6 +28,17 @@ export interface RegisterPayload {
     role?: string;
 }
 
+export interface RegisterEventManagerPayload {
+    email: string;
+    password: string;
+    fullName: string;
+    phoneNumber?: string;
+    organizationName?: string;
+    gstNumber?: string;
+    designation?: string;
+    website?: string;
+}
+
 export interface ResetPasswordPayload {
     email: string;
     otp: string;
@@ -42,6 +53,12 @@ export const authService = {
 
     register: async (payload: RegisterPayload): Promise<AuthResponse> => {
         const response = await api.post<AuthResponse>('/api/auth/register', payload);
+        return response.data;
+    },
+
+    registerEventManager: async (payload: RegisterEventManagerPayload): Promise<AuthResponse> => {
+        // Points to the BFF proxy route, which forwards to /api/auth/event-managers/register
+        const response = await api.post<AuthResponse>('/api/auth/event-managers/register', payload);
         return response.data;
     },
 
