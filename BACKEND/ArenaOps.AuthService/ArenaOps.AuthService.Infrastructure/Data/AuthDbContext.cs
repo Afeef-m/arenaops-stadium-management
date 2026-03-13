@@ -60,7 +60,7 @@ public class AuthDbContext : DbContext
             entity.HasData(
                 new Role { RoleId = 1, Name = "Admin" },
                 new Role { RoleId = 2, Name = "StadiumOwner" },
-                new Role { RoleId = 3, Name = "Organizer" },
+                new Role { RoleId = 3, Name = "EventManager" },
                 new Role { RoleId = 4, Name = "User" }
             );
         });
@@ -152,7 +152,6 @@ public class AuthDbContext : DbContext
             entity.HasKey(e => e.EventManagerDetailsId);
             entity.Property(e => e.EventManagerDetailsId).HasDefaultValueSql("NEWSEQUENTIALID()");
 
-            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
             entity.Property(e => e.OrganizationName).HasMaxLength(200);
             entity.Property(e => e.GstNumber).HasMaxLength(20);
             entity.Property(e => e.Designation).HasMaxLength(100);

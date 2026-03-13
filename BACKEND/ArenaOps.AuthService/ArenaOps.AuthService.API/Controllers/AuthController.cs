@@ -313,6 +313,7 @@ public class AuthController : ControllerBase
             return BadRequest(ApiResponse<object>.Fail("VALIDATION_ERROR", "Invalid request data"));
 
         var userIdClaim = User.FindFirst("userId")?.Value
+            ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
             ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))

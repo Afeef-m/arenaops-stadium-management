@@ -9,6 +9,7 @@ public interface IAuthRepository
 {
     Task<User?> GetUserByEmailAsync(string email);
     Task<User?> GetUserByIdAsync(Guid userId);
+    Task<User?> GetUserProfileAsync(Guid userId);
     Task<Role?> GetRoleByNameAsync(string roleName);
     Task AddUserAsync(User user);
     Task AddUserRoleAsync(UserRole userRole);
