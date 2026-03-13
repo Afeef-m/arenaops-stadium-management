@@ -39,7 +39,7 @@ public class EventSlotController : ControllerBase
     }
 
     /// <summary>
-    /// Add a time slot to an event (Organizer only).
+    /// Add a time slot to an event (EventManager only).
     /// Validates: event exists, event is editable, EndTime > StartTime, no overlapping slots.
     /// </summary>
     [HttpPost("api/events/{eventId:guid}/slots")]

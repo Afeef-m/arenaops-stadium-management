@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { authService, LoginPayload, RegisterPayload, UserData, ResetPasswordPayload } from "@/services/authService";
+// Tokens are in HttpOnly cookies — only user profile is stored in localStorage
 
 interface AuthState {
     loading: boolean;
@@ -22,8 +23,7 @@ export const loginUser = createAsyncThunk(
         try {
             const response = await authService.login(payload);
             if (response.success) {
-                localStorage.setItem("accessToken", response.data.accessToken);
-                localStorage.setItem("refreshToken", response.data.refreshToken);
+                // Tokens are in HttpOnly cookies — only persist user profile for UI
                 localStorage.setItem("user", JSON.stringify(response.data));
                 return response.data;
             } else {
@@ -41,8 +41,7 @@ export const registerUser = createAsyncThunk(
         try {
             const response = await authService.register(payload);
             if (response.success) {
-                localStorage.setItem("accessToken", response.data.accessToken);
-                localStorage.setItem("refreshToken", response.data.refreshToken);
+                // Tokens are in HttpOnly cookies — only persist user profile for UI
                 localStorage.setItem("user", JSON.stringify(response.data));
                 return response.data;
             } else {
@@ -58,15 +57,11 @@ export const logoutUser = createAsyncThunk(
     "auth/logout",
     async (_, { rejectWithValue }) => {
         try {
-            const refreshToken = localStorage.getItem("refreshToken");
-            if (refreshToken) {
-                await authService.logout(refreshToken);
-            }
+            // Cookie is sent automatically — backend blacklists the token and clears cookies
+            await authService.logout();
         } catch (err) {
-            // Ignore logout errors
+            // Ignore logout errors — still clear local session
         } finally {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
             localStorage.removeItem("user");
         }
     }
@@ -78,8 +73,7 @@ export const googleLoginUser = createAsyncThunk(
         try {
             const response = await authService.googleLogin(code, redirectUri);
             if (response.success) {
-                localStorage.setItem("accessToken", response.data.accessToken);
-                localStorage.setItem("refreshToken", response.data.refreshToken);
+                // Tokens are in HttpOnly cookies — only persist user profile for UI
                 localStorage.setItem("user", JSON.stringify(response.data));
                 return response.data;
             } else {

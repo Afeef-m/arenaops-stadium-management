@@ -18,12 +18,12 @@ namespace ArenaOps.CoreService.API.Controllers;
 /// 
 /// WHY a separate controller (not part of SeatingPlanController)?
 /// SeatingPlanController handles TEMPLATE operations (Stadium Owner domain).
-/// EventLayoutController handles EVENT-SPECIFIC operations (Organizer domain).
+/// EventLayoutController handles EVENT-SPECIFIC operations (EventManager domain).
 /// Different roles, different data, different concerns → separate controllers.
 /// 
-/// WHY [Authorize] at class level + [Authorize(Roles = "Organizer,Admin")] per method?
+/// WHY [Authorize] at class level + [Authorize(Roles = "EventManager,Admin")] per method?
 /// - Class-level [Authorize] = all endpoints require authentication
-/// - Method-level role check = only Organizers and Admins can clone/lock
+/// - Method-level role check = only EventManagers and Admins can clone/lock
 /// - GET endpoint has no role restriction = any authenticated user can view
 /// This follows the same pattern as SectionController and LandmarkController.
 /// </summary>
@@ -101,7 +101,7 @@ public class EventLayoutController : ControllerBase
     /// explicit prevents accidental locks via the update endpoint.
     /// </summary>
     [HttpPost("api/events/{eventId:guid}/layout/lock")]
-    [Authorize(Roles = "Organizer,Admin")]
+    [Authorize(Roles = "EventManager,Admin")]
     public async Task<IActionResult> LockLayout(Guid eventId, CancellationToken cancellationToken)
     {
         var userId = GetUserId();

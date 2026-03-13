@@ -94,9 +94,8 @@ public class AuthController : ControllerBase
     // =============================================
 
     /// <summary>
-    /// Register a new user with email/password.
-    /// Accepts optional Role: "User" (default) or "EventManager".
-    /// Admin/StadiumOwner roles are blocked from self-registration.
+    /// Register a new regular User account with email/password.
+    /// For EventManager registration use POST /api/auth/event-managers/register instead.
     /// Sets accessToken and refreshToken cookies automatically.
     /// </summary>
     [HttpPost("register")]
@@ -231,6 +230,33 @@ public class AuthController : ControllerBase
     }
 
     // =============================================
+    // EVENT MANAGER
+    // =============================================
+
+    /// <summary>
+    /// Self-registration for EventManagers.
+    /// Role is automatically set to "EventManager" — no need to pass it.
+    /// Sets accessToken and refreshToken cookies automatically.
+    /// </summary>
+    [HttpPost("event-managers/register")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<AuthResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RegisterEventManager([FromBody] RegisterEventManagerRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ApiResponse<object>.Fail("VALIDATION_ERROR", "Invalid request data."));
+
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var ua = Request.Headers.UserAgent.ToString();
+
+        var result = await _authService.RegisterEventManagerAsync(request, ip, ua);
+        SetAuthCookies(result);
+        return Ok(ApiResponse<AuthResponse>.Ok(result, "EventManager registration successful"));
+    }
+
+    // =============================================
     // PASSWORD MANAGEMENT
     // =============================================
 
@@ -287,6 +313,7 @@ public class AuthController : ControllerBase
             return BadRequest(ApiResponse<object>.Fail("VALIDATION_ERROR", "Invalid request data"));
 
         var userIdClaim = User.FindFirst("userId")?.Value
+            ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
             ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
