@@ -14,6 +14,7 @@ public interface IAuthRepository
     Task AddUserRoleAsync(UserRole userRole);
     Task AddRefreshTokenAsync(RefreshToken refreshToken);
     Task AddAuthAuditLogAsync(AuthAuditLog auditLog);
+    Task AddEventManagerDetailsAsync(EventManagerDetails details);
     Task<RefreshToken?> GetRefreshTokenAsync(string token);
     Task<List<RefreshToken>> GetActiveRefreshTokensByUserIdAsync(Guid userId);
     Task SaveChangesAsync();

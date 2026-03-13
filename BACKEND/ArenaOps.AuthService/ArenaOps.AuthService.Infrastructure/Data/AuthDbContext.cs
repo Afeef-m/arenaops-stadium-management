@@ -13,6 +13,7 @@ public class AuthDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<AuthAuditLog> AuthAuditLogs => Set<AuthAuditLog>();
     public DbSet<ExternalLogin> ExternalLogins => Set<ExternalLogin>();
+    public DbSet<EventManagerDetails> EventManagerDetails => Set<EventManagerDetails>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -140,6 +141,30 @@ public class AuthDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany(u => u.ExternalLogins)
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // =====================
+        // EVENT MANAGER DETAILS CONFIGURATION
+        // =====================
+        modelBuilder.Entity<EventManagerDetails>(entity =>
+        {
+            entity.HasKey(e => e.EventManagerDetailsId);
+            entity.Property(e => e.EventManagerDetailsId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+            entity.Property(e => e.OrganizationName).HasMaxLength(200);
+            entity.Property(e => e.GstNumber).HasMaxLength(20);
+            entity.Property(e => e.Designation).HasMaxLength(100);
+            entity.Property(e => e.Website).HasMaxLength(300);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            // One user → one EventManagerDetails record
+            entity.HasIndex(e => e.UserId).IsUnique();
+
+            entity.HasOne(e => e.User)
+                .WithOne(u => u.EventManagerDetails)
+                .HasForeignKey<EventManagerDetails>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

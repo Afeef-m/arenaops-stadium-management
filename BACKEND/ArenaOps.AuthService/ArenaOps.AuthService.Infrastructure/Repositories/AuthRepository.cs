@@ -56,6 +56,11 @@ public class AuthRepository : IAuthRepository
         await _context.AuthAuditLogs.AddAsync(auditLog);
     }
 
+    public async Task AddEventManagerDetailsAsync(EventManagerDetails details)
+    {
+        await _context.EventManagerDetails.AddAsync(details);
+    }
+
     public async Task<RefreshToken?> GetRefreshTokenAsync(string token)
     {
         return await _context.RefreshTokens

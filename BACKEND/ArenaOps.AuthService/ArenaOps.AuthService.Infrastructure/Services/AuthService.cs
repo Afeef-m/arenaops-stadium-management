@@ -91,6 +91,76 @@ public class AuthService : IAuthService
         };
     }
 
+    public async Task<AuthResponse> RegisterEventManagerAsync(
+        RegisterEventManagerRequest request, string? ipAddress, string? userAgent)
+    {
+        var existingUser = await _repo.GetUserByEmailAsync(request.Email);
+        if (existingUser != null)
+            throw new ConflictException("EMAIL_EXISTS", "An account with this email already exists.");
+
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+        var user = new User
+        {
+            Email = request.Email,
+            PasswordHash = passwordHash,
+            FullName = request.FullName,
+            PhoneNumber = request.PhoneNumber,
+            AuthProvider = "Local",
+            IsEmailVerified = false,
+            IsActive = true
+        };
+
+        await _repo.AddUserAsync(user);
+        await _repo.SaveChangesAsync();
+
+        var role = await _repo.GetRoleByNameAsync("EventManager");
+        if (role == null) throw new Exception("ROLE_NOT_FOUND: EventManager role not found");
+
+        await _repo.AddUserRoleAsync(new UserRole { UserId = user.UserId, RoleId = role.RoleId });
+
+        await _repo.AddEventManagerDetailsAsync(new EventManagerDetails
+        {
+            UserId = user.UserId,
+            PhoneNumber = request.PhoneNumber,
+            OrganizationName = request.OrganizationName,
+            GstNumber = request.GstNumber,
+            Designation = request.Designation,
+            Website = request.Website
+        });
+
+        await _repo.SaveChangesAsync();
+
+        var roles = new List<string> { "EventManager" };
+        var tokenResult = _tokenService.GenerateTokens(user, roles);
+
+        await _repo.AddRefreshTokenAsync(new RefreshToken
+        {
+            UserId = user.UserId,
+            Token = tokenResult.RefreshToken,
+            ExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiryDays)
+        });
+
+        await _repo.AddAuthAuditLogAsync(new AuthAuditLog
+        {
+            UserId = user.UserId,
+            Action = "EventManagerRegister",
+            IpAddress = ipAddress,
+            UserAgent = userAgent
+        });
+
+        await _repo.SaveChangesAsync();
+
+        return new AuthResponse
+        {
+            AccessToken = tokenResult.AccessToken,
+            RefreshToken = tokenResult.RefreshToken,
+            UserId = user.UserId,
+            Roles = roles.ToArray(),
+            IsNewUser = true
+        };
+    }
+
     public async Task<AuthResponse> LoginAsync(LoginRequest request, string? ipAddress, string? userAgent)
     {
         var user = await _repo.GetUserByEmailAsync(request.Email);

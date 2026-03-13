@@ -9,6 +9,12 @@ public interface IAuthService
     Task<AuthResponse> RegisterAsync(RegisterRequest request, string? ipAddress, string? userAgent);
     Task<AuthResponse> LoginAsync(LoginRequest request, string? ipAddress, string? userAgent);
     Task<AuthResponse> RefreshTokenAsync(string refreshToken);
+
+    /// <summary>
+    /// Self-registration for EventManagers.
+    /// Creates the auth account with EventManager role AND saves org details atomically.
+    /// </summary>
+    Task<AuthResponse> RegisterEventManagerAsync(RegisterEventManagerRequest request, string? ipAddress, string? userAgent);
     
     // UPDATE: Use ApiResponse where AuthResponse is not used
     Task<ApiResponse<object>> LogoutAsync(string refreshToken);

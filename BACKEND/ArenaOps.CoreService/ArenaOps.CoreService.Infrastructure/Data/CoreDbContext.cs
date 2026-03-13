@@ -29,9 +29,6 @@ public class CoreDbContext : DbContext
     // ─── Event Time Slots ───────────────────────────────────────
     public DbSet<EventSlot> EventSlots => Set<EventSlot>();
 
-    // ─── Event Manager Profiles ──────────────────────────────────────
-    public DbSet<EventManagerProfile> EventManagerProfiles => Set<EventManagerProfile>();
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -239,33 +236,6 @@ public class CoreDbContext : DbContext
                   .HasForeignKey(e => e.SourceFeatureId)
                   .OnDelete(DeleteBehavior.SetNull)
                   .IsRequired(false);
-        });
-
-        // ─── EventManagerProfile ─────────────────────────────────────────
-        // WHY UNIQUE index on EventManagerId?
-        // One event manager can have exactly one business profile.
-        // The UNIQUE index enforces this at the DB level — the service layer
-        // also checks via ExistsByEventManagerIdAsync before inserting (belt + suspenders).
-        //
-        // WHY no FK to Event.EventManagerId?
-        // EventManagerId is a cross-service reference to Auth.Users.UserId.
-        // Same pattern as Stadium.OwnerId — logical reference, not a DB FK.
-        modelBuilder.Entity<EventManagerProfile>(entity =>
-        {
-            entity.HasKey(e => e.EventManagerProfileId);
-            entity.Property(e => e.EventManagerProfileId).HasDefaultValueSql("NEWSEQUENTIALID()");
-
-            entity.Property(e => e.OrganizationName).HasMaxLength(200);
-            entity.Property(e => e.GstNumber).HasMaxLength(20);
-            entity.Property(e => e.Designation).HasMaxLength(100);
-            entity.Property(e => e.Website).HasMaxLength(300);
-            entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
-            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
-
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-
-            // One event manager → one profile. Enforced at DB + service layer.
-            entity.HasIndex(e => e.EventManagerId).IsUnique();
         });
 
         // ─── TicketType (Pricing per Event) ─────────────────────────
