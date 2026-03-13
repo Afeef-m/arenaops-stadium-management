@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { resetPassword } from "@/store/authSlice";
-import { RootState } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import Link from "next/link";
 import { Key, Eye, EyeOff, Lock, Hash } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToastActions } from "@/components/ui/toast";
 
 export default function ResetPasswordClient() {
-  const dispatch = useDispatch<any>();
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { loading } = useSelector((state: RootState) => state.auth);

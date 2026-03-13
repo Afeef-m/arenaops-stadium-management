@@ -1,0 +1,1 @@
+export type AppError = Error | string | unknown;

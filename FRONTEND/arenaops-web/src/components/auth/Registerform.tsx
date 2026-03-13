@@ -7,7 +7,7 @@ import {
   useEffect,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import { registerUser } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
@@ -25,7 +25,7 @@ interface FormState {
 
 export default function RegisterForm() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const dispatch = useDispatch<any>();
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { loading, isAuthenticated, error } = useSelector((state: RootState) => state.auth);
 
