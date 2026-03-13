@@ -49,6 +49,7 @@ builder.Services.AddCors(options =>
                 "http://localhost:3000",
                 "https://localhost:3000"
             )
+            .SetIsOriginAllowed(origin => new Uri(origin).Host.EndsWith("ngrok-free.app") || new Uri(origin).Host.EndsWith("ngrok-free.dev") || origin.Contains("localhost"))
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
