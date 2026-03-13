@@ -6,24 +6,9 @@ import { AppDispatch, RootState } from "@/store/store";
 import { registerUser } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion, Variants } from "framer-motion";
-import {
-    Eye,
-    EyeOff,
-    Trophy,
-    ArrowRight,
-    Loader2
-} from "lucide-react";
-
-interface FormState {
-    errors: {
-        fullName?: string;
-        email?: string;
-        password?: string;
-        organizationName?: string;
-        phone?: string;
-    };
-}
+// import EventManagerNavbar from "@/components/navfooter/EventManagerNavbar";
+// import EventManagerFooter from "@/components/navfooter/EventManagerFooter";
+import { Ticket, ShieldCheck, Mail, Phone, Building2, FileText, BadgeInfo, Globe, Lock, Eye, EyeOff, ArrowRight, User } from "lucide-react";
 
 export default function EventManagerRegisterForm() {
     const dispatch = useDispatch<AppDispatch>();
@@ -32,23 +17,31 @@ export default function EventManagerRegisterForm() {
         (state: RootState) => state.auth
     );
 
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [showPassword, setShowPassword] = useState(false);
-    const [fullName, setFullName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [organizationName, setOrganizationName] = useState("");
-    const [phone, setPhone] = useState("");
-    const [formErrors, setFormErrors] = useState<FormState["errors"]>({});
-    const [activeField, setActiveField] = useState<string | null>(null);
-    // Redirect if not authenticated
-   
+    
+    const [form, setForm] = useState({
+        fullName: "",
+        email: "",
+        phoneNumber: "",
+        organizationName: "",
+        gstNumber: "",
+        designation: "",
+        website: "",
+        password: ""
+    });
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setForm({ ...form, [e.target.id]: e.target.value });
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const errors: FormState["errors"] = {};
+        const errors: Record<string, string> = {};
 
-        if (!fullName) errors.fullName = "Full name is required";
-        if (!email) errors.email = "Email address is required";
-        if (!password || password.length < 6)
+        if (!form.fullName) errors.fullName = "Full name is required";
+        if (!form.email) errors.email = "Email address is required";
+        if (!form.password || form.password.length < 6)
             errors.password = "Password must be at least 6 characters";
 
         if (Object.keys(errors).length > 0) {
@@ -58,15 +51,15 @@ export default function EventManagerRegisterForm() {
         setFormErrors({});
 
         const result = await dispatch(
-            registerUser({ email, password, fullName, role: "EventManager" })
+            registerUser({ email: form.email, password: form.password, fullName: form.fullName, role: "EventManager" })
         );
 
         if (registerUser.fulfilled.match(result)) {
             localStorage.setItem(
                 "organizerProfile",
                 JSON.stringify({
-                    organizationName,
-                    phone,
+                    organizationName: form.organizationName,
+                    phone: form.phoneNumber,
                     registeredAsOrganizer: true,
                 })
             );
@@ -74,201 +67,204 @@ export default function EventManagerRegisterForm() {
         }
     };
 
-    const containerVariants: Variants = {
-        hidden: { opacity: 0, scale: 0.98 },
-        visible: {
-            opacity: 1,
-            scale: 1,
-            transition: {
-                duration: 0.5,
-                ease: "easeOut",
-                staggerChildren: 0.05,
-            },
-        },
-    };
-
-    const itemVariants: Variants = {
-        hidden: { opacity: 0, y: 15 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.4, ease: "easeOut" },
-        },
-    };
-
-    const InputField = ({
-        label,
-        value,
-        onChange,
-        name,
-        type = "text",
-        placeholder,
-        error
-    }: {
-        label: string,
-        value: string,
-        onChange: (val: string) => void,
-        name: string,
-        type?: string,
-        placeholder?: string,
-        error?: string
-    }) => (
-        <motion.div variants={itemVariants} className="space-y-1.5">
-            <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest ml-1">{label}</label>
-            <div className="relative group">
-                <input
-                    type={type}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    onFocus={() => setActiveField(name)}
-                    onBlur={() => setActiveField(null)}
-                    placeholder={placeholder}
-                    className={`w-full px-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder:text-zinc-700 outline-none transition-all duration-300
-                        ${activeField === name || value ? 'border-blue-500/50 bg-zinc-900 shadow-[0_0_15px_-3px_rgba(59,130,246,0.1)]' : 'hover:border-zinc-700'}
-                        ${error ? 'border-red-500/50' : ''}
-                    `}
-                />
-            </div>
-            {error && <p className="text-red-400 text-[10px] ml-1 font-medium">{error}</p>}
-        </motion.div>
-    );
-
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-black p-4 selection:bg-blue-500/30 selection:text-blue-200 text-zinc-100">
+        <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen overflow-x-hidden selection:bg-primary selection:text-background-dark">
+            <div className="fixed inset-0 stadium-grid pointer-events-none z-0"></div>
+            <div className="fixed -top-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+            <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[150px] pointer-events-none z-0"></div>
 
-            <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
-                className="w-full max-w-[440px] relative z-10"
-            >
-                {/* Header */}
-                <div className="text-center mb-10">
-                    <Link href="/" className="inline-block mb-8 group">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center mx-auto shadow-xl shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300 ring-1 ring-white/10">
+            <div className="relative flex flex-col min-h-screen z-10 w-full">
+                {/* <EventManagerNavbar /> */}
 
+                <main className="flex-grow flex items-center justify-center p-6 lg:py-16 w-full">
+                    <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-12 items-center mx-auto">
+                        <div className="hidden lg:flex flex-col gap-8">
+                            <div className="space-y-4">
+                                <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-widest uppercase border border-primary/20">
+                                    Partner with the best
+                                </span>
+                                <h2 className="text-6xl font-bold leading-[1.1] tracking-tighter text-slate-900 dark:text-slate-100">
+                                    Manage the <br /> <span className="text-[#10b981] italic">Greatest Stages</span> <br /> on Earth.
+                                </h2>
+                                <p className="text-slate-500 dark:text-slate-400 text-lg max-w-md">
+                                    From crowd control to VIP hospitality, ArenaManager gives event professionals the tools to deliver flawless experiences.
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="p-6 glass rounded-2xl relative">
+                                    <Ticket className="text-[#10b981] mb-2 w-8 h-8 select-none" />
+                                    <h3 className="font-bold text-xl text-slate-100">50M+</h3>
+                                    <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Tickets Managed</p>
+                                </div>
+                                <div className="p-6 glass rounded-2xl relative">
+                                    <ShieldCheck className="text-[#10b981] mb-2 w-8 h-8 select-none" />
+                                    <h3 className="font-bold text-xl text-slate-100">99.9%</h3>
+                                    <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Uptime Reliability</p>
+                                </div>
+                            </div>
+                            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-primary/20 shadow-2xl">
+                                <img
+                                    className="w-full h-full object-cover grayscale opacity-50"
+                                    alt="Modern illuminated stadium interior architecture aerial view"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuALWe6_amO5NN6O26a7ykBvLH7D2xV1xCpVdnfNX55hCv56xDUir2T0U46oTQEFLzxXzbJZqKBSrBISE-oC4Hm_uT-iwJGGHtKNa1WejDCXZG73FqsMwRFWJxs2tne5BLPt3b11ifE2nlJB5z2cgmkkst4noZhVgmD-g-PSZEK1T9zGf8yk9Mbnb1JnM5d_ARwacLP-Jg05WIKSaES9_t4m6u5xeueskFEq-OqDePykX-oXB_sqdtr0BeEStKpZH0ur_i0ly-WnKewe"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent"></div>
+                                <div className="absolute bottom-6 left-6">
+                                    <div className="flex items-center gap-2">
+                                        <span className="flex h-2 w-2 rounded-full bg-[#10b981] animate-pulse"></span>
+                                        <span className="text-xs font-bold uppercase tracking-widest text-slate-200">Live Operations View</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </Link>
-                    <motion.h1 variants={itemVariants} className="text-2xl font-bold text-white tracking-tight mb-2">
-                        Event Manager Access
-                    </motion.h1>
-                    <motion.p variants={itemVariants} className="text-zinc-500 text-sm max-w-[280px] mx-auto leading-relaxed">
-                        Create your organization account to start hosting events on ArenaOps
-                    </motion.p>
-                </div>
 
-                {/* Form Card */}
-                <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/50">
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="grid grid-cols-2 gap-4">
-                            <InputField
-                                label="Full Name"
-                                name="fullname"
-                                value={fullName}
-                                onChange={setFullName}
-                                placeholder="John Doe"
-                                error={formErrors.fullName}
-                            />
-                            <InputField
-                                label="Organization"
-                                name="org"
-                                value={organizationName}
-                                onChange={setOrganizationName}
-                                placeholder="Acme Inc."
-                            />
-                        </div>
-
-                        <InputField
-                            label="Email Address"
-                            name="email"
-                            value={email}
-                            onChange={setEmail}
-                            placeholder="john@example.com"
-                            type="email"
-                            error={formErrors.email}
-                        />
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <InputField
-                                label="Phone"
-                                name="phone"
-                                value={phone}
-                                onChange={setPhone}
-                                placeholder="(555) 000-0000"
-                            />
-
-                            <motion.div variants={itemVariants} className="space-y-1.5">
-                                <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Password</label>
-                                <div className="relative group">
-                                    <input
-                                        type={showPassword ? "text" : "password"}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        onFocus={() => setActiveField('password')}
-                                        onBlur={() => setActiveField(null)}
-                                        placeholder="••••••••"
-                                        className={`w-full px-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder:text-zinc-700 outline-none transition-all duration-300 pr-10
-                                            ${activeField === 'password' || password ? 'border-blue-500/50 bg-zinc-900 shadow-[0_0_15px_-3px_rgba(59,130,246,0.1)]' : 'hover:border-zinc-700'}
-                                            ${formErrors.password ? 'border-red-500/50' : ''}
-                                        `}
-                                    />
+                        <div className="glass p-8 lg:p-12 rounded-[2rem] shadow-2xl border border-primary/10 relative overflow-hidden text-left">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                            <div className="mb-10 text-center lg:text-left relative">
+                                <h3 className="text-3xl font-bold mb-2 text-slate-100">Create Account</h3>
+                                <p className="text-slate-400">Start managing your venue today.</p>
+                            </div>
+                            <form onSubmit={handleSubmit} className="space-y-5 relative">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <label htmlFor="fullName" className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Full Name</label>
+                                        <div className="relative">
+                                            <User className="absolute left-4 top-4 text-slate-500 w-5 h-5 pointer-events-none select-none" />
+                                            <input
+                                                id="fullName"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 focus:border-[#10b981]/50 transition-all"
+                                                placeholder=""
+                                                type="text"
+                                                value={form.fullName}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="email" className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Email</label>
+                                        <div className="relative">
+                                            <Mail className="absolute left-4 top-4 text-slate-500 w-5 h-5 pointer-events-none select-none" />
+                                            <input
+                                                id="email"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 focus:border-[#10b981]/50 transition-all"
+                                                placeholder=""
+                                                type="email"
+                                                value={form.email}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="phoneNumber" className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Phone Number</label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-4 top-4 text-slate-500 w-5 h-5 pointer-events-none select-none" />
+                                            <input
+                                                id="phoneNumber"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 focus:border-[#10b981]/50 transition-all"
+                                                placeholder=""
+                                                type="tel"
+                                                value={form.phoneNumber}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="organizationName" className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Organization Name</label>
+                                        <div className="relative">
+                                            <Building2 className="absolute left-4 top-4 text-slate-500 w-5 h-5 pointer-events-none select-none" />
+                                            <input
+                                                id="organizationName"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 focus:border-[#10b981]/50 transition-all"
+                                                placeholder=""
+                                                type="text"
+                                                value={form.organizationName}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="gstNumber" className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">GST Number</label>
+                                        <div className="relative">
+                                            <FileText className="absolute left-4 top-4 text-slate-500 w-5 h-5 pointer-events-none select-none" />
+                                            <input
+                                                id="gstNumber"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 focus:border-[#10b981]/50 transition-all"
+                                                placeholder=""
+                                                type="text"
+                                                value={form.gstNumber}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="designation" className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Designation</label>
+                                        <div className="relative">
+                                            <BadgeInfo className="absolute left-4 top-4 text-slate-500 w-5 h-5 pointer-events-none select-none" />
+                                            <input
+                                                id="designation"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 focus:border-[#10b981]/50 transition-all"
+                                                placeholder=""
+                                                type="text"
+                                                value={form.designation}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="website" className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Website</label>
+                                    <div className="relative">
+                                        <Globe className="absolute left-4 top-4 text-slate-500 w-5 h-5 pointer-events-none select-none" />
+                                        <input
+                                            id="website"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 focus:border-[#10b981]/50 transition-all"
+                                            placeholder=""
+                                            type="url"
+                                            value={form.website}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="password" className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Password</label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-4 top-4 text-slate-500 w-5 h-5 pointer-events-none select-none" />
+                                        <input
+                                            id="password"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-12 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 focus:border-[#10b981]/50 transition-all"
+                                            placeholder=""
+                                            type={showPassword ? "text" : "password"}
+                                            value={form.password}
+                                            onChange={handleChange}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 cursor-pointer hover:text-[#10b981] z-10 bg-transparent border-0 outline-none"
+                                        >
+                                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="pt-4 relative z-10">
                                     <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-3 text-zinc-600 hover:text-zinc-300 transition-colors"
+                                        type="submit"
+                                        className="w-full bg-[#10b981] text-[#132210] font-bold py-5 rounded-xl hover:shadow-[0_0_25px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-2 group cursor-pointer border border-[#10b981]/50"
                                     >
-                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        Create My Account
+                                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                     </button>
                                 </div>
-                                {formErrors.password && <p className="text-red-400 text-[10px] ml-1 font-medium">{formErrors.password}</p>}
-                            </motion.div>
+                                <p className="text-center text-xs text-slate-500 px-8 relative z-10">
+                                    By clicking "Create My Account", you agree to our <a className="text-slate-300 hover:text-[#10b981] underline cursor-pointer" href="#">Terms of Service</a> and <a className="text-slate-300 hover:text-[#10b981] underline cursor-pointer" href="#">Privacy Policy</a>.
+                                </p>
+                            </form>
                         </div>
-
-                        {error && (
-                            <motion.div variants={itemVariants} className="p-3 rounded-lg bg-red-500/10 border border-red-500/10 text-red-400 text-xs text-center font-medium">
-                                {error}
-                            </motion.div>
-                        )}
-
-                        <motion.button
-                            variants={itemVariants}
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.99 }}
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-3.5 mt-2 rounded-xl bg-white hover:bg-zinc-200 text-black font-bold text-sm tracking-wide shadow-lg shadow-white/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            {loading ? (
-                                <Loader2 size={18} className="animate-spin text-black" />
-                            ) : (
-                                <>
-                                    Create Account <ArrowRight size={16} className="opacity-60" />
-                                </>
-                            )}
-                        </motion.button>
-
-                    </form>
-                </div>
-
-                <motion.div variants={itemVariants} className="mt-8 text-center space-y-3">
-                    <div className="text-zinc-500 text-xs text-center w-full">
-                        Already have an account?{" "}
-                        <Link href="/login" className="text-blue-500 hover:text-blue-400 font-semibold hover:underline transition-all">
-                            Sign In
-                        </Link>
                     </div>
+                </main>
 
-                    <div className="w-8 h-px bg-zinc-800 mx-auto" />
-
-                    <Link
-                        href="/register"
-                        className="inline-block text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-zinc-300 transition-colors"
-                    >
-                        User Registration
-                    </Link>
-                </motion.div>
-
-            </motion.div>
+                {/* <EventManagerFooter /> */}
+            </div>
         </div>
     );
 }

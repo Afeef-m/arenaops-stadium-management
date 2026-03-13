@@ -114,7 +114,7 @@ const SimpleUniqueFooter = () => {
               Ready to host?
             </p>
             <Link
-              href="/register-event-manager"
+              href="/event-manager"
               className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full text-[10px] font-bold uppercase tracking-widest text-white hover:shadow-lg hover:shadow-indigo-500/20 transition-all"
             >
               Become an Event Manager ↗

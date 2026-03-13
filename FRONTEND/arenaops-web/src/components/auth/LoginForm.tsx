@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useLayoutEffect, useState } from "react";
+import { useRef, useLayoutEffect, useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { loginUser } from "@/store/authSlice";
@@ -18,10 +18,10 @@ interface FormState {
 }
 
 export default function LoginForm() {
-const { success, error: showError } = useToastActions();
+  const { success, error: showError } = useToastActions();
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const dispatch = useDispatch<AppDispatch>(); 
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
 
@@ -30,9 +30,11 @@ const { success, error: showError } = useToastActions();
   const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if authenticated
-  if (isAuthenticated) {
-    router.push("/");
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
 
   // Stadium-Entrance Animation
   useLayoutEffect(() => {
@@ -95,15 +97,15 @@ const { success, error: showError } = useToastActions();
     const result = await dispatch(loginUser({ email, password }));
 
     if (loginUser.fulfilled.match(result)) {
-  success("Welcome back to the Arena!");
-  router.push("/");
-} else {
-  if (result.payload) {
-    showError(result.payload as string);
-  } else {
-    showError("Login failed. Check your credentials.");
-  }
-}
+      success("Welcome back to the Arena!");
+      router.push("/");
+    } else {
+      if (result.payload) {
+        showError(result.payload as string);
+      } else {
+        showError("Login failed. Check your credentials.");
+      }
+    }
   };
 
   return (
