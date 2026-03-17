@@ -70,8 +70,18 @@ function normalizeRecentBooking(payload: unknown): RecentBooking {
   return {
     id,
     userName: toString(obj.userName ?? obj.userFullName ?? obj.userEmail, "Unknown"),
-    eventName: toString(obj.eventName ?? obj.eventTitle ?? obj.event?.name, "Unknown event"),
-    stadiumName: toString(obj.stadiumName ?? obj.stadium?.name, "Unknown stadium"),
+    eventName: toString(
+  obj.eventName ??
+  obj.eventTitle ??
+  (obj.event as { name?: unknown } | undefined)?.name,
+  "Unknown event"
+),
+
+stadiumName: toString(
+  obj.stadiumName ??
+  (obj.stadium as { name?: unknown } | undefined)?.name,
+  "Unknown stadium"
+),
     seats: toNumber(obj.seats ?? obj.seatCount ?? obj.totalSeats, "seats"),
     status: normalizeBookingStatus(obj.status),
     createdAt: toString(obj.createdAt ?? obj.createdOn, new Date().toISOString()),
