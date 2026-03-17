@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || 'http://localhost:5002/api';
+const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || 'http://localhost:5007/api';
 
 // Headers that should NOT be forwarded to the backend
 const HOP_BY_HOP_HEADERS = ['host', 'connection', 'expect', 'transfer-encoding', 'keep-alive', 'upgrade'];
@@ -31,13 +31,19 @@ async function handleProxy(request: NextRequest, slug: string[]) {
 
         const responseBody = await response.text();
 
-        return new NextResponse(responseBody, {
+        const proxiedResponse = new NextResponse(responseBody, {
             status: response.status,
             statusText: response.statusText,
             headers: {
                 'Content-Type': response.headers.get('Content-Type') || 'application/json',
             },
         });
+
+        // Forward all Set-Cookie headers so the browser receives HttpOnly cookies
+        const setCookies = response.headers.getSetCookie?.() ?? [];
+        setCookies.forEach((cookie) => proxiedResponse.headers.append('Set-Cookie', cookie));
+
+        return proxiedResponse;
     } catch (error) {
         console.error(`[BFF Core Proxy Error]:`, error);
         return NextResponse.json({ error: 'Failed to proxy request to Core Service' }, { status: 502 });

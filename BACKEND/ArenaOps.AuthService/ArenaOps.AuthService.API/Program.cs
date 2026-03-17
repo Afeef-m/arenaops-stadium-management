@@ -49,6 +49,7 @@ builder.Services.AddCors(options =>
                 "http://localhost:3000",
                 "https://localhost:3000"
             )
+            .SetIsOriginAllowed(origin => new Uri(origin).Host.EndsWith("ngrok-free.app") || new Uri(origin).Host.EndsWith("ngrok-free.dev") || origin.Contains("localhost"))
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -185,11 +186,14 @@ app.UseSerilogRequestLogging();
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 // Configure the HTTP request pipeline.
-app.UseSwagger();
-app.UseSwaggerUI(options =>
+if (app.Environment.IsDevelopment())
 {
-    options.SwaggerEndpoint("v1/swagger.json", "ArenaOps Auth Service v1");
-});
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ArenaOps Auth Service v1");
+    });
+}
 
 // Only redirect to HTTPS in production (dev uses HTTP only)
 if (!app.Environment.IsDevelopment())

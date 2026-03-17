@@ -23,4 +23,5 @@ public class User
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     public ICollection<AuthAuditLog> AuditLogs { get; set; } = new List<AuthAuditLog>();
     public ICollection<ExternalLogin> ExternalLogins { get; set; } = new List<ExternalLogin>();
+    public EventManagerDetails? EventManagerDetails { get; set; }
 }

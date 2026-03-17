@@ -19,15 +19,15 @@ public class CoreDbContext : DbContext
     public DbSet<EventSection> EventSections => Set<EventSection>();
     public DbSet<EventLandmark> EventLandmarks => Set<EventLandmark>();
 
+    // ─── Event Seat Inventory ────────────────────────────────────
+    public DbSet<EventSeat> EventSeats => Set<EventSeat>();
+
     // ─── Ticketing & Pricing ────────────────────────────────────
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
     public DbSet<SectionTicketType> SectionTicketTypes => Set<SectionTicketType>();
 
     // ─── Event Time Slots ───────────────────────────────────────
     public DbSet<EventSlot> EventSlots => Set<EventSlot>();
-
-    // ─── Event Manager Profiles ──────────────────────────────────────
-    public DbSet<EventManagerProfile> EventManagerProfiles => Set<EventManagerProfile>();
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -238,33 +238,6 @@ public class CoreDbContext : DbContext
                   .IsRequired(false);
         });
 
-        // ─── EventManagerProfile ─────────────────────────────────────────
-        // WHY UNIQUE index on EventManagerId?
-        // One event manager can have exactly one business profile.
-        // The UNIQUE index enforces this at the DB level — the service layer
-        // also checks via ExistsByEventManagerIdAsync before inserting (belt + suspenders).
-        //
-        // WHY no FK to Event.EventManagerId?
-        // EventManagerId is a cross-service reference to Auth.Users.UserId.
-        // Same pattern as Stadium.OwnerId — logical reference, not a DB FK.
-        modelBuilder.Entity<EventManagerProfile>(entity =>
-        {
-            entity.HasKey(e => e.EventManagerProfileId);
-            entity.Property(e => e.EventManagerProfileId).HasDefaultValueSql("NEWSEQUENTIALID()");
-
-            entity.Property(e => e.OrganizationName).HasMaxLength(200);
-            entity.Property(e => e.GstNumber).HasMaxLength(20);
-            entity.Property(e => e.Designation).HasMaxLength(100);
-            entity.Property(e => e.Website).HasMaxLength(300);
-            entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
-            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
-
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-
-            // One event manager → one profile. Enforced at DB + service layer.
-            entity.HasIndex(e => e.EventManagerId).IsUnique();
-        });
-
         // ─── TicketType (Pricing per Event) ─────────────────────────
         modelBuilder.Entity<TicketType>(entity =>
         {
@@ -320,6 +293,62 @@ public class CoreDbContext : DbContext
                   .WithMany(tt => tt.SectionTicketTypes)
                   .HasForeignKey(e => e.TicketTypeId)
                   .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ─── EventSeat (Event-specific seat inventory) ──────────────
+        // WHY Cascade from EventSection?
+        //   Deleting an EventSection removes all its EventSeats — no orphans.
+        // WHY SetNull on SourceSeat FK?
+        //   If a template Seat is later deleted, the EventSeat record survives
+        //   with SourceSeatId = NULL. The event seat data is still valid.
+        // WHY no Cascade from Seat → EventSeat?
+        //   SetNull (not Cascade) is used so that removing a template seat
+        //   does not wipe out already-sold or available event seats.
+        modelBuilder.Entity<EventSeat>(entity =>
+        {
+            entity.HasKey(e => e.EventSeatId);
+            entity.Property(e => e.EventSeatId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            // WHY index on EventId only (no FK constraint)?
+            // EventId is a denormalized lookup key following the same pattern as
+            // EventSeatingPlan.EventId — an indexed column without a DB FK constraint.
+            // This avoids a multiple cascade paths issue (Event→EventSeatingPlan→EventSection→EventSeat
+            // already handles cascades; a second direct Event→EventSeat cascade would conflict).
+            entity.HasIndex(e => e.EventId);
+
+            entity.Property(e => e.RowLabel).HasMaxLength(5);
+            // SeatLabel is wider than the template Seat.SeatLabel (10) to support "GA-100" style labels.
+            entity.Property(e => e.SeatLabel).HasMaxLength(20);
+            // SectionType is denormalized from EventSection.Type for query performance on booking paths.
+            entity.Property(e => e.SectionType).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(20).IsRequired().HasDefaultValue("Available");
+            entity.Property(e => e.Price).HasPrecision(10, 2).IsRequired(false);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsAccessible).HasDefaultValue(false);
+            // LockedUntil and LockedByUserId are NULL when Available/Confirmed.
+            // Set by sp_HoldSeat, cleared by sp_ConfirmBookingSeats + sp_CleanupExpiredHolds.
+            entity.Property(e => e.LockedUntil).IsRequired(false);
+            entity.Property(e => e.LockedByUserId).IsRequired(false);
+
+            entity.HasIndex(e => e.EventSectionId);
+            entity.HasIndex(e => e.SourceSeatId);
+            // Composite index matches docs: IX_EventSeat_EventId_Status — used by booking queries.
+            entity.HasIndex(e => new { e.EventId, e.Status });
+            // Filtered index matches docs: IX_EventSeat_LockedUntil — only for held seats.
+            entity.HasIndex(e => e.LockedUntil).HasFilter("[Status] = 'Held'");
+
+            // FK to EventSection — Cascade: section deleted → all its seats deleted
+            entity.HasOne(e => e.EventSection)
+                  .WithMany(es => es.EventSeats)
+                  .HasForeignKey(e => e.EventSectionId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // FK to template Seat — SetNull: template seat deleted → SourceSeatId becomes NULL
+            entity.HasOne(e => e.SourceSeat)
+                  .WithMany()
+                  .HasForeignKey(e => e.SourceSeatId)
+                  .OnDelete(DeleteBehavior.SetNull)
+                  .IsRequired(false);
         });
     }
 }

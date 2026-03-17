@@ -1,38 +1,28 @@
 import axios from 'axios';
 
 // Routes through the Next.js BFF proxy at /api/auth/[...slug] and /api/core/[...slug]
-// The proxy forwards requests to the actual backend services (localhost:5001, etc.)
+// The proxy forwards requests to the actual backend services (localhost:5001, localhost:5007)
+// Authentication is handled via HttpOnly cookies — withCredentials ensures they are sent on every request
 export const api = axios.create({
     baseURL: '',
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Request interceptor: attach access token
-api.interceptors.request.use(
-    (config) => {
-        if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+// No request interceptor needed — the browser automatically sends HttpOnly cookies
 
 // Response interceptor: auto-refresh on 401
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: unknown) => void }> = [];
+let failedQueue: Array<{ resolve: () => void; reject: (reason?: unknown) => void }> = [];
 
-const processQueue = (error: unknown, token: string | null = null) => {
+const processQueue = (error: unknown) => {
     failedQueue.forEach((prom) => {
         if (error) {
             prom.reject(error);
         } else {
-            prom.resolve(token);
+            prom.resolve();
         }
     });
     failedQueue = [];
@@ -43,54 +33,37 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // If 401 and not a refresh request itself
         if (error.response?.status === 401 && !originalRequest._retry) {
-            // If TOKEN_REVOKED, redirect to login
-            if (error.response?.data?.error === 'TOKEN_REVOKED') {
+            // Token blacklisted — clear session and redirect to login immediately
+            if (error.response?.data?.error?.code === 'TOKEN_REVOKED') {
                 if (typeof window !== 'undefined') {
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('refreshToken');
                     localStorage.removeItem('user');
                     window.location.href = '/login';
                 }
                 return Promise.reject(error);
             }
 
+            // Queue concurrent requests while a refresh is in progress
             if (isRefreshing) {
-                return new Promise((resolve, reject) => {
+                return new Promise<void>((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
-                }).then((token) => {
-                    originalRequest.headers.Authorization = `Bearer ${token}`;
-                    return api(originalRequest);
-                });
+                })
+                    .then(() => api(originalRequest))
+                    .catch((err) => Promise.reject(err));
             }
 
             originalRequest._retry = true;
             isRefreshing = true;
 
             try {
-                const refreshToken = localStorage.getItem('refreshToken');
-                if (!refreshToken) {
-                    throw new Error('No refresh token');
-                }
-
-                const response = await axios.post('/api/auth/refresh', { refreshToken });
-                const { accessToken, refreshToken: newRefreshToken } = response.data.data;
-
-                localStorage.setItem('accessToken', accessToken);
-                localStorage.setItem('refreshToken', newRefreshToken);
-
-                api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-                originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-
-                processQueue(null, accessToken);
+                // Cookie is sent automatically — no body or token needed
+                await axios.post('/api/auth/refresh', {}, { withCredentials: true });
+                processQueue(null);
                 return api(originalRequest);
             } catch (refreshError) {
-                processQueue(refreshError, null);
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                localStorage.removeItem('user');
+                processQueue(refreshError);
                 if (typeof window !== 'undefined') {
+                    localStorage.removeItem('user');
                     window.location.href = '/login';
                 }
                 return Promise.reject(refreshError);

@@ -55,7 +55,7 @@ export function EventDiscovery({events}:EventDiscoveryProps) {
                             Discover the hottest matches, concerts, and exclusive experiences happening near you.
                         </p>
                     </div>
-                    <Button variant="ghost" className="text-primary hover:text-primary hover:bg-white/5 group h-12 px-6 rounded-full border border-white/10">
+                    <Button variant="ghost" className="text-[#10b981] hover:text-[#10b981] hover:bg-white/5 group h-12 px-6 rounded-full border border-white/10">
                         View All Events <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </Button>
                 </div>
@@ -77,7 +77,7 @@ export function EventDiscovery({events}:EventDiscoveryProps) {
                             </div>
 
                             <CardHeader className="pb-4">
-                                <CardTitle className="text-xl font-bold text-white group-hover:text-primary transition-colors leading-tight">
+                                <CardTitle className="text-xl font-bold text-white group-hover:text-[#10b981] transition-colors leading-tight">
                                     {event.title}
                                 </CardTitle>
                                 <CardDescription className={styles.iconLabel}>
@@ -116,7 +116,7 @@ export function EventDiscovery({events}:EventDiscoveryProps) {
             </div>
 
             {/* Subtle light leak for depth */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-linear-to-r from-transparent via-primary/30 to-transparent" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-linear-to-r from-transparent via-[#10b981]/30 to-transparent" />
         </section>
     )
 }

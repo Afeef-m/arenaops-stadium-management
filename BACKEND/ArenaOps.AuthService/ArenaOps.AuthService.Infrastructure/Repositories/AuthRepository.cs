@@ -31,6 +31,15 @@ public class AuthRepository : IAuthRepository
         return await _context.Users.FindAsync(userId);
     }
 
+    public async Task<User?> GetUserProfileAsync(Guid userId)
+    {
+        return await _context.Users
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .Include(u => u.EventManagerDetails)   // null for non-EventManagers
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+    }
+
     public async Task<Role?> GetRoleByNameAsync(string roleName)
     {
         return await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
@@ -54,6 +63,11 @@ public class AuthRepository : IAuthRepository
     public async Task AddAuthAuditLogAsync(AuthAuditLog auditLog)
     {
         await _context.AuthAuditLogs.AddAsync(auditLog);
+    }
+
+    public async Task AddEventManagerDetailsAsync(EventManagerDetails details)
+    {
+        await _context.EventManagerDetails.AddAsync(details);
     }
 
     public async Task<RefreshToken?> GetRefreshTokenAsync(string token)

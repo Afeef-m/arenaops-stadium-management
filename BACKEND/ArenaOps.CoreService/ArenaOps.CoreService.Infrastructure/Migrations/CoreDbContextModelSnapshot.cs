@@ -168,6 +168,87 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                     b.ToTable("EventManagerProfiles");
                 });
 
+            modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventSeat", b =>
+                {
+                    b.Property<Guid>("EventSeatId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EventSectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsAccessible")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid?>("LockedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("LockedUntil")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("PosX")
+                        .HasColumnType("float");
+
+                    b.Property<double>("PosY")
+                        .HasColumnType("float");
+
+                    b.Property<decimal?>("Price")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("RowLabel")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<string>("SeatLabel")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("SeatNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SectionType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid?>("SourceSeatId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Available");
+
+                    b.HasKey("EventSeatId");
+
+                    b.HasIndex("EventId");
+
+                    b.HasIndex("EventSectionId");
+
+                    b.HasIndex("LockedUntil")
+                        .HasFilter("[Status] = 'Held'");
+
+                    b.HasIndex("SourceSeatId");
+
+                    b.HasIndex("EventId", "Status");
+
+                    b.ToTable("EventSeats");
+                });
+
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventSeatingPlan", b =>
                 {
                     b.Property<Guid>("EventSeatingPlanId")
@@ -591,6 +672,24 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                     b.Navigation("SourceLandmark");
                 });
 
+            modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventSeat", b =>
+                {
+                    b.HasOne("ArenaOps.CoreService.Domain.Entities.EventSection", "EventSection")
+                        .WithMany("EventSeats")
+                        .HasForeignKey("EventSectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ArenaOps.CoreService.Domain.Entities.Seat", "SourceSeat")
+                        .WithMany()
+                        .HasForeignKey("SourceSeatId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("EventSection");
+
+                    b.Navigation("SourceSeat");
+                });
+
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventSeatingPlan", b =>
                 {
                     b.HasOne("ArenaOps.CoreService.Domain.Entities.SeatingPlan", "SourceSeatingPlan")
@@ -719,6 +818,8 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
 
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventSection", b =>
                 {
+                    b.Navigation("EventSeats");
+
                     b.Navigation("SectionTicketTypes");
                 });
 

@@ -26,4 +26,7 @@ public class EventSection
     public EventSeatingPlan EventSeatingPlan { get; set; } = null!;
     public Section? SourceSection { get; set; }
     public ICollection<SectionTicketType> SectionTicketTypes { get; set; } = new List<SectionTicketType>();
+
+    /// <summary>Event-specific seats generated from this section (populated after seat generation).</summary>
+    public ICollection<EventSeat> EventSeats { get; set; } = new List<EventSeat>();
 }

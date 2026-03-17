@@ -57,6 +57,45 @@ namespace ArenaOps.AuthService.Infrastructure.Migrations
                     b.ToTable("AuthAuditLogs");
                 });
 
+            modelBuilder.Entity("ArenaOps.AuthService.Core.Entities.EventManagerDetails", b =>
+                {
+                    b.Property<Guid>("EventManagerDetailsId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Designation")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("GstNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("OrganizationName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("EventManagerDetailsId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("EventManagerDetails");
+                });
+
             modelBuilder.Entity("ArenaOps.AuthService.Core.Entities.ExternalLogin", b =>
                 {
                     b.Property<Guid>("ExternalLoginId")
@@ -276,6 +315,17 @@ namespace ArenaOps.AuthService.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ArenaOps.AuthService.Core.Entities.EventManagerDetails", b =>
+                {
+                    b.HasOne("ArenaOps.AuthService.Core.Entities.User", "User")
+                        .WithOne("EventManagerDetails")
+                        .HasForeignKey("ArenaOps.AuthService.Core.Entities.EventManagerDetails", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ArenaOps.AuthService.Core.Entities.ExternalLogin", b =>
                 {
                     b.HasOne("ArenaOps.AuthService.Core.Entities.User", "User")
@@ -325,6 +375,8 @@ namespace ArenaOps.AuthService.Infrastructure.Migrations
             modelBuilder.Entity("ArenaOps.AuthService.Core.Entities.User", b =>
                 {
                     b.Navigation("AuditLogs");
+
+                    b.Navigation("EventManagerDetails");
 
                     b.Navigation("ExternalLogins");
 
