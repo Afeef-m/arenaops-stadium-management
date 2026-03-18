@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
 import Image from "next/image";
+import { coreService } from "@/services/coreService";
 
 type Props = {
   params: {
@@ -11,15 +12,53 @@ type Props = {
 export async function generateMetadata({ params }: Props) {
   const { eventId } = await params;
 
-  return {
-    title: `Event ${eventId} | ArenaOps`,
-    description: `Details for event ${eventId}`,
-  };
+  try {
+    const response = await coreService.getEvent(eventId);
+    const event = response.data;
+    return {
+      title: `${event?.name || 'Event'} | ArenaOps`,
+      description: event?.description || `Details for event`,
+    };
+  } catch (error) {
+    return {
+      title: `Event ${eventId} | ArenaOps`,
+      description: `Details for event ${eventId}`,
+    };
+  }
 }
-
 
 export default async function EventDetailPage({ params }: Props) {
   const { eventId } = await params;
+
+  let event: any = null;
+  let slots: any[] = [];
+
+  try {
+    const eventResponse = await coreService.getEvent(eventId);
+    event = eventResponse.data;
+
+    const slotsResponse = await coreService.getEventSlots(eventId);
+    slots = slotsResponse.data || [];
+  } catch (error) {
+    console.error("Failed to load event:", error);
+  }
+
+  if (!event) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Event Not Found</h1>
+          <p className="text-muted-foreground mb-6">The event you're looking for doesn't exist or has been removed.</p>
+          <Link href="/events" className="text-primary hover:underline">
+            Back to Events
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const startDate = event.startDate ? new Date(event.startDate) : null;
+  const firstSlot = slots[0];
 
   return (
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
@@ -27,8 +66,8 @@ export default async function EventDetailPage({ params }: Props) {
       {/* HERO SECTION */}
       <div className="relative h-[320px] w-full overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1506157786151-b8491531f063"
-          alt="Event Banner"
+          src={event.imageUrl || "https://images.unsplash.com/photo-1506157786151-b8491531f063"}
+          alt={event.name}
           fill
           priority
           className="object-cover brightness-75"
@@ -37,10 +76,10 @@ export default async function EventDetailPage({ params }: Props) {
 
         <div className="relative container mx-auto px-6 py-16 text-white">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Summer Concert 2026
+            {event.name}
           </h1>
           <p className="text-lg text-gray-200">
-            Event ID: {eventId}
+            {event.description || `Event ID: ${eventId}`}
           </p>
         </div>
       </div>
@@ -65,7 +104,9 @@ export default async function EventDetailPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Date</p>
-                  <p className="font-semibold">July 15, 2026</p>
+                  <p className="font-semibold">
+                    {startDate ? startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'TBD'}
+                  </p>
                 </div>
               </div>
 
@@ -75,7 +116,9 @@ export default async function EventDetailPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Time</p>
-                  <p className="font-semibold">7:00 PM</p>
+                  <p className="font-semibold">
+                    {firstSlot?.startTime ? new Date(firstSlot.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
+                  </p>
                 </div>
               </div>
 
@@ -85,7 +128,7 @@ export default async function EventDetailPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Venue</p>
-                  <p className="font-semibold">Concert Arena</p>
+                  <p className="font-semibold">{event.stadiumName || 'Arena'}</p>
                 </div>
               </div>
 
@@ -94,8 +137,8 @@ export default async function EventDetailPage({ params }: Props) {
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Capacity</p>
-                  <p className="font-semibold">5,000 Seats</p>
+                  <p className="text-sm text-muted-foreground">Type</p>
+                  <p className="font-semibold">{event.eventType || 'Event'}</p>
                 </div>
               </div>
 
@@ -110,10 +153,7 @@ export default async function EventDetailPage({ params }: Props) {
             </h2>
 
             <p className="text-muted-foreground leading-relaxed">
-              Experience an unforgettable night of music, lights, and energy at
-              Summer Concert 2026. Featuring top artists and an electrifying
-              atmosphere, this event promises a world-class entertainment
-              experience.
+              {event.description || 'No description available for this event. Check back for more information.'}
             </p>
           </div>
 
@@ -141,13 +181,29 @@ export default async function EventDetailPage({ params }: Props) {
                 Limited seats available
               </p>
             </div>
+
+            {/* Status */}
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Status</p>
+              <p className="font-semibold capitalize">{event.status || 'Live'}</p>
+            </div>
+
             {/* CTA Button */}
-            <Link
-              href={`/events/${eventId}/book`}
-              className="block w-full text-center py-3 bg-primary text-primary-foreground font-semibold rounded-[var(--radius-md)] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
-            >
-              Book Tickets
-            </Link>
+            {event.status === 'Live' ? (
+              <Link
+                href={`/events/${eventId}/book`}
+                className="block w-full text-center py-3 bg-primary text-primary-foreground font-semibold rounded-[var(--radius-md)] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+              >
+                Book Tickets
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="block w-full text-center py-3 bg-muted text-muted-foreground font-semibold rounded-[var(--radius-md)] cursor-not-allowed"
+              >
+                Coming Soon
+              </button>
+            )}
 
             {/* Secondary Button */}
             <Link
