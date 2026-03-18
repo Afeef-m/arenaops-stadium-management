@@ -15,6 +15,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set PowerShell Execution Policy
+        shell: powershell
+        run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
@@ -72,16 +76,3 @@ jobs:
         working-directory: FRONTEND/arenaops-web
         run: npx tsc --noEmit
 
-  # ── Deploy to IIS (main branch only) ─────────────────────────────────────
-  deploy:
-    name: Deploy — IIS
-    needs: [backend, frontend]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, windows, iis-server]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy to IIS
-        shell: pwsh
-        run: .\deploy-iis.ps1
