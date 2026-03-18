@@ -1,7 +1,2 @@
 <Solution>
-  <Project Path="../ArenaOps.Shared/ArenaOps.Shared.csproj" />
-  <Project Path="ArenaOps.CoreService.API/ArenaOps.CoreService.API.csproj" />
-  <Project Path="ArenaOps.CoreService.Application/ArenaOps.CoreService.Application.csproj" />
-  <Project Path="ArenaOps.CoreService.Domain/ArenaOps.CoreService.Domain.csproj" />
-  <Project Path="ArenaOps.CoreService.Infrastructure/ArenaOps.CoreService.Infrastructure.csproj" />
 </Solution>

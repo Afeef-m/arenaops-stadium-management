@@ -181,7 +181,6 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
-            .SetIsOriginAllowed(origin => new Uri(origin).Host.EndsWith("ngrok-free.app") || new Uri(origin).Host.EndsWith("ngrok-free.dev") || origin.Contains("localhost"))
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -231,3 +230,6 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+// Required for WebApplicationFactory<Program> in integration tests
+public partial class Program { }

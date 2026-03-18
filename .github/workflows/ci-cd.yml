@@ -1,0 +1,87 @@
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Backend: build + integration tests ───────────────────────────────────
+  backend:
+    name: Backend — Build & Test
+    runs-on: [self-hosted, windows, iis-server]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore — AuthService
+        run: dotnet restore BACKEND/ArenaOps.AuthService.sln
+
+      - name: Restore — CoreService
+        run: dotnet restore BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.sln
+
+      - name: Build — AuthService
+        run: dotnet build BACKEND/ArenaOps.AuthService.sln --no-restore -c Release
+
+      - name: Build — CoreService
+        run: dotnet build BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.sln --no-restore -c Release
+
+      - name: Test — AuthService
+        run: dotnet test BACKEND/ArenaOps.AuthService.sln --no-build -c Release --logger trx --results-directory TestResults/auth
+
+      - name: Test — CoreService
+        run: dotnet test BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.sln --no-build -c Release --logger trx --results-directory TestResults/core
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: TestResults/
+
+  # ── Frontend: lint + type-check ──────────────────────────────────────────
+  frontend:
+    name: Frontend — Lint & Type-Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: FRONTEND/arenaops-web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: FRONTEND/arenaops-web
+        run: npm ci
+
+      - name: Lint
+        working-directory: FRONTEND/arenaops-web
+        run: npx eslint .
+
+      - name: Type-check
+        working-directory: FRONTEND/arenaops-web
+        run: npx tsc --noEmit
+
+  # ── Deploy to IIS (main branch only) ─────────────────────────────────────
+  deploy:
+    name: Deploy — IIS
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, windows, iis-server]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to IIS
+        shell: pwsh
+        run: .\deploy-iis.ps1

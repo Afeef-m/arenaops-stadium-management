@@ -37,5 +37,12 @@ Logs/
 # RSA private keys
 Keys/
 *.key
+
+# ngrok
+ngrok.yml
+start-tunnels.ps1
 tmpclaude*
 nul
+
+# GitHub Actions self-hosted runner (not part of source)
+actions-runner/
