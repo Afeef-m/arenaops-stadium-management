@@ -183,14 +183,17 @@ var app = builder.Build();
 app.UseSerilogRequestLogging();
 
 // Global exception handler — must be first in pipeline
-// app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 // Configure the HTTP request pipeline.
-app.UseSwagger();
-app.UseSwaggerUI(options =>
+if (app.Environment.IsDevelopment())
 {
-    options.SwaggerEndpoint("v1/swagger.json", "ArenaOps Auth Service v1");
-});
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ArenaOps Auth Service v1");
+    });
+}
 
 // Only redirect to HTTPS in production (dev uses HTTP only)
 if (!app.Environment.IsDevelopment())
