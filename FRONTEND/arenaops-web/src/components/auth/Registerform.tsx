@@ -23,6 +23,11 @@ interface FormState {
   };
 }
 
+const readStoredValue = (key: string): string => {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(key) ?? "";
+};
+
 export default function RegisterForm() {
   const containerRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch<AppDispatch>();
@@ -30,8 +35,8 @@ export default function RegisterForm() {
   const { loading, isAuthenticated, error } = useSelector((state: RootState) => state.auth);
 
   const [showPassword, setShowPassword] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(() => readStoredValue("reg_name"));
+  const [email, setEmail] = useState(() => readStoredValue("reg_email"));
   const [password, setPassword] = useState("");
   const [formErrors, setFormErrors] = useState<FormState["errors"]>({});
 
@@ -41,13 +46,6 @@ export default function RegisterForm() {
   if (isAuthenticated) {
     router.push("/");
   }
-
-  useEffect(() => {
-    const savedName = localStorage.getItem("reg_name");
-    const savedEmail = localStorage.getItem("reg_email");
-    if (savedName) setName(savedName);
-    if (savedEmail) setEmail(savedEmail);
-  }, []);
 
   useEffect(() => {
     localStorage.setItem("reg_name", name);

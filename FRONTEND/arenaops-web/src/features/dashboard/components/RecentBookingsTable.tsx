@@ -79,7 +79,7 @@ function StatusBadge({ status }: { status: RecentBooking["status"] }) {
 }
 
 export function RecentBookingsTable({
-  title = "Recent bookings",
+  title: _title = "Recent bookings",
   data,
   isLoading,
   isError,
@@ -87,6 +87,8 @@ export function RecentBookingsTable({
   onRetry,
   rows = 5,
 }: Props) {
+  void _title;
+
   return (
     <div className="space-y-3">
       {isError && (

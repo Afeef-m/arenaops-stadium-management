@@ -52,7 +52,7 @@ export default function AuthCallbackClient() {
         router.push("/login");
       }
     }
-  }, [searchParams, router, dispatch]);
+  }, [searchParams, router, dispatch, showError, success]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white">

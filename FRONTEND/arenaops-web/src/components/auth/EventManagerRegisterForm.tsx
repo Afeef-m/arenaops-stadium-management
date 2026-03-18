@@ -10,7 +10,6 @@ import { motion, Variants } from "framer-motion";
 import {
     Eye,
     EyeOff,
-    Trophy,
     ArrowRight,
     Loader2
 } from "lucide-react";
@@ -23,6 +22,53 @@ interface FormState {
         organizationName?: string;
         phone?: string;
     };
+}
+
+type InputFieldProps = {
+    label: string;
+    value: string;
+    onChange: (val: string) => void;
+    name: string;
+    type?: string;
+    placeholder?: string;
+    error?: string;
+    itemVariants: Variants;
+    activeField: string | null;
+    setActiveField: (value: string | null) => void;
+};
+
+function InputField({
+    label,
+    value,
+    onChange,
+    name,
+    type = "text",
+    placeholder,
+    error,
+    itemVariants,
+    activeField,
+    setActiveField,
+}: InputFieldProps) {
+    return (
+        <motion.div variants={itemVariants} className="space-y-1.5">
+            <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest ml-1">{label}</label>
+            <div className="relative group">
+                <input
+                    type={type}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    onFocus={() => setActiveField(name)}
+                    onBlur={() => setActiveField(null)}
+                    placeholder={placeholder}
+                    className={`w-full px-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder:text-zinc-700 outline-none transition-all duration-300
+                        ${activeField === name || value ? 'border-blue-500/50 bg-zinc-900 shadow-[0_0_15px_-3px_rgba(59,130,246,0.1)]' : 'hover:border-zinc-700'}
+                        ${error ? 'border-red-500/50' : ''}
+                    `}
+                />
+            </div>
+            {error && <p className="text-red-400 text-[10px] ml-1 font-medium">{error}</p>}
+        </motion.div>
+    );
 }
 
 export default function EventManagerRegisterForm() {
@@ -101,43 +147,6 @@ export default function EventManagerRegisterForm() {
         },
     };
 
-    const InputField = ({
-        label,
-        value,
-        onChange,
-        name,
-        type = "text",
-        placeholder,
-        error
-    }: {
-        label: string,
-        value: string,
-        onChange: (val: string) => void,
-        name: string,
-        type?: string,
-        placeholder?: string,
-        error?: string
-    }) => (
-        <motion.div variants={itemVariants} className="space-y-1.5">
-            <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest ml-1">{label}</label>
-            <div className="relative group">
-                <input
-                    type={type}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    onFocus={() => setActiveField(name)}
-                    onBlur={() => setActiveField(null)}
-                    placeholder={placeholder}
-                    className={`w-full px-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-lg text-sm text-zinc-100 placeholder:text-zinc-700 outline-none transition-all duration-300
-                        ${activeField === name || value ? 'border-blue-500/50 bg-zinc-900 shadow-[0_0_15px_-3px_rgba(59,130,246,0.1)]' : 'hover:border-zinc-700'}
-                        ${error ? 'border-red-500/50' : ''}
-                    `}
-                />
-            </div>
-            {error && <p className="text-red-400 text-[10px] ml-1 font-medium">{error}</p>}
-        </motion.div>
-    );
-
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-black p-4 selection:bg-blue-500/30 selection:text-blue-200 text-zinc-100">
 
@@ -173,6 +182,9 @@ export default function EventManagerRegisterForm() {
                                 onChange={setFullName}
                                 placeholder="John Doe"
                                 error={formErrors.fullName}
+                                itemVariants={itemVariants}
+                                activeField={activeField}
+                                setActiveField={setActiveField}
                             />
                             <InputField
                                 label="Organization"
@@ -180,6 +192,9 @@ export default function EventManagerRegisterForm() {
                                 value={organizationName}
                                 onChange={setOrganizationName}
                                 placeholder="Acme Inc."
+                                itemVariants={itemVariants}
+                                activeField={activeField}
+                                setActiveField={setActiveField}
                             />
                         </div>
 
@@ -191,6 +206,9 @@ export default function EventManagerRegisterForm() {
                             placeholder="john@example.com"
                             type="email"
                             error={formErrors.email}
+                            itemVariants={itemVariants}
+                            activeField={activeField}
+                            setActiveField={setActiveField}
                         />
 
                         <div className="grid grid-cols-2 gap-4">
@@ -200,6 +218,9 @@ export default function EventManagerRegisterForm() {
                                 value={phone}
                                 onChange={setPhone}
                                 placeholder="(555) 000-0000"
+                                itemVariants={itemVariants}
+                                activeField={activeField}
+                                setActiveField={setActiveField}
                             />
 
                             <motion.div variants={itemVariants} className="space-y-1.5">

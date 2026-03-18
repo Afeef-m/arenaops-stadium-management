@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { resetPassword } from "@/store/authSlice";
 import { AppDispatch, RootState } from "@/store/store";
@@ -16,18 +16,13 @@ export default function ResetPasswordClient() {
   const { loading } = useSelector((state: RootState) => state.auth);
   const { success, error: showError } = useToastActions();
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => searchParams.get("email") ?? "");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const emailParam = searchParams.get("email");
-    if (emailParam) setEmail(emailParam);
-  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

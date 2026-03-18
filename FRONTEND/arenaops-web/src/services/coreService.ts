@@ -7,7 +7,7 @@ export interface ApiResponse<T> {
     success: boolean;
     data: T;
     message: string | null;
-    error: { code: string; message: string; details?: any } | null;
+    error: { code: string; message: string; details?: unknown } | null;
     pagination?: { page: number; pageSize: number; totalCount: number };
 }
 
@@ -247,12 +247,12 @@ export const coreService = {
         return response.data;
     },
 
-    lockLayout: async (eventId: string): Promise<ApiResponse<any>> => {
+    lockLayout: async (eventId: string): Promise<ApiResponse<unknown>> => {
         const response = await api.post(`/api/core/events/${eventId}/layout/lock`);
         return response.data;
     },
 
-    generateSeats: async (eventId: string): Promise<ApiResponse<any>> => {
+    generateSeats: async (eventId: string): Promise<ApiResponse<unknown>> => {
         const response = await api.post(`/api/core/events/${eventId}/generate-seats`);
         return response.data;
     },
@@ -284,34 +284,34 @@ export const coreService = {
         return response.data;
     },
 
-    confirmBooking: async (id: string): Promise<ApiResponse<any>> => {
+    confirmBooking: async (id: string): Promise<ApiResponse<unknown>> => {
         const response = await api.post(`/api/core/bookings/${id}/confirm`);
         return response.data;
     },
 
-    cancelBooking: async (id: string): Promise<ApiResponse<any>> => {
+    cancelBooking: async (id: string): Promise<ApiResponse<unknown>> => {
         const response = await api.post(`/api/core/bookings/${id}/cancel`);
         return response.data;
     },
 
     // ── Seat Map ─────────────────────────────────────────
-    getEventSeats: async (eventId: string, sectionId?: string): Promise<ApiResponse<any[]>> => {
+    getEventSeats: async (eventId: string, sectionId?: string): Promise<ApiResponse<unknown[]>> => {
         const params = sectionId ? `?sectionId=${sectionId}` : '';
         const response = await api.get(`/api/core/events/${eventId}/seats${params}`);
         return response.data;
     },
 
-    holdSeat: async (eventId: string, seatId: string): Promise<ApiResponse<any>> => {
+    holdSeat: async (eventId: string, seatId: string): Promise<ApiResponse<unknown>> => {
         const response = await api.post(`/api/core/events/${eventId}/seats/${seatId}/hold`);
         return response.data;
     },
 
-    releaseSeat: async (eventId: string, seatId: string): Promise<ApiResponse<any>> => {
+    releaseSeat: async (eventId: string, seatId: string): Promise<ApiResponse<unknown>> => {
         const response = await api.post(`/api/core/events/${eventId}/seats/${seatId}/release`);
         return response.data;
     },
 
-    holdStanding: async (eventId: string, sectionId: string, quantity: number): Promise<ApiResponse<any>> => {
+    holdStanding: async (eventId: string, sectionId: string, quantity: number): Promise<ApiResponse<unknown>> => {
         const response = await api.post(`/api/core/events/${eventId}/standing/${sectionId}/hold`, { quantity });
         return response.data;
     },

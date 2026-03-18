@@ -701,7 +701,7 @@ const restoredSeats =
     } finally {
       setIsProcessing(false);
     }
-  }, [isProcessing, showActionMessage]);
+  }, [isProcessing, layoutSettings.pricing, showActionMessage]);
 
   const handleDeleteDraft = useCallback(() => {
     if (isProcessing) {

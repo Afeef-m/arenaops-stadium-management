@@ -93,10 +93,19 @@ function normalizeRecentBookings(payload: unknown): RecentBooking[] {
   // - data: RecentBooking[]
   // - data: { items: RecentBooking[] }
   // - data: { data: RecentBooking[] } (double-wrapped)
-  const root = payload as any;
+  const root = payload;
+  let candidate: unknown[] | null = null;
 
-  const candidate =
-    Array.isArray(root) ? root : Array.isArray(root?.items) ? root.items : Array.isArray(root?.data) ? root.data : null;
+  if (Array.isArray(root)) {
+    candidate = root;
+  } else if (root && typeof root === "object") {
+    const obj = root as UnknownRecord;
+    if (Array.isArray(obj.items)) {
+      candidate = obj.items;
+    } else if (Array.isArray(obj.data)) {
+      candidate = obj.data;
+    }
+  }
 
   if (!candidate) {
     throw new Error("Invalid recent bookings payload");
