@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { registerUser } from "@/store/authSlice";
+import { registerEventManagerUser } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 // import EventManagerNavbar from "@/components/navfooter/EventManagerNavbar";
@@ -51,10 +51,19 @@ export default function EventManagerRegisterForm() {
         setFormErrors({});
 
         const result = await dispatch(
-            registerUser({ email: form.email, password: form.password, fullName: form.fullName, role: "EventManager" })
+            registerEventManagerUser({ 
+                email: form.email, 
+                password: form.password, 
+                fullName: form.fullName, 
+                phoneNumber: form.phoneNumber,
+                organizationName: form.organizationName,
+                gstNumber: form.gstNumber,
+                designation: form.designation,
+                website: form.website
+            })
         );
 
-        if (registerUser.fulfilled.match(result)) {
+        if (registerEventManagerUser.fulfilled.match(result)) {
             localStorage.setItem(
                 "organizerProfile",
                 JSON.stringify({

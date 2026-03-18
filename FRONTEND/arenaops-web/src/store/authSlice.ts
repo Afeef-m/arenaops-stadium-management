@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { authService, LoginPayload, RegisterPayload, UserData, ResetPasswordPayload } from "@/services/authService";
+import { authService, LoginPayload, RegisterPayload, RegisterEventManagerPayload, UserData, ResetPasswordPayload } from "@/services/authService";
 // Tokens are in HttpOnly cookies — only user profile is stored in localStorage
 
 interface AuthState {
@@ -49,6 +49,24 @@ export const registerUser = createAsyncThunk(
             }
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message || "Registration failed");
+        }
+    }
+);
+
+export const registerEventManagerUser = createAsyncThunk(
+    "auth/registerEventManager",
+    async (payload: RegisterEventManagerPayload, { rejectWithValue }) => {
+        try {
+            const response = await authService.registerEventManager(payload);
+            if (response.success) {
+                // Tokens are in HttpOnly cookies — only persist user profile for UI
+                localStorage.setItem("user", JSON.stringify(response.data));
+                return response.data;
+            } else {
+                return rejectWithValue(response.message || "Event Manager Registration failed");
+            }
+        } catch (err: any) {
+            return rejectWithValue(err.response?.data?.message || err.message || "Event Manager Registration failed");
         }
     }
 );
@@ -168,6 +186,22 @@ const authSlice = createSlice({
             state.error = null;
         });
         builder.addCase(registerUser.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string;
+        });
+
+        // Register Event Manager
+        builder.addCase(registerEventManagerUser.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(registerEventManagerUser.fulfilled, (state, action) => {
+            state.loading = false;
+            state.user = action.payload;
+            state.isAuthenticated = true;
+            state.error = null;
+        });
+        builder.addCase(registerEventManagerUser.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload as string;
         });
