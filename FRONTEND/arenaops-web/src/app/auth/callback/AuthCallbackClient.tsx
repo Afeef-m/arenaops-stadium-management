@@ -37,9 +37,13 @@ export default function AuthCallbackClient() {
 
       dispatch(googleLoginUser({ code, redirectUri }))
         .unwrap()
-        .then(() => {
+        .then((res: any) => {
           success("Google Login successful!");
-          router.push("/");
+          if (res?.roles?.includes("EventManager")) {
+            router.push("/event-manager/dashboard");
+          } else {
+            router.push("/");
+          }
         })
         .catch((err: AppError) => {
           console.error("Google Auth Failed:", err);

@@ -5,17 +5,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { registerEventManagerUser } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-// import EventManagerNavbar from "@/components/navfooter/EventManagerNavbar";
-// import EventManagerFooter from "@/components/navfooter/EventManagerFooter";
 import { Ticket, ShieldCheck, Mail, Phone, Building2, FileText, BadgeInfo, Globe, Lock, Eye, EyeOff, ArrowRight, User } from "lucide-react";
 
 export default function EventManagerRegisterForm() {
     const dispatch = useDispatch<AppDispatch>();
     const router = useRouter();
-    const { loading, error } = useSelector(
-        (state: RootState) => state.auth
-    );
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [showPassword, setShowPassword] = useState(false);
@@ -72,7 +66,7 @@ export default function EventManagerRegisterForm() {
                     registeredAsOrganizer: true,
                 })
             );
-            router.push("/manager");
+            router.push("/event-manager/dashboard");
         }
     };
 
@@ -265,7 +259,7 @@ export default function EventManagerRegisterForm() {
                                     </button>
                                 </div>
                                 <p className="text-center text-xs text-slate-500 px-8 relative z-10">
-                                    By clicking "Create My Account", you agree to our <a className="text-slate-300 hover:text-[#10b981] underline cursor-pointer" href="#">Terms of Service</a> and <a className="text-slate-300 hover:text-[#10b981] underline cursor-pointer" href="#">Privacy Policy</a>.
+                                    By clicking &quot;Create My Account&quot;, you agree to our <a className="text-slate-300 hover:text-[#10b981] underline cursor-pointer" href="#">Terms of Service</a> and <a className="text-slate-300 hover:text-[#10b981] underline cursor-pointer" href="#">Privacy Policy</a>.
                                 </p>
                             </form>
                         </div>

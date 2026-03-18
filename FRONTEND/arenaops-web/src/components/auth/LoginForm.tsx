@@ -23,7 +23,7 @@ export default function LoginForm() {
   const containerRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { loading, error, isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
   // Local state for form errors since we are moving away from useActionState for simplicity with Thunks
   const [formErrors, setFormErrors] = useState<FormState["errors"]>({});
@@ -31,10 +31,14 @@ export default function LoginForm() {
 
   // Redirect if authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/");
+    if (isAuthenticated && user) {
+      if (user.roles?.includes("EventManager")) {
+        router.push("/event-manager/dashboard");
+      } else {
+        router.push("/");
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   // Stadium-Entrance Animation
   useLayoutEffect(() => {
@@ -98,7 +102,12 @@ export default function LoginForm() {
 
     if (loginUser.fulfilled.match(result)) {
       success("Welcome back to the Arena!");
-      router.push("/");
+      const userPayload = result.payload as any;
+      if (userPayload?.roles?.includes("EventManager")) {
+         router.push("/event-manager/dashboard");
+      } else {
+         router.push("/");
+      }
     } else {
       if (result.payload) {
         showError(result.payload as string);

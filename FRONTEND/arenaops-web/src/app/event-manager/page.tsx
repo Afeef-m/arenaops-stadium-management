@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { PlayCircle, Grid, TrendingUp, Radio, Quote } from "lucide-react";
 
 export default function EventManagerLandingPage() {
@@ -21,7 +20,7 @@ export default function EventManagerLandingPage() {
               The Future of <span className="text-primary italic">Arena Management</span> is Here.
             </h1>
             <p className="max-w-xl text-lg leading-relaxed text-slate-400 md:text-xl">
-              Experience the industry's first dashboard-driven event management platform. Precision planning meets real-time execution in a single glass-pane view.
+              Experience the industry&apos;s first dashboard-driven event management platform. Precision planning meets real-time execution in a single glass-pane view.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link href="/register-event-manager" className="rounded-lg bg-primary px-8 py-4 text-lg font-bold text-background-dark hover:shadow-[0_0_20px_rgba(71,244,37,0.4)] transition-all">
@@ -50,7 +49,7 @@ export default function EventManagerLandingPage() {
       <section className="bg-background-dark/50 px-6 py-24">
         <div className="mx-auto max-w-7xl">
           <div className="mb-16 flex flex-col items-center text-center">
-            <h2 className="mb-4 text-3xl font-bold text-white md:text-5xl">The Manager's Toolkit</h2>
+            <h2 className="mb-4 text-3xl font-bold text-white md:text-5xl">The Manager&apos;s Toolkit</h2>
             <div className="h-1.5 w-24 rounded-full bg-primary"></div>
             <p className="mt-6 max-w-2xl text-slate-400">Everything you need to orchestrate world-class events, from seat selection to revenue optimization.</p>
           </div>
@@ -142,7 +141,7 @@ export default function EventManagerLandingPage() {
         <div className="mx-auto max-w-4xl text-center">
           <Quote className="w-16 h-16 text-primary mb-8 mx-auto" />
           <blockquote className="text-2xl font-medium italic text-white md:text-4xl leading-snug">
-            "ArenaManager didn't just change how we sell tickets; it changed how we understand our fans. The real-time heatmaps are a game-changer for stadium logistics."
+            &quot;ArenaManager didn&apos;t just change how we sell tickets; it changed how we understand our fans. The real-time heatmaps are a game-changer for stadium logistics.&quot;
           </blockquote>
           <div className="mt-10 flex flex-col items-center gap-4">
             <img alt="Testimonial Author" className="h-16 w-16 rounded-full object-cover border-2 border-primary" data-alt="Professional portrait of a stadium manager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9btHGBZxNeiRIlTaCi7e0jj89DRUPfx0Z-3ZZMw8De0Co7PYtvzEzgN8Uiv8dk4-xfwUZPjso5EicnGGNexsqnEav8Scp3SbzYJlIQZPd6_hyU5F2Z84WV1rTZIhgmsIVtRzrsG3jWxId4_9Sjf8q1iy1N-G6w6vJoigV1UEos-vs6Pragsarsw8RQmSDKcd-f5jPStKS4ogJaCoswJwAvuosaQJqPUeI5citMJsyvk5CRakjOU0SypV-URwS2I0SRl8Pa-IyLuUN"/>

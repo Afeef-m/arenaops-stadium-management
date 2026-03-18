@@ -1,0 +1,46 @@
+﻿
+> arenaops-web@0.1.0 lint
+> eslint
+
+
+D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\app\(public)\events\[eventId]\book\page.tsx
+  22:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\app\(public)\events\[eventId]\page.tsx
+  22:12  warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+  33:14  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  34:14  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  51:66  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  51:87  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\app\auth\callback\AuthCallbackClient.tsx
+  40:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\app\event-manager\page.tsx
+   37:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+   66:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+   77:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+   88:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  110:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  121:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  132:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  147:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\app\layout.tsx
+  38:9  warning  Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged. See: https://nextjs.org/docs/messages/no-page-custom-font  @next/next/no-page-custom-font
+
+D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\components\auth\EventManagerRegisterForm.tsx
+    4:23  warning  'useSelector' is defined but never used                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+    5:23  warning  'RootState' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   14:12  warning  'formErrors' is assigned a value but never used                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  109:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\components\auth\LoginForm.tsx
+  105:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\store\authSlice.ts
+  85:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  97:18  warning  'err' is defined but never used           @typescript-eslint/no-unused-vars
+
+Γ£û 23 problems (2 errors, 21 warnings)
+

@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props) {
       title: `${event?.name || 'Event'} | ArenaOps`,
       description: event?.description || `Details for event`,
     };
-  } catch (error) {
+  } catch {
     return {
       title: `Event ${eventId} | ArenaOps`,
       description: `Details for event ${eventId}`,
@@ -48,7 +48,7 @@ export default async function EventDetailPage({ params }: Props) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-4">Event Not Found</h1>
-          <p className="text-muted-foreground mb-6">The event you're looking for doesn't exist or has been removed.</p>
+          <p className="text-muted-foreground mb-6">The event you&apos;re looking for doesn&apos;t exist or has been removed.</p>
           <Link href="/events" className="text-primary hover:underline">
             Back to Events
           </Link>
