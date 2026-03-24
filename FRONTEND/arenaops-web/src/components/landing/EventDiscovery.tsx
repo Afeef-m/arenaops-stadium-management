@@ -10,9 +10,7 @@ import type { Event } from "@/services/coreService"
 interface EventDiscoveryProps {
   events: Event[]
 }
-export function EventDiscovery({ events: _events }: EventDiscoveryProps) {
-    void _events;
-
+export function EventDiscovery({ events }: EventDiscoveryProps) {
     return (
         <section className={styles.eventDiscoverySection}>
             <div className="container mx-auto px-6 relative z-10">

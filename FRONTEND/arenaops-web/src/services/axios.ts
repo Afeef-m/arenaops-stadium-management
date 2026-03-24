@@ -4,7 +4,7 @@ import axios from 'axios';
 // The proxy forwards requests to the actual backend services (localhost:5001, localhost:5007)
 // Authentication is handled via HttpOnly cookies — withCredentials ensures they are sent on every request
 export const api = axios.create({
-    baseURL: '',
+    baseURL: typeof window === 'undefined' ? 'http://localhost:3000' : '',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',

@@ -1,0 +1,211 @@
+@use "sass:color";
+
+// App default color theme (emerald)
+$dark-bg: #050505;
+$card-bg: #111827;
+$card-bg-light: rgba(17, 24, 39, 0.4);
+$border-color: rgba(255, 255, 255, 0.05);
+$primary-accent: #10b981; // emerald-500
+$primary-accent-light: #34d399; // emerald-400
+$text-primary: #f8fafc;
+$text-secondary: #94a3b8;
+$text-muted: #64748b;
+
+.profileCard {
+    background: $card-bg-light;
+    backdrop-filter: blur(12px);
+    border: 1px solid $border-color;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    width: 100%;
+    max-width: 32rem;
+}
+
+// ─── Header ──────────────────────────────────────────────────────────────────
+
+.header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 2rem 1.5rem 1.5rem;
+    text-align: center;
+    border-bottom: 1px solid $border-color;
+    background: rgba(255, 255, 255, 0.02);
+
+    @media (min-width: 480px) {
+        flex-direction: row;
+        text-align: left;
+        padding: 1.5rem;
+    }
+}
+
+.avatarWrapper {
+    flex-shrink: 0;
+}
+
+.avatar {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 1rem;
+    object-fit: cover;
+    border: 2px solid rgba($primary-accent, 0.3);
+}
+
+.avatarPlaceholder {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 1rem;
+    background: rgba($primary-accent, 0.1);
+    border: 1px solid rgba($primary-accent, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatarIcon {
+    width: 2rem;
+    height: 2rem;
+    color: $primary-accent;
+}
+
+.headerInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $text-primary;
+    margin: 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+
+    @media (min-width: 480px) {
+        justify-content: flex-start;
+    }
+}
+
+.roleBadge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.25rem 0.625rem;
+    border-radius: 2rem;
+    background: rgba($primary-accent, 0.15);
+    color: $primary-accent-light;
+    border: 1px solid rgba($primary-accent, 0.3);
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.5rem;
+    border-radius: 2rem;
+}
+
+.verifiedBadge {
+    background: rgba($primary-accent, 0.1);
+    color: $primary-accent;
+    border: 1px solid rgba($primary-accent, 0.2);
+}
+
+// ─── Sections ────────────────────────────────────────────────────────────────
+
+.section {
+    padding: 1.5rem;
+
+    & + & {
+        border-top: 1px solid $border-color;
+    }
+}
+
+.sectionTitle {
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: $text-muted;
+    margin: 0 0 1rem;
+}
+
+// ─── Info List ───────────────────────────────────────────────────────────────
+
+.infoList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    margin: 0;
+}
+
+.infoItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    @media (min-width: 480px) {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+}
+
+.infoLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: $text-muted;
+
+    svg {
+        flex-shrink: 0;
+        color: $primary-accent;
+    }
+}
+
+.infoValue {
+    font-size: 0.875rem;
+    color: $text-primary;
+    margin: 0;
+    word-break: break-word;
+
+    @media (min-width: 480px) {
+        text-align: right;
+    }
+}
+
+.mono {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.8125rem;
+}
+
+.link {
+    color: $primary-accent;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 0.8;
+        text-decoration: underline;
+    }
+}

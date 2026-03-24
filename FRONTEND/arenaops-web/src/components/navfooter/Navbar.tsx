@@ -130,14 +130,25 @@ export default function Navbar() {
                 {/* Desktop Auth/User Buttons */}
                 {isAuthenticated && user ? (
                     <div className="hidden md:flex items-center gap-4">
-                        <div className="flex items-center gap-3 bg-[#111827]/40 backdrop-blur-md rounded-full px-4 py-2 border border-white/5">
-                            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                                <User size={18} />
+                        <Link
+                            href="/profile"
+                            className="flex items-center gap-3 bg-[#111827]/40 backdrop-blur-md rounded-full px-4 py-2 border border-white/5 hover:border-emerald-500/30 transition-all group"
+                        >
+                            <div className="w-8 h-8 rounded-full overflow-hidden bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
+                                {user.profilePictureUrl ? (
+                                    <img
+                                        src={user.profilePictureUrl}
+                                        alt={user.fullName || "User"}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <User size={18} />
+                                )}
                             </div>
-                            <span className="text-sm font-medium text-gray-200">
+                            <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
                                 {user.fullName || "User"}
                             </span>
-                        </div>
+                        </Link>
                         <button
                             onClick={handleLogout}
                             className="bg-[#111827]/40 backdrop-blur-md rounded-full p-2.5 border border-white/5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
@@ -219,12 +230,27 @@ export default function Navbar() {
                         <div className="border-t border-white/10 pt-4 flex flex-col gap-4">
                             {isAuthenticated && user ? (
                                 <>
-                                    <div className="flex items-center gap-3 text-gray-300">
-                                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                                            <User size={18} />
+                                    <Link
+                                        href="/profile"
+                                        onClick={() => setIsMobileOpen(false)}
+                                        className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors"
+                                    >
+                                        <div className="w-10 h-10 rounded-full overflow-hidden bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
+                                            {user.profilePictureUrl ? (
+                                                <img
+                                                    src={user.profilePictureUrl}
+                                                    alt={user.fullName || "User"}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <User size={20} />
+                                            )}
                                         </div>
-                                        <span className="font-medium">{user.fullName || "User"}</span>
-                                    </div>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">{user.fullName || "User"}</span>
+                                            <span className="text-xs text-gray-500">View Profile</span>
+                                        </div>
+                                    </Link>
                                     <button
                                         onClick={handleLogout}
                                         className="text-red-400 hover:text-red-300 flex items-center gap-2"

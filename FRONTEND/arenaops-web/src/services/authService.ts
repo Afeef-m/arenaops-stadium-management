@@ -7,6 +7,7 @@ export interface UserData {
     isNewUser: boolean;
     fullName: string;
     email: string;
+    profilePictureUrl?: string;
 }
 
 export interface AuthResponse {
@@ -15,6 +16,52 @@ export interface AuthResponse {
     message: string | null;
     error: string | null;
 }
+
+// ─── Profile Types ───────────────────────────────────────────────────────────
+
+export interface EventManagerDetails {
+    organizationName?: string;
+    gstNumber?: string;
+    designation?: string;
+    website?: string;
+}
+
+export interface UserProfile {
+    userId: string;
+    fullName?: string;
+    email?: string;
+    phoneNumber?: string;
+    profilePictureUrl?: string;
+    roles?: string[];
+    isEmailVerified?: boolean;
+    createdAt?: string;
+    eventManagerDetails?: EventManagerDetails;
+}
+
+export interface ProfileResponse {
+    success: boolean;
+    data: UserProfile;
+    message: string | null;
+    error: { code: string; message: string; details?: unknown } | null;
+}
+
+export interface UpdateProfilePayload {
+    fullName?: string;
+    phoneNumber?: string;
+    profilePictureUrl?: string;
+    // EventManager only fields
+    organizationName?: string;
+    gstNumber?: string;
+    designation?: string;
+    website?: string;
+}
+
+export interface ChangePasswordPayload {
+    currentPassword: string;
+    newPassword: string;
+}
+
+// ─── Auth Types ──────────────────────────────────────────────────────────────
 
 export interface LoginPayload {
     email: string;
@@ -87,5 +134,22 @@ export const authService = {
     resetPassword: async (payload: ResetPasswordPayload): Promise<{ success: boolean; message: string }> => {
         const response = await api.post('/api/auth/reset-password', payload);
         return response.data;
-    }
+    },
+
+    // ─── Profile Endpoints ───────────────────────────────────────────────────
+
+    getProfile: async (): Promise<ProfileResponse> => {
+        const response = await api.get<ProfileResponse>('/api/auth/profile/me');
+        return response.data;
+    },
+
+    updateProfile: async (payload: UpdateProfilePayload): Promise<ProfileResponse> => {
+        const response = await api.put<ProfileResponse>('/api/auth/profile/me', payload);
+        return response.data;
+    },
+
+    changePassword: async (payload: ChangePasswordPayload): Promise<{ success: boolean; message: string }> => {
+        const response = await api.post('/api/auth/change-password', payload);
+        return response.data;
+    },
 };
