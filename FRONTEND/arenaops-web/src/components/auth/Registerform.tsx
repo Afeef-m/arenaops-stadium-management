@@ -42,10 +42,11 @@ export default function RegisterForm() {
 
   const { success, error: showError } = useToastActions();
 
-  // Redirect if authenticated
-  if (isAuthenticated) {
-    router.push("/");
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace("/");
+    }
+  }, [isAuthenticated, router]);
 
   useEffect(() => {
     localStorage.setItem("reg_name", name);
@@ -126,6 +127,14 @@ export default function RegisterForm() {
       }
     }
   };
+
+  if (isAuthenticated) {
+    return (
+      <div className="flex min-h-[24rem] w-[85vw] max-w-250 items-center justify-center rounded-[2.5rem] border border-white/5 bg-[#050505] text-center text-sm font-bold uppercase tracking-[0.2em] text-gray-400">
+        Redirecting to ArenaOps...
+      </div>
+    );
+  }
 
   return (
     <div

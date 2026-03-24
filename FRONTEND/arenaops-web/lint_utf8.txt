@@ -7,11 +7,8 @@ D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\app\(public)\e
   22:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\app\(public)\events\[eventId]\page.tsx
-  22:12  warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
-  33:14  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
-  34:14  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
-  51:66  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
-  51:87  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  33:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\app\auth\callback\AuthCallbackClient.tsx
   40:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -42,5 +39,5 @@ D:\ArenaOps\arenaops-stadium-management\FRONTEND\arenaops-web\src\store\authSlic
   85:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   97:18  warning  'err' is defined but never used           @typescript-eslint/no-unused-vars
 
-Γ£û 23 problems (2 errors, 21 warnings)
+Γ£û 20 problems (0 errors, 20 warnings)
 

@@ -45,6 +45,7 @@ builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IEventSlotRepository, EventSlotRepository>();
 builder.Services.AddScoped<ISectionTicketTypeRepository, SectionTicketTypeRepository>();
 builder.Services.AddScoped<IEventSeatRepository, EventSeatRepository>();
+builder.Services.AddScoped<IAdminActivityRepository, AdminActivityRepository>();
 
 // Services
 builder.Services.AddScoped<IStadiumService, StadiumService>();
@@ -113,6 +114,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new RsaSecurityKey(rsa),
             ClockSkew = TimeSpan.Zero
+        };
+
+        // Read JWT from cookie when Authorization header is absent
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (string.IsNullOrEmpty(context.Token) &&
+                    context.Request.Cookies.TryGetValue("accessToken", out var cookieToken))
+                {
+                    context.Token = cookieToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 

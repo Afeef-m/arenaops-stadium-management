@@ -43,6 +43,7 @@ public class StadiumController : ControllerBase
     /// List all stadiums
     /// </summary>
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var response = await _stadiumService.GetAllStadiumsAsync();
@@ -53,6 +54,7 @@ public class StadiumController : ControllerBase
     /// Get stadium details by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var response = await _stadiumService.GetStadiumByIdAsync(id);

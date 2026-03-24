@@ -39,7 +39,9 @@ export default function AuthCallbackClient() {
         .unwrap()
         .then((res: any) => {
           success("Google Login successful!");
-          if (res?.roles?.includes("StadiumOwner")) {
+          if (res?.roles?.includes("Admin")) {
+            router.push("/admin/dashboard");
+          } else if (res?.roles?.includes("StadiumOwner")) {
             router.push("/manager");
           } else if (res?.roles?.includes("EventManager")) {
             router.push("/event-manager/dashboard");

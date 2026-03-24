@@ -29,6 +29,9 @@ public class CoreDbContext : DbContext
     // ─── Event Time Slots ───────────────────────────────────────
     public DbSet<EventSlot> EventSlots => Set<EventSlot>();
 
+    // ─── Admin Activity Logs ──────────────────────────────────────
+    public DbSet<AdminActivity> AdminActivities => Set<AdminActivity>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -349,6 +352,26 @@ public class CoreDbContext : DbContext
                   .HasForeignKey(e => e.SourceSeatId)
                   .OnDelete(DeleteBehavior.SetNull)
                   .IsRequired(false);
+        });
+
+        // ─── AdminActivity (Admin Dashboard Activity Feed) ───────────
+        modelBuilder.Entity<AdminActivity>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.ActivityType).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.EntityId).HasMaxLength(100);
+            entity.Property(e => e.EntityType).HasMaxLength(50);
+            entity.Property(e => e.UserName).HasMaxLength(200);
+            entity.Property(e => e.UserEmail).HasMaxLength(256);
+            entity.Property(e => e.Metadata).HasMaxLength(2000);
+            entity.Property(e => e.Timestamp).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasIndex(e => e.ActivityType);
+            entity.HasIndex(e => e.Timestamp);
+            entity.HasIndex(e => e.UserId);
         });
     }
 }
