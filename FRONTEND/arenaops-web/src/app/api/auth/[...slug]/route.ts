@@ -5,9 +5,28 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:5001/
 // Headers that should NOT be forwarded to the backend
 const HOP_BY_HOP_HEADERS = ['host', 'connection', 'expect', 'transfer-encoding', 'keep-alive', 'upgrade'];
 
+// Get the base URL without the /api/auth suffix for profile routes
+function getAuthServiceBase(): string {
+    const url = AUTH_SERVICE_URL;
+    // Remove /api/auth suffix to get base URL for building other routes
+    if (url.endsWith('/api/auth')) {
+        return url.slice(0, -9); // Remove "/api/auth"
+    }
+    // Fallback for localhost format
+    return url.replace('/api/auth', '');
+}
+
 async function handleProxy(request: NextRequest, slug: string[]) {
     const slugPath = slug.join('/');
-    const url = `${AUTH_SERVICE_URL}/${slugPath}${request.nextUrl.search}`;
+
+    // Route profile/* requests to /api/profile/* on the auth service
+    let url: string;
+    if (slugPath.startsWith('profile')) {
+        const baseUrl = getAuthServiceBase();
+        url = `${baseUrl}/api/${slugPath}${request.nextUrl.search}`;
+    } else {
+        url = `${AUTH_SERVICE_URL}/${slugPath}${request.nextUrl.search}`;
+    }
 
     // Build clean headers — strip hop-by-hop and problematic ones
     const headers: Record<string, string> = {};

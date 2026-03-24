@@ -7,17 +7,14 @@ on:
     branches: [main]
 
 jobs:
-  # ── Backend: build + integration tests ───────────────────────────────────
+  # ── CI: Backend Build & Test (GitHub hosted) ───────────────────────
   backend:
     name: Backend — Build & Test
-    runs-on: [self-hosted, windows, iis-server]
+    runs-on: ubuntu-latest   # ✅ FIX: no more PowerShell issues
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set PowerShell Execution Policy
-        shell: powershell
-        run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
@@ -37,27 +34,22 @@ jobs:
         run: dotnet build BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.sln --no-restore -c Release
 
       - name: Test — AuthService
-        run: dotnet test BACKEND/ArenaOps.AuthService.sln --no-build -c Release --logger trx --results-directory TestResults/auth
+        run: dotnet test BACKEND/ArenaOps.AuthService.sln --no-build -c Release
 
       - name: Test — CoreService
-        run: dotnet test BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.sln --no-build -c Release --logger trx --results-directory TestResults/core
+        run: dotnet test BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.sln --no-build -c Release
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-test-results
-          path: TestResults/
 
-  # ── Frontend: lint + type-check ──────────────────────────────────────────
+  # ── CI: Frontend (GitHub hosted) ───────────────────────────────────
   frontend:
     name: Frontend — Lint & Type-Check
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -76,3 +68,37 @@ jobs:
         working-directory: FRONTEND/arenaops-web
         run: npx tsc --noEmit
 
+
+  # ── CD: Deploy to IIS (Self-hosted) ────────────────────────────────
+  deploy:
+    name: Deploy to IIS
+    needs: [backend, frontend]   # ✅ Only deploy if BOTH pass
+    if: github.ref == 'refs/heads/main'   # ✅ Only on main branch
+    runs-on: [self-hosted, windows, iis-server]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish App
+        run: dotnet publish BACKEND/ArenaOps.AuthService.sln -c Release -o publish
+
+      - name: Stop IIS Site
+        shell: powershell
+        run: |
+          Import-Module WebAdministration
+          Stop-WebSite -Name "YourSiteName"
+
+      - name: Copy Files to IIS
+        run: |
+          xcopy /E /Y publish\* C:\inetpub\wwwroot\YourApp\
+
+      - name: Start IIS Site
+        shell: powershell
+        run: |
+          Start-WebSite -Name "YourSiteName"
