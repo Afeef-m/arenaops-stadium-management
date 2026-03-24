@@ -48,6 +48,18 @@ public class AuthWebApplicationFactory : WebApplicationFactory<Program>
                 d => d.ServiceType == typeof(ITokenBlacklistService));
             if (blacklistDescriptor != null) services.Remove(blacklistDescriptor);
             services.AddSingleton<ITokenBlacklistService, InMemoryTokenBlacklistService>();
+
+            // Setup SQLite in-memory database instead of LocalDB
+            var dbContextDescriptor = services.FirstOrDefault(
+                d => d.ServiceType == typeof(DbContextOptions<AuthDbContext>));
+            if (dbContextDescriptor != null) services.Remove(dbContextDescriptor);
+
+            var dbConnectionDescriptor = services.FirstOrDefault(
+                d => d.ServiceType == typeof(System.Data.Common.DbConnection));
+            if (dbConnectionDescriptor != null) services.Remove(dbConnectionDescriptor);
+
+            services.AddDbContext<AuthDbContext>(options =>
+                options.UseSqlite("DataSource=:memory:"));
         });
     }
 
@@ -57,7 +69,8 @@ public class AuthWebApplicationFactory : WebApplicationFactory<Program>
 
         _scope = host.Services.CreateScope();
         var db = _scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-        db.Database.Migrate();
+        db.Database.OpenConnection();
+        db.Database.EnsureCreated();
 
         return host;
     }
