@@ -148,6 +148,28 @@ $text-muted: #64748b;
     gap: 0.5rem;
 }
 
+.headerActions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+
+    @media (min-width: 640px) {
+        margin-top: 0;
+    }
+}
+
+.layoutButton {
+    background: rgba($primary-accent, 0.1) !important;
+    border: 1px solid rgba($primary-accent, 0.4) !important;
+    color: $primary-accent-light !important;
+    font-weight: 600 !important;
+
+    &:hover {
+        background: rgba($primary-accent, 0.2) !important;
+        border-color: rgba($primary-accent, 0.6) !important;
+    }
+}
+
 .statusBadge {
     display: inline-flex;
     align-items: center;

@@ -40,6 +40,7 @@ export default function CreateStadiumPage() {
         city: "",
         state: "",
         country: "",
+        pincode: "",
         latitude: 0,
         longitude: 0,
     });
@@ -96,18 +97,29 @@ export default function CreateStadiumPage() {
 
         setSaving(true);
         try {
-            // Create stadium first
-            const response = await coreService.createStadium(formData);
+            let finalFormData = { ...formData };
+
+            // Upload image first if selected
+            if (selectedFile) {
+                const uploadRes = await uploadService.uploadImage(selectedFile, {
+                    folder: "arenaops/stadiums/temp",
+                });
+
+                if (uploadRes.success && uploadRes.data) {
+                    finalFormData = {
+                        ...finalFormData,
+                        imageUrl: uploadRes.data.url,
+                        imagePublicId: uploadRes.data.publicId,
+                    };
+                } else {
+                    showNotification("error", "Image upload failed. Proceeding without image.");
+                }
+            }
+
+            // Create stadium with full data including image info
+            const response = await coreService.createStadium(finalFormData);
 
             if (response.success && response.data) {
-                // If image selected, upload it
-                if (selectedFile) {
-                    await uploadService.uploadStadiumImage(
-                        selectedFile,
-                        response.data.stadiumId
-                    );
-                }
-
                 showNotification("success", "Stadium created successfully");
                 setTimeout(() => {
                     router.push("/manager");
@@ -267,6 +279,19 @@ export default function CreateStadiumPage() {
                                     value={formData.country}
                                     onChange={handleInputChange}
                                     placeholder="Country"
+                                    className={styles.input}
+                                    required
+                                />
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>Pincode *</label>
+                                <input
+                                    type="text"
+                                    name="pincode"
+                                    value={formData.pincode}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter pincode"
                                     className={styles.input}
                                     required
                                 />

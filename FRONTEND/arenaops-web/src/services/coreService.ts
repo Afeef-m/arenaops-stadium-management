@@ -19,12 +19,16 @@ export interface Stadium {
     city: string;
     state: string;
     country: string;
+    pincode: string;
     latitude: number;
     longitude: number;
+    imageUrl: string;
+    imagePublicId: string;
     capacity?: number;
     ownerId?: string;
     isApproved?: boolean;
     createdAt?: string;
+    isActive?: boolean;
 }
 
 export interface CreateStadiumPayload {
@@ -33,8 +37,11 @@ export interface CreateStadiumPayload {
     city: string;
     state: string;
     country: string;
+    pincode: string;
     latitude: number;
     longitude: number;
+    imageUrl?: string;
+    imagePublicId?: string;
 }
 
 // Seating Plan
