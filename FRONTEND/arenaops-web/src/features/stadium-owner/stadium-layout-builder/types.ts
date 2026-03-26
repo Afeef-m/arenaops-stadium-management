@@ -143,11 +143,11 @@ export const DEFAULT_CONSTRAINTS: CapacityConstraints = {
   seatsPerRow: { min: 20, max: 30 },
 };
 
-export type WarningSevert = 'info' | 'warning' | 'error';
+export type WarningSeverity = 'info' | 'warning' | 'error';
 
 export interface CapacityWarning {
   id: string;
-  severity: WarningSevert;
+  severity: WarningSeverity;
   message: string;
   sectionId?: string;  // If warning relates to specific section
   field: string;  // 'totalCapacity' | 'sectionCount' | 'sectionCapacity'
@@ -313,6 +313,42 @@ export const DEFAULT_PRICING: SeatPricing = {
 };
 
 // ============================================================================
+// Section Create/Update Requests
+// ============================================================================
+
+export interface SectionCreateRequest {
+  name: string;
+  shape: SectionShape;
+  centerX: number;
+  centerY: number;
+
+  // Arc geometry (if shape === 'arc')
+  innerRadius?: number;
+  outerRadius?: number;
+  startAngle?: number;
+  endAngle?: number;
+
+  // Rectangle geometry (if shape === 'rectangle')
+  width?: number;
+  height?: number;
+  rotation?: number;
+
+  // Seating configuration
+  rows: number;
+  seatsPerRow: number;
+  seatType: SeatType;
+  verticalAisles?: number[];
+  horizontalAisles?: number[];
+
+  // Bowl assignment (optional)
+  bowlId?: string | null;
+
+  // Display
+  color?: string;
+  isActive?: boolean;
+}
+
+// ============================================================================
 // Helper Type Guards
 // ============================================================================
 
@@ -324,6 +360,6 @@ export function isRectangleSection(section: LayoutSection): boolean {
   return section.shape === 'rectangle';
 }
 
-export function hasWarnings(warnings: CapacityWarning[], severity: WarningSevert): boolean {
+export function hasWarnings(warnings: CapacityWarning[], severity: WarningSeverity): boolean {
   return warnings.some(w => w.severity === severity);
 }

@@ -2,6 +2,8 @@
 
 import React, { useRef, useState, useCallback } from "react";
 import { useCanvas } from "./hooks/useCanvas";
+import { FieldRenderer, FieldGradientDefs } from "./components/FieldRenderer";
+import { createArcPath, createRectanglePath } from "./utils/geometry";
 import type { FieldConfig, LayoutSection, Bowl, ViewMode, Point } from "./types";
 
 export interface LayoutCanvasProps {
@@ -164,50 +166,37 @@ export function LayoutCanvas({
   // Render Field
   // ============================================================================
 
-  const renderField = () => {
-    const centerX = width / 2;
-    const centerY = height / 2;
-
-    if (fieldConfig.shape === 'round') {
-      const radius = (fieldConfig.length / 2) * 2; // Scale for visualization
-
-      return (
-        <circle
-          cx={centerX}
-          cy={centerY}
-          r={radius}
-          fill="url(#field-gradient)"
-          stroke="#10b981"
-          strokeWidth={3}
-        />
-      );
-    } else {
-      // Rectangle field
-      const fieldWidth = fieldConfig.length * 2; // Scale for visualization
-      const fieldHeight = fieldConfig.width * 2;
-
-      return (
-        <rect
-          x={centerX - fieldWidth / 2}
-          y={centerY - fieldHeight / 2}
-          width={fieldWidth}
-          height={fieldHeight}
-          rx={10}
-          fill="url(#field-gradient)"
-          stroke="#10b981"
-          strokeWidth={3}
-        />
-      );
-    }
-  };
+  // Field now rendered using FieldRenderer component (see JSX below)
 
   // ============================================================================
-  // Render Sections (Placeholder)
+  // Render Sections (Proper Geometry)
   // ============================================================================
 
   const renderSection = (section: LayoutSection) => {
     const isSelected = section.id === selectedSectionId;
     const bowl = bowls.find(b => b.id === section.bowlId);
+    const displayColor = bowl?.color || section.color;
+
+    // Generate path based on shape
+    let path = '';
+    if (section.shape === 'arc') {
+      path = createArcPath(
+        section.centerX,
+        section.centerY,
+        section.innerRadius,
+        section.outerRadius,
+        section.startAngle,
+        section.endAngle
+      );
+    } else {
+      path = createRectanglePath(
+        section.centerX,
+        section.centerY,
+        section.width,
+        section.height,
+        section.rotation
+      );
+    }
 
     return (
       <g
@@ -217,41 +206,55 @@ export function LayoutCanvas({
         onDoubleClick={(e) => handleSectionDoubleClick(section.id, e)}
         style={{ cursor: 'pointer' }}
       >
-        {/* Placeholder rectangle for section */}
-        <rect
-          x={section.centerX - 50}
-          y={section.centerY - 30}
-          width={100}
-          height={60}
-          fill={bowl?.color || section.color}
-          fillOpacity={isSelected ? 0.8 : 0.4}
+        {/* Section shape */}
+        <path
+          d={path}
+          fill={displayColor}
+          fillOpacity={isSelected ? 0.8 : 0.5}
           stroke={isSelected ? '#3b82f6' : '#9ca3af'}
-          strokeWidth={isSelected ? 3 : 1}
-          rx={5}
+          strokeWidth={isSelected ? 3 : 1.5}
+          className="section-path"
         />
-        <text
-          x={section.centerX}
-          y={section.centerY}
-          textAnchor="middle"
-          alignmentBaseline="middle"
-          fill="#000"
-          fontSize={12}
-          fontWeight={isSelected ? 600 : 400}
+
+        {/* Center point indicator */}
+        <circle
+          cx={section.centerX}
+          cy={section.centerY}
+          r={isSelected ? 6 : 4}
+          fill={isSelected ? '#3b82f6' : '#6b7280'}
+          opacity={0.7}
+          className="section-center"
           pointerEvents="none"
-        >
-          {section.name}
-        </text>
-        <text
-          x={section.centerX}
-          y={section.centerY + 15}
-          textAnchor="middle"
-          alignmentBaseline="middle"
-          fill="#666"
-          fontSize={10}
-          pointerEvents="none"
-        >
-          {section.calculatedCapacity} seats
-        </text>
+        />
+
+        {/* Label (only show at reasonable zoom) */}
+        {canvas.zoom > 0.5 && (
+          <g className="section-label" pointerEvents="none">
+            <text
+              x={section.centerX}
+              y={section.centerY - 5}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="#000"
+              fontSize="12"
+              fontWeight={isSelected ? 600 : 400}
+              className="section-name"
+            >
+              {section.name}
+            </text>
+            <text
+              x={section.centerX}
+              y={section.centerY + 12}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="#666"
+              fontSize="10"
+              className="section-capacity"
+            >
+              {section.calculatedCapacity} seats
+            </text>
+          </g>
+        )}
       </g>
     );
   };
@@ -274,13 +277,8 @@ export function LayoutCanvas({
         onWheel={handleWheel}
         style={{ cursor: isPanning ? 'grabbing' : 'grab', userSelect: 'none' }}
       >
-        {/* Gradients */}
-        <defs>
-          <linearGradient id="field-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#22c55e', stopOpacity: 0.8 }} />
-            <stop offset="100%" style={{ stopColor: '#16a34a', stopOpacity: 0.9 }} />
-          </linearGradient>
-        </defs>
+        {/* Gradients and field defs */}
+        <FieldGradientDefs />
 
         {/* Background grid */}
         {renderGrid()}
@@ -288,7 +286,7 @@ export function LayoutCanvas({
         {/* Transformed content */}
         <g transform={canvas.getTransform()}>
           {/* Field */}
-          {renderField()}
+          <FieldRenderer fieldConfig={fieldConfig} showMarkings={true} />
 
           {/* Sections */}
           {sections.map(renderSection)}
@@ -352,8 +350,28 @@ export function LayoutCanvas({
           transition: all 0.15s;
         }
 
-        .section:hover rect {
-          filter: brightness(1.1);
+        .section:hover .section-path {
+          filter: brightness(1.15);
+        }
+
+        .section-path {
+          transition: all 0.15s;
+        }
+
+        .section-center {
+          transition: all 0.15s;
+        }
+
+        .section-label {
+          user-select: none;
+        }
+
+        .section-name {
+          text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .section-capacity {
+          text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
         }
       `}</style>
     </div>

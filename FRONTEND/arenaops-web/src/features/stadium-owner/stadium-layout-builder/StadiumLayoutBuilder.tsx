@@ -1,24 +1,13 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import type {
-  LayoutBuilderState,
-  BuilderMode,
-  FieldConfig,
-  Bowl,
-  LayoutSection,
-  EditorMode,
-  ViewMode,
-  DEFAULT_FIELD_CONFIG,
-} from "./types";
-
-// Components will be imported as we create them
-// import { LayoutCanvas } from "./LayoutCanvas";
-// import { FieldConfigPanel } from "./FieldConfigPanel";
-// import { BowlManagerSidebar } from "./BowlManagerSidebar";
-// import { SectionPropertiesPanel } from "./SectionPropertiesPanel";
-// import { CapacityValidation } from "./CapacityValidation";
+import { useLayoutBuilder } from "./hooks/useLayoutBuilder";
+import { LayoutCanvas } from "./LayoutCanvas";
+import { FieldConfigPanel } from "./FieldConfigPanel";
+import { SectionCreationModal } from "./SectionCreationModal";
+import { SectionPropertiesPanel } from "./SectionPropertiesPanel";
+import type { BuilderMode } from "./types";
 
 const CANVAS_WIDTH = 1400;
 const CANVAS_HEIGHT = 900;
@@ -47,137 +36,85 @@ export function StadiumLayoutBuilder({
   const router = useRouter();
 
   // ============================================================================
-  // State Management
+  // State Management (via hook)
   // ============================================================================
 
-  const [fieldConfig, setFieldConfig] = useState<FieldConfig>(DEFAULT_FIELD_CONFIG);
-  const [bowls, setBowls] = useState<Bowl[]>([]);
-  const [sections, setSections] = useState<LayoutSection[]>([]);
-  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
-  const [selectedSeatIds, setSelectedSeatIds] = useState<Set<string>>(new Set());
-  const [editorMode, setEditorMode] = useState<EditorMode>('stadium');
-  const [viewMode, setViewMode] = useState<ViewMode>('overview');
-  const [isLayoutLocked, setIsLayoutLocked] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
+  const {
+    fieldConfig,
+    updateFieldConfig,
+    bowls,
+    addBowl,
+    updateBowl,
+    deleteBowl,
+    sections,
+    addSection,
+    updateSection,
+    deleteSection,
+    selectedSectionId,
+    selectSection,
+    editorMode,
+    setEditorMode,
+    viewMode,
+    setViewMode,
+    isLayoutLocked,
+    setIsLayoutLocked,
+    isDirty,
+    stats,
+  } = useLayoutBuilder({ mode, stadiumId, eventId, templateId });
+
+  // ============================================================================
+  // Local State
+  // ============================================================================
+
   const [saving, setSaving] = useState(false);
-
-  // ============================================================================
-  // Computed Values
-  // ============================================================================
-
-  const selectedSection = sections.find(s => s.id === selectedSectionId) || null;
-
-  const totalCapacity = sections.reduce((sum, section) => sum + section.calculatedCapacity, 0);
-
-  const stats = {
-    totalSections: sections.length,
-    totalCapacity,
-    averageCapacityPerSection: sections.length > 0 ? Math.round(totalCapacity / sections.length) : 0,
-    activeSections: sections.filter(s => s.isActive).length,
-  };
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // ============================================================================
   // Event Handlers
   // ============================================================================
 
-  const handleFieldConfigChange = useCallback((newConfig: FieldConfig) => {
-    setFieldConfig(newConfig);
-    setIsDirty(true);
-  }, []);
+  const handleFieldConfigChange = (newConfig) => {
+    updateFieldConfig(newConfig);
+  };
 
-  const handleBowlCreate = useCallback(() => {
-    const newBowl: Bowl = {
-      id: `bowl-${Date.now()}`,
-      name: `Bowl ${bowls.length + 1}`,
-      color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
-      sectionIds: [],
-      isActive: true,
-      displayOrder: bowls.length + 1,
-    };
-    setBowls(prev => [...prev, newBowl]);
-    setIsDirty(true);
-  }, [bowls.length]);
+  const handleSectionSelect = (sectionId: string | null) => {
+    selectSection(sectionId);
+  };
 
-  const handleBowlUpdate = useCallback((bowlId: string, updates: Partial<Bowl>) => {
-    setBowls(prev => prev.map(b => b.id === bowlId ? { ...b, ...updates } : b));
-    setIsDirty(true);
-  }, []);
-
-  const handleBowlDelete = useCallback((bowlId: string) => {
-    // Remove bowl and unassign sections
-    setBowls(prev => prev.filter(b => b.id !== bowlId));
-    setSections(prev => prev.map(s => s.bowlId === bowlId ? { ...s, bowlId: null } : s));
-    setIsDirty(true);
-  }, []);
-
-  const handleSectionAssignToBowl = useCallback((sectionId: string, bowlId: string | null) => {
-    setSections(prev => prev.map(s =>
-      s.id === sectionId ? { ...s, bowlId } : s
-    ));
-
-    // Update bowl's sectionIds
-    setBowls(prev => prev.map(bowl => ({
-      ...bowl,
-      sectionIds: sections
-        .filter(s => s.bowlId === bowl.id || (s.id === sectionId && bowl.id === bowlId))
-        .map(s => s.id),
-    })));
-
-    setIsDirty(true);
-  }, [sections]);
-
-  const handleSectionSelect = useCallback((sectionId: string | null) => {
-    setSelectedSectionId(sectionId);
-    setSelectedSeatIds(new Set());
-  }, []);
-
-  const handleSectionUpdate = useCallback((sectionId: string, updates: Partial<LayoutSection>) => {
-    setSections(prev => prev.map(s =>
-      s.id === sectionId ? { ...s, ...updates } : s
-    ));
-    setIsDirty(true);
-  }, []);
-
-  const handleSectionDelete = useCallback((sectionId: string) => {
-    if (!confirm(`Delete ${sections.find(s => s.id === sectionId)?.name}?`)) {
-      return;
-    }
-    setSections(prev => prev.filter(s => s.id !== sectionId));
-    setSelectedSectionId(null);
-    setIsDirty(true);
-  }, [sections]);
-
-  const handleSectionDoubleClick = useCallback((sectionId: string) => {
-    setSelectedSectionId(sectionId);
+  const handleSectionDoubleClick = (sectionId: string) => {
+    selectSection(sectionId);
     setEditorMode('section-detail');
-  }, []);
+  };
 
-  const handleExitDetailMode = useCallback(() => {
-    setEditorMode('stadium');
-    setSelectedSeatIds(new Set());
-  }, []);
+  const handleCreateSection = (newSection) => {
+    addSection(newSection);
+    setIsCreateModalOpen(false);
+  };
 
-  const handleSaveTemplate = useCallback(async () => {
+  const handleSectionDelete = (sectionId: string) => {
+    deleteSection(sectionId);
+  };
+
+  const handleSaveTemplate = async () => {
     // TODO: Implement save logic in Phase 9
     console.log('Save template:', { fieldConfig, bowls, sections });
     setSaving(true);
     // API calls will go here
     setTimeout(() => {
       setSaving(false);
-      setIsDirty(false);
       alert('Template saved successfully!');
     }, 1000);
-  }, [fieldConfig, bowls, sections]);
+  };
 
-  const handleLockLayout = useCallback(async () => {
+  const handleLockLayout = async () => {
     if (!confirm('Locking the layout will prevent further changes. Continue?')) {
       return;
     }
     // TODO: API call to lock layout
     setIsLayoutLocked(true);
-  }, []);
+  };
 
-  const handleGenerateSeats = useCallback(async () => {
+  const handleGenerateSeats = async () => {
     if (!isLayoutLocked) {
       alert('Please lock the layout before generating seats.');
       return;
@@ -185,7 +122,7 @@ export function StadiumLayoutBuilder({
     // TODO: API call to generate seats
     alert('Seats generated successfully!');
     router.push(`/manager/events/${eventId}`);
-  }, [isLayoutLocked, eventId, router]);
+  };
 
   // ============================================================================
   // Render
@@ -222,11 +159,26 @@ export function StadiumLayoutBuilder({
 
       {/* Main Layout Grid */}
       <div className="layout-grid">
-        {/* Left Sidebar: Bowl Manager */}
+        {/* Left Sidebar: Bowl Manager & Section Creator */}
         <div className="left-sidebar">
-          <h3>Bowls</h3>
-          <button onClick={handleBowlCreate} disabled={!canEdit}>+ Add Bowl</button>
-          {/* BowlManagerSidebar will render here */}
+          <h3>Sections & Bowls</h3>
+          <button
+            className="create-section-button"
+            onClick={() => setIsCreateModalOpen(true)}
+            disabled={!canEdit}
+          >
+            + Create Section
+          </button>
+
+          <h4 className="secondary-heading">Bowls</h4>
+          <button
+            className="add-button"
+            onClick={addBowl}
+            disabled={!canEdit}
+          >
+            + Add Bowl
+          </button>
+
           <div className="bowl-list">
             {bowls.map(bowl => (
               <div key={bowl.id} className="bowl-item">
@@ -234,8 +186,13 @@ export function StadiumLayoutBuilder({
                   className="bowl-color"
                   style={{ backgroundColor: bowl.color }}
                 />
-                <span>{bowl.name} ({bowl.sectionIds.length})</span>
-                <button onClick={() => handleBowlDelete(bowl.id)}>Delete</button>
+                <span className="bowl-name">{bowl.name} ({bowl.sectionIds.length})</span>
+                <button
+                  className="delete-button"
+                  onClick={() => deleteBowl(bowl.id)}
+                >
+                  ✕
+                </button>
               </div>
             ))}
           </div>
@@ -243,37 +200,47 @@ export function StadiumLayoutBuilder({
 
         {/* Center: Canvas */}
         <div className="canvas-container">
-          {/* LayoutCanvas will render here */}
-          <div className="placeholder-canvas">
-            <div className="placeholder-field">FIELD</div>
-            <div className="placeholder-info">
-              Canvas placeholder - LayoutCanvas component will render here
-              <br />
-              Field: {fieldConfig.shape} ({fieldConfig.length} x {fieldConfig.width} {fieldConfig.unit})
-              <br />
-              Sections: {sections.length}
-              <br />
-              Capacity: {totalCapacity.toLocaleString()}
-            </div>
-          </div>
+          <LayoutCanvas
+            width={CANVAS_WIDTH}
+            height={CANVAS_HEIGHT}
+            fieldConfig={fieldConfig}
+            bowls={bowls}
+            sections={sections}
+            selectedSectionId={selectedSectionId}
+            onSectionSelect={handleSectionSelect}
+            onSectionDoubleClick={handleSectionDoubleClick}
+            viewMode={viewMode}
+            showBowlZones={true}
+            showGrid={true}
+          />
         </div>
 
-        {/* Right Sidebar: Section Properties */}
+        {/* Right Sidebar: Properties */}
         <div className="right-sidebar">
-          <h3>Section Properties</h3>
-          {selectedSection ? (
-            <div className="section-details">
-              <p><strong>Name:</strong> {selectedSection.name}</p>
-              <p><strong>Shape:</strong> {selectedSection.shape}</p>
-              <p><strong>Rows:</strong> {selectedSection.rows}</p>
-              <p><strong>Seats/Row:</strong> {selectedSection.seatsPerRow}</p>
-              <p><strong>Capacity:</strong> {selectedSection.calculatedCapacity}</p>
-              <button onClick={() => handleSectionDelete(selectedSection.id)}>
-                Delete Section
-              </button>
-            </div>
+          {!selectedSection ? (
+            <>
+              <div className="sidebar-tabs">
+                <button
+                  className="tab-button active"
+                >
+                  Field
+                </button>
+              </div>
+              <FieldConfigPanel
+                fieldConfig={fieldConfig}
+                onChange={handleFieldConfigChange}
+                disabled={!canEdit || isEventMode}
+              />
+            </>
           ) : (
-            <p>Select a section to edit properties</p>
+            <SectionPropertiesPanel
+              section={selectedSection}
+              bowls={bowls}
+              fieldConfig={fieldConfig}
+              onChange={updateSection}
+              onDelete={handleSectionDelete}
+              disabled={!canEdit}
+            />
           )}
         </div>
       </div>
@@ -283,7 +250,7 @@ export function StadiumLayoutBuilder({
         <div className="stats">
           <span>Sections: {stats.totalSections}</span>
           <span>Capacity: {stats.totalCapacity.toLocaleString()}</span>
-          <span>Avg/Section: {stats.averageCapacityPerSection}</span>
+          <span>Avg/Section: {stats.averageCapacity}</span>
         </div>
         <div className="view-controls">
           <button
@@ -306,6 +273,15 @@ export function StadiumLayoutBuilder({
           </button>
         </div>
       </div>
+
+      {/* Modals */}
+      <SectionCreationModal
+        isOpen={isCreateModalOpen}
+        fieldConfig={fieldConfig}
+        stadiumId={stadiumId}
+        onCreate={handleCreateSection}
+        onCancel={() => setIsCreateModalOpen(false)}
+      />
 
       <style jsx>{`
         .stadium-layout-builder {
@@ -377,6 +353,45 @@ export function StadiumLayoutBuilder({
         .right-sidebar {
           border-right: none;
           border-left: 1px solid #e5e7eb;
+          padding: 0;
+        }
+
+        .sidebar-tabs {
+          display: flex;
+          border-bottom: 1px solid #e5e7eb;
+          background: #fff;
+        }
+
+        .tab-button {
+          flex: 1;
+          padding: 0.75rem 1rem;
+          border: none;
+          border-bottom: 2px solid transparent;
+          background: #f9fafb;
+          font-size: 0.875rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+
+        .tab-button:hover {
+          background: #f3f4f6;
+        }
+
+        .tab-button.active {
+          background: #fff;
+          border-bottom-color: #3b82f6;
+          color: #3b82f6;
+        }
+
+        .section-details {
+          padding: 1.5rem;
+        }
+
+        .section-details h3 {
+          margin: 0 0 1rem 0;
+          font-size: 1rem;
+          font-weight: 600;
         }
 
         .left-sidebar h3,
@@ -403,6 +418,60 @@ export function StadiumLayoutBuilder({
           background: #fff;
         }
 
+        .create-section-button,
+        .add-button {
+          width: 100%;
+          padding: 0.5rem 1rem;
+          border: 1px solid #d1d5db;
+          border-radius: 0.375rem;
+          background: #fff;
+          color: #3b82f6;
+          cursor: pointer;
+          font-size: 0.875rem;
+          font-weight: 500;
+          margin-bottom: 1rem;
+          transition: all 0.15s;
+        }
+
+        .create-section-button:hover:not(:disabled),
+        .add-button:hover:not(:disabled) {
+          background: #eff6ff;
+          border-color: #3b82f6;
+        }
+
+        .create-section-button:disabled,
+        .add-button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          color: #6b7280;
+        }
+
+        .secondary-heading {
+          margin: 1.5rem 0 0.5rem 0;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #6b7280;
+        }
+
+        .bowl-name {
+          flex: 1;
+          font-size: 0.875rem;
+        }
+
+        .bowl-item .delete-button {
+          padding: 0.25rem 0.5rem;
+          border: 1px solid #fca5a5;
+          background: transparent;
+          color: #dc2626;
+          cursor: pointer;
+          font-size: 0.75rem;
+          transition: all 0.15s;
+        }
+
+        .bowl-item .delete-button:hover {
+          background: #fef2f2;
+        }
+
         .bowl-color {
           width: 20px;
           height: 20px;
@@ -414,33 +483,6 @@ export function StadiumLayoutBuilder({
           position: relative;
           background: #ffffff;
           overflow: hidden;
-        }
-
-        .placeholder-canvas {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-          color: #6b7280;
-        }
-
-        .placeholder-field {
-          width: 200px;
-          height: 150px;
-          border: 2px dashed #9ca3af;
-          border-radius: 0.5rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          margin-bottom: 2rem;
-        }
-
-        .placeholder-info {
-          text-align: center;
-          font-size: 0.875rem;
-          line-height: 1.5;
         }
 
         .section-details {
