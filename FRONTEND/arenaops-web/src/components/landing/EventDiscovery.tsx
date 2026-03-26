@@ -1,4 +1,5 @@
 "use client"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, MapPin, Users, ArrowRight } from "lucide-react"
@@ -6,11 +7,38 @@ import styles from "./EventDiscovery.module.scss"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import type { Event } from "@/services/coreService"
+import { coreService } from "@/services/coreService"
 
 interface EventDiscoveryProps {
-  events: Event[]
+  events?: Event[]
 }
-export function EventDiscovery({ events }: EventDiscoveryProps) {
+export function EventDiscovery({ events: _events = [] }: EventDiscoveryProps) {
+    const [events, setEvents] = useState<Event[]>(_events);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        coreService
+            .getEvents()
+            .then((res) => {
+                setEvents(res?.data || []);
+            })
+            .catch((error) => {
+                console.error('EventDiscovery failed to load events', error);
+                setEvents([]);
+            })
+            .finally(() => setLoading(false));
+    }, []);
+
+    if (loading) {
+        return (
+            <section className={styles.eventDiscoverySection}>
+                <div className="container mx-auto px-6 relative z-10">
+                    <p className="text-slate-400 text-lg">Loading events...</p>
+                </div>
+            </section>
+        );
+    }
+
     return (
         <section className={styles.eventDiscoverySection}>
             <div className="container mx-auto px-6 relative z-10">
@@ -26,61 +54,61 @@ export function EventDiscovery({ events }: EventDiscoveryProps) {
                     </Button>
                 </div>
 
-                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    {events.map((event) => (
-                        <Card key={event.eventId} className={styles.eventCard}>
-                            {/* Image Placeholder with Gradient */}
-                            <div
-                                className={styles.imagePlaceholder}
-                                style={{ background: `linear-gradient(135deg, ${event.eventType ? '#1e3a8a' : '#581c87'} 0%, #3b82f6 100%)` }}
-                            >
-                                <span className={styles.categoryBadge}>{event.eventType || 'Event'}</span>
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-                                    <h3 className="text-4xl font-black text-white italic tracking-tighter">
-                                        {event.eventType?.toUpperCase() || 'EVENT'}
-                                    </h3>
+                {Array.isArray(events) && events.length > 0 ? (
+                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                        {events.map((event) => (
+                            <Card key={event.eventId} className={styles.eventCard}>
+                                {/* Image Placeholder with Gradient */}
+                                <div
+                                    className={styles.imagePlaceholder}
+                                    style={{ background: `linear-gradient(135deg, ${event.eventType ? '#1e3a8a' : '#581c87'} 0%, #3b82f6 100%)` }}
+                                >
+                                    <span className={styles.categoryBadge}>{event.eventType || 'Event'}</span>
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+                                        <h3 className="text-4xl font-black text-white italic tracking-tighter">
+                                            {event.eventType?.toUpperCase() || 'EVENT'}
+                                        </h3>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <CardHeader className="pb-4">
-                                <CardTitle className="text-xl font-bold text-white group-hover:text-[#10b981] transition-colors leading-tight">
-                                    {event.name}
-                                </CardTitle>
-                                <CardDescription className={styles.iconLabel}>
-                                    <MapPin className="w-4 h-4" /> {event.stadiumName || 'TBD'}
-                                </CardDescription>
-                            </CardHeader>
+                                <CardHeader className="pb-4">
+                                    <CardTitle className="text-xl font-bold text-white group-hover:text-[#10b981] transition-colors leading-tight">
+                                        {event.name}
+                                    </CardTitle>
+                                    <CardDescription className={styles.iconLabel}>
+                                        <MapPin className="w-4 h-4" /> {event.stadiumName || 'TBD'}
+                                    </CardDescription>
+                                </CardHeader>
 
-                            <CardContent className="space-y-4">
-                                <div className={styles.iconLabel}>
-                                    <Calendar className="w-4 h-4" />
-                                    <span>{event.startDate ? new Date(event.startDate).toLocaleDateString() : 'Date TBD'}</span>
-                                </div>
-                                <div className={styles.iconLabel}>
-                                    <Users className="w-4 h-4" />
-                                    <span>Event ID: {event.eventId.slice(0, 8)}</span>
-                                </div>
-                                <div className="pt-4 flex items-baseline gap-1">
-                                    <span className={styles.priceTag}>₹999+</span>
-                                    <span className="text-xs text-slate-500 font-medium tracking-wide">/ PERSON</span>
-                                </div>
-                            </CardContent>
+                                <CardContent className="space-y-4">
+                                    <div className={styles.iconLabel}>
+                                        <Calendar className="w-4 h-4" />
+                                        <span>{event.startDate ? new Date(event.startDate).toLocaleDateString() : 'Date TBD'}</span>
+                                    </div>
+                                    <div className={styles.iconLabel}>
+                                        <Users className="w-4 h-4" />
+                                        <span>Event ID: {event.eventId.slice(0, 8)}</span>
+                                    </div>
+                                    <div className="pt-4 flex items-baseline gap-1">
+                                        <span className={styles.priceTag}>₹999+</span>
+                                        <span className="text-xs text-slate-500 font-medium tracking-wide">/ PERSON</span>
+                                    </div>
+                                </CardContent>
 
-                            <CardFooter className="pt-2">
-                                <Link href={`/events/${event.eventId}`}>
-                                <Button
-                                    className={cn("w-full h-12 text-sm font-bold uppercase tracking-widest", styles.bookButton)}
-                                    variant="outline"
-                                    >
-                                    Book Tickets
-                                </Button>
-                                    </Link>
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-
-                {events.length === 0 && (
+                                <CardFooter className="pt-2">
+                                    <Link href={`/events/${event.eventId}`}>
+                                    <Button
+                                        className={cn("w-full h-12 text-sm font-bold uppercase tracking-widest", styles.bookButton)}
+                                        variant="outline"
+                                        >
+                                        Book Tickets
+                                    </Button>
+                                        </Link>
+                                </CardFooter>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
                     <div className="text-center py-12">
                         <p className="text-slate-400 text-lg">No events available at this time.</p>
                     </div>

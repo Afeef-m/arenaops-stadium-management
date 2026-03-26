@@ -16,6 +16,7 @@ import {
     Trash2,
     Calendar,
     Users,
+    Grid3X3,
 } from "lucide-react";
 import {
     coreService,
@@ -66,6 +67,7 @@ export default function StadiumDetailPage() {
         city: "",
         state: "",
         country: "",
+        pincode: "",
         latitude: 0,
         longitude: 0,
     });
@@ -92,6 +94,7 @@ export default function StadiumDetailPage() {
                     city: s.city || "",
                     state: s.state || "",
                     country: s.country || "",
+                    pincode: s.pincode || "",
                     latitude: s.latitude || 0,
                     longitude: s.longitude || 0,
                 });
@@ -150,14 +153,26 @@ export default function StadiumDetailPage() {
 
         setSaving(true);
         try {
-            const response = await coreService.updateStadium(stadiumId, formData);
+            let finalFormData = { ...formData };
+
+            // Upload new image if selected
+            if (selectedFile) {
+                const uploadRes = await uploadService.uploadStadiumImage(selectedFile, stadiumId);
+                
+                if (uploadRes.success && uploadRes.data) {
+                    finalFormData = {
+                        ...finalFormData,
+                        imageUrl: uploadRes.data.url,
+                        imagePublicId: uploadRes.data.publicId,
+                    };
+                } else {
+                    showNotification("error", "Image upload failed. Proceeding with existing image.");
+                }
+            }
+
+            const response = await coreService.updateStadium(stadiumId, finalFormData);
 
             if (response.success) {
-                // Upload new image if selected
-                if (selectedFile) {
-                    await uploadService.uploadStadiumImage(selectedFile, stadiumId);
-                }
-
                 showNotification("success", "Stadium updated successfully");
                 setStadium(response.data);
                 clearImage();
@@ -294,6 +309,14 @@ export default function StadiumDetailPage() {
                                 </span>
                             )}
                         </div>
+                        <div className={styles.headerActions}>
+                            <Link href={`/manager/stadiumLayout?stadiumId=${stadiumId}`}>
+                                <Button variant="outline" className={styles.layoutButton}>
+                                    <Grid3X3 size={16} className="mr-2" />
+                                    Stadium Layout
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
                 </header>
 
@@ -405,6 +428,18 @@ export default function StadiumDetailPage() {
                                         type="text"
                                         name="country"
                                         value={formData.country}
+                                        onChange={handleInputChange}
+                                        className={styles.input}
+                                        required
+                                    />
+                                </div>
+
+                                <div className={styles.formGroup}>
+                                    <label className={styles.label}>Pincode *</label>
+                                    <input
+                                        type="text"
+                                        name="pincode"
+                                        value={formData.pincode}
                                         onChange={handleInputChange}
                                         className={styles.input}
                                         required

@@ -233,7 +233,7 @@ export default function LoginForm() {
               onClick={handleGoogleLogin}
               className="w-full py-4 rounded-xl border border-white/10 bg-[#111827] text-white hover:bg-[#1f2937] transition-all flex items-center justify-center gap-3 group relative overflow-hidden"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               <Chrome size={20} className="text-[#10b981]" />
               <span className="text-xs font-bold uppercase tracking-widest">Continue with Google</span>
             </button>

@@ -3,8 +3,12 @@ import axios from 'axios';
 // Routes through the Next.js BFF proxy at /api/auth/[...slug] and /api/core/[...slug]
 // The proxy forwards requests to the actual backend services (localhost:5001, localhost:5007)
 // Authentication is handled via HttpOnly cookies — withCredentials ensures they are sent on every request
+const isServer = typeof window === 'undefined';
+
 export const api = axios.create({
-    baseURL: typeof window === 'undefined' ? 'http://localhost:3000' : '',
+    baseURL: isServer
+        ? process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+        : '',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
