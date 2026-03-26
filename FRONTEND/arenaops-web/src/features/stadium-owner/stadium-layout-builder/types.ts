@@ -160,7 +160,7 @@ export interface CapacityWarning {
 // ============================================================================
 
 export type EditorMode = 'stadium' | 'section-detail';
-export type ViewMode = 'overview' | 'rows' | 'seats';
+export type ViewMode = 'overview' | 'rows' | 'seats' | 'section-focus';
 export type BuilderMode = 'template' | 'event';
 
 /**
@@ -176,6 +176,7 @@ export interface LayoutBuilderState {
   fieldConfig: FieldConfig;
   bowls: Bowl[];
   sections: LayoutSection[];
+  seats: LayoutSeat[];  // Generated from sections
 
   // UI State
   selectedSectionId: string | null;
@@ -213,6 +214,28 @@ export interface DragState {
   offsetY: number;
   startX: number;
   startY: number;
+}
+
+// ============================================================================
+// Selection State (Phase 5)
+// ============================================================================
+
+export type SelectionMode = 'click' | 'drag-rect' | 'range';
+
+export interface SelectionRectangle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  seatCount: number;  // Number of seats within bounds
+}
+
+export interface SelectionState {
+  selectionStart?: Point;  // mouseDown point
+  selectionEnd?: Point;    // current point during drag
+  selectionMode: SelectionMode;  // Current mode
+  selectionPreview: SelectionRectangle | null;  // For rectangle visualization
+  lastSelectedSeatId: string | null;  // For Ctrl+click range selection
 }
 
 // ============================================================================

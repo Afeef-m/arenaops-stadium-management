@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import type { FieldConfig, FieldShape, FieldUnit } from "../types";
+import type { FieldConfig, FieldShape, FieldUnit } from "./types";
 import {
   calculateMinimumInnerRadius,
   validateFieldDimensions,
   getDefaultFieldWidth,
   getFieldShapeDisplayName,
-} from "../utils/geometry";
+} from "./utils/geometry";
 
 export interface FieldConfigPanelProps {
   fieldConfig: FieldConfig;

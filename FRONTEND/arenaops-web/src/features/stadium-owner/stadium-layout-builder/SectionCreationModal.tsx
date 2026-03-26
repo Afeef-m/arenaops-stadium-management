@@ -104,7 +104,7 @@ export function SectionCreationModal({
       horizontalAisles: [],
       isActive: form.isActive ?? true,
       isLocked: false,
-      color: form.color,
+      color: form.color ?? '#3b82f6',
     };
 
     /// Call parent handler

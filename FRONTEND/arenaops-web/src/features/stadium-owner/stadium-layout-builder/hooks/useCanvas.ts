@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import type { Point, CanvasState } from "../types";
+import type { Point, CanvasState, SelectionRectangle, SelectionState } from "../types";
 
 export interface UseCanvasOptions {
   canvasWidth?: number;
@@ -27,6 +27,17 @@ export interface UseCanvasReturn extends CanvasState {
   // Transform
   getTransform: () => string;
   clientToCanvas: (clientX: number, clientY: number, svgElement: SVGSVGElement) => Point;
+
+  // Selection (Phase 5)
+  selectionStart: Point | undefined;
+  setSelectionStart: (point: Point | undefined) => void;
+  selectionEnd: Point | undefined;
+  setSelectionEnd: (point: Point | undefined) => void;
+  selectionPreview: SelectionRectangle | null;
+  setSelectionPreview: (preview: SelectionRectangle | null) => void;
+  lastSelectedSeatId: string | null;
+  setLastSelectedSeatId: (seatId: string | null) => void;
+  clearSelection: () => void;
 
   // Refs for performance
   zoomRef: React.MutableRefObject<number>;
@@ -58,6 +69,12 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
 
   const [zoom, setZoomState] = useState(1);
   const [pan, setPanState] = useState<Point>({ x: 0, y: 0 });
+
+  // Selection state (Phase 5)
+  const [selectionStart, setSelectionStart] = useState<Point | undefined>();
+  const [selectionEnd, setSelectionEnd] = useState<Point | undefined>();
+  const [selectionPreview, setSelectionPreview] = useState<SelectionRectangle | null>(null);
+  const [lastSelectedSeatId, setLastSelectedSeatId] = useState<string | null>(null);
 
   // Refs for performance (avoid re-renders during drag)
   const zoomRef = useRef(zoom);
@@ -163,6 +180,16 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
   }, []);
 
   // ============================================================================
+  // Selection Helpers (Phase 5)
+  // ============================================================================
+
+  const clearSelection = useCallback(() => {
+    setSelectionStart(undefined);
+    setSelectionEnd(undefined);
+    setSelectionPreview(null);
+  }, []);
+
+  // ============================================================================
   // Return
   // ============================================================================
 
@@ -188,6 +215,17 @@ export function useCanvas(options: UseCanvasOptions = {}): UseCanvasReturn {
     // Transform
     getTransform,
     clientToCanvas,
+
+    // Selection (Phase 5)
+    selectionStart,
+    setSelectionStart,
+    selectionEnd,
+    setSelectionEnd,
+    selectionPreview,
+    setSelectionPreview,
+    lastSelectedSeatId,
+    setLastSelectedSeatId,
+    clearSelection,
 
     // Refs
     zoomRef,

@@ -6,12 +6,14 @@ import type {
   FieldConfig,
   Bowl,
   LayoutSection,
+  LayoutSeat,
   EditorMode,
   ViewMode,
   CapacityWarning,
   BuilderMode,
-  DEFAULT_FIELD_CONFIG,
 } from "../types";
+import { DEFAULT_FIELD_CONFIG } from "../types";
+import { generateAllSeats } from "../utils/seatGenerator";
 
 export interface UseLayoutBuilderOptions {
   mode: BuilderMode;
@@ -37,9 +39,16 @@ export interface UseLayoutBuilderReturn extends LayoutBuilderState {
   deleteSection: (sectionId: string) => void;
   assignSectionToBowl: (sectionId: string, bowlId: string | null) => void;
 
-  // Selection
+  // Seat generation & selection
+  generateSeats: () => void;
   selectSection: (sectionId: string | null) => void;
+  selectSeat: (seatId: string, multiSelect?: boolean) => void;
   selectSeats: (seatIds: Set<string>) => void;
+  clearSelectedSeats: () => void;
+  updateSeat: (seatId: string, updates: Partial<LayoutSeat>) => void;
+  updateSeats: (seatIds: string[], updates: Partial<LayoutSeat>) => void;
+  deleteSeats: (seatIds: string[]) => void;
+  addSeat: (seat: LayoutSeat) => void;
 
   // Editor mode
   setEditorMode: (mode: EditorMode) => void;
@@ -74,6 +83,7 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
   const [fieldConfig, setFieldConfig] = useState<FieldConfig>(DEFAULT_FIELD_CONFIG);
   const [bowls, setBowls] = useState<Bowl[]>([]);
   const [sections, setSections] = useState<LayoutSection[]>([]);
+  const [seats, setSeats] = useState<LayoutSeat[]>([]);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [selectedSeatIds, setSelectedSeatIds] = useState<Set<string>>(new Set());
   const [editorMode, setEditorMode] = useState<EditorMode>('stadium');
@@ -205,7 +215,7 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
   }, [sections]);
 
   // ============================================================================
-  // Selection
+  // Selection & Seat Generation
   // ============================================================================
 
   const selectSection = useCallback((sectionId: string | null) => {
@@ -215,6 +225,67 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
 
   const selectSeats = useCallback((seatIds: Set<string>) => {
     setSelectedSeatIds(seatIds);
+  }, []);
+
+  const selectSeat = useCallback((seatId: string, multiSelect: boolean = false) => {
+    setSelectedSeatIds(prev => {
+      const next = new Set(prev);
+      if (multiSelect) {
+        if (next.has(seatId)) {
+          next.delete(seatId);
+        } else {
+          next.add(seatId);
+        }
+      } else {
+        next.clear();
+        next.add(seatId);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearSelectedSeats = useCallback(() => {
+    setSelectedSeatIds(new Set());
+  }, []);
+
+  const generateSeats = useCallback(() => {
+    try {
+      const newSeats = generateAllSeats(sections, fieldConfig);
+      setSeats(newSeats);
+      setIsDirty(true);
+      console.log(`Generated ${newSeats.length} seats from ${sections.length} sections`);
+    } catch (error) {
+      console.error('Seat generation failed:', error);
+    }
+  }, [sections, fieldConfig]);
+
+  const updateSeat = useCallback((seatId: string, updates: Partial<LayoutSeat>) => {
+    setSeats(prev => prev.map(s =>
+      s.seatId === seatId ? { ...s, ...updates } : s
+    ));
+    setIsDirty(true);
+  }, []);
+
+  const updateSeats = useCallback((seatIds: string[], updates: Partial<LayoutSeat>) => {
+    setSeats(prev => prev.map(s =>
+      seatIds.includes(s.seatId) ? { ...s, ...updates } : s
+    ));
+    setIsDirty(true);
+  }, []);
+
+  const deleteSeats = useCallback((seatIds: string[]) => {
+    setSeats(prev => prev.filter(s => !seatIds.includes(s.seatId)));
+    setSelectedSeatIds(prev => {
+      const next = new Set(prev);
+      seatIds.forEach(id => next.delete(id));
+      return next;
+    });
+    setIsDirty(true);
+  }, []);
+
+  const addSeat = useCallback((seat: LayoutSeat) => {
+    setSeats(prev => [...prev, seat]);
+    setIsDirty(true);
   }, []);
 
   // ============================================================================
@@ -283,6 +354,7 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
     fieldConfig,
     bowls,
     sections,
+    seats,
     selectedSectionId,
     selectedSeatIds,
     editorMode,
@@ -306,6 +378,15 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
     updateSection,
     deleteSection,
     assignSectionToBowl,
+
+    // Seats
+    generateSeats,
+    selectSeat,
+    clearSelectedSeats,
+    updateSeat,
+    updateSeats,
+    deleteSeats,
+    addSeat,
 
     // Selection
     selectSection,

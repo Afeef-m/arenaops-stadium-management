@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import { useCanvas } from "./hooks/useCanvas";
 import { FieldRenderer, FieldGradientDefs } from "./components/FieldRenderer";
+import { SeatRenderer } from "./components/SeatRenderer";
+import { SelectionRectangle } from "./components/SelectionRectangle";
 import { createArcPath, createRectanglePath } from "./utils/geometry";
-import type { FieldConfig, LayoutSection, Bowl, ViewMode, Point } from "./types";
+import { getSeatsBoundingRect, calculateBoundingRect, distance } from "./utils/selectionAlgorithms";
+import type { FieldConfig, LayoutSection, Bowl, ViewMode, Point, LayoutSeat } from "./types";
 
 export interface LayoutCanvasProps {
   width?: number;
@@ -14,7 +17,9 @@ export interface LayoutCanvasProps {
   fieldConfig: FieldConfig;
   bowls: Bowl[];
   sections: LayoutSection[];
+  seats: LayoutSeat[];
   selectedSectionId: string | null;
+  selectedSeatIds: Set<string>;
 
   // Interaction handlers
   onSectionSelect: (sectionId: string | null) => void;
@@ -22,6 +27,8 @@ export interface LayoutCanvasProps {
   onSectionDragStart?: (sectionId: string, offset: Point) => void;
   onSectionDragMove?: (sectionId: string, position: Point) => void;
   onSectionDragEnd?: (sectionId: string) => void;
+  onSeatClick?: (seatId: string, shiftKey: boolean, ctrlKey?: boolean) => void;
+  onSeatsSelect?: (seatIds: Set<string>) => void;  // For drag-select & bulk operations
 
   // View options
   viewMode: ViewMode;
@@ -41,12 +48,16 @@ export function LayoutCanvas({
   fieldConfig,
   bowls,
   sections,
+  seats,
   selectedSectionId,
+  selectedSeatIds,
   onSectionSelect,
   onSectionDoubleClick,
   onSectionDragStart,
   onSectionDragMove,
   onSectionDragEnd,
+  onSeatClick,
+  onSeatsSelect,
   viewMode = 'overview',
   showBowlZones = true,
   showGrid = true,
@@ -57,36 +68,164 @@ export function LayoutCanvas({
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState<Point | null>(null);
 
+  // Drag-selection state (Phase 5)
+  const [isDragSelecting, setIsDragSelecting] = useState(false);
+  const [dragSelectStart, setDragSelectStart] = useState<Point | null>(null);
+
   // ============================================================================
-  // Pan Handling
+  // Zoom to Section Helper
+  // ============================================================================
+
+  const zoomToSection = useCallback((section: LayoutSection) => {
+    // Calculate section bounding box
+    let minX: number, maxX: number, minY: number, maxY: number;
+
+    if (section.shape === 'arc') {
+      // Arc: use outer radius to calculate bounds
+      minX = section.centerX - section.outerRadius;
+      maxX = section.centerX + section.outerRadius;
+      minY = section.centerY - section.outerRadius;
+      maxY = section.centerY + section.outerRadius;
+    } else {
+      // Rectangle: use width/height with rotation
+      const halfW = section.width / 2;
+      const halfH = section.height / 2;
+      // Simplified bounds (ignore rotation for now, add padding)
+      minX = section.centerX - halfW - 50;
+      maxX = section.centerX + halfW + 50;
+      minY = section.centerY - halfH - 50;
+      maxY = section.centerY + halfH + 50;
+    }
+
+    // Calculate zoom to fit section with padding
+    const sectionWidth = maxX - minX;
+    const sectionHeight = maxY - minY;
+    const padding = 100; // Extra padding around section
+
+    const zoomX = (width - padding * 2) / sectionWidth;
+    const zoomY = (height - padding * 2) / sectionHeight;
+    const targetZoom = Math.min(zoomX, zoomY, 3.0); // Cap at 3x zoom
+
+    // Calculate pan to center section
+    const sectionCenterX = (minX + maxX) / 2;
+    const sectionCenterY = (minY + maxY) / 2;
+
+    const targetPanX = width / 2 - sectionCenterX * targetZoom;
+    const targetPanY = height / 2 - sectionCenterY * targetZoom;
+
+    // Apply zoom and pan
+    canvas.setZoom(targetZoom);
+    canvas.setPan({ x: targetPanX, y: targetPanY });
+  }, [canvas, width, height]);
+
+  // Auto-zoom when entering section-focus mode
+  useEffect(() => {
+    if (viewMode === 'section-focus' && selectedSectionId) {
+      const section = sections.find(s => s.id === selectedSectionId);
+      if (section) {
+        // Small delay to let DOM settle
+        setTimeout(() => {
+          zoomToSection(section);
+        }, 100);
+      }
+    }
+  }, [viewMode, selectedSectionId, sections, zoomToSection]);
+
+  // ============================================================================
+  // Pan & Drag-Selection Handling (Phase 5)
   // ============================================================================
 
   const handleCanvasMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if (e.button !== 0) return; // Left click only
 
-    // Start panning
-    setIsPanning(true);
-    setPanStart({ x: e.clientX, y: e.clientY });
-  }, []);
+    if (!svgRef.current) return;
+
+    // Convert to canvas coordinates for drag-selection
+    const canvasPoint = canvas.clientToCanvas(e.clientX, e.clientY, svgRef.current);
+
+    // Store initial point for both panning and drag-selection
+    const startPoint = { x: e.clientX, y: e.clientY };
+    setPanStart(startPoint);
+    setDragSelectStart(canvasPoint);
+    setIsDragSelecting(false); // Will be determined in handleCanvasMouseMove
+    setIsPanning(false);
+
+    // Store selection start in canvas state
+    canvas.setSelectionStart(canvasPoint);
+  }, [canvas]);
 
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (!isPanning || !panStart) return;
+    if (!panStart || !svgRef.current) return;
 
-    const dx = e.clientX - panStart.x;
-    const dy = e.clientY - panStart.y;
+    const currentPoint = { x: e.clientX, y: e.clientY };
+    const dragDist = distance(panStart, currentPoint);
+    const isDragging = dragDist >= 5;
 
-    canvas.setPan({
-      x: canvas.pan.x + dx,
-      y: canvas.pan.y + dy,
-    });
+    if (!isDragging) {
+      return; // Below threshold, do nothing yet
+    }
 
-    setPanStart({ x: e.clientX, y: e.clientY });
-  }, [isPanning, panStart, canvas]);
+    // Past threshold: decide between panning and drag-selection
+    const canvasPoint = canvas.clientToCanvas(e.clientX, e.clientY, svgRef.current);
+
+    if (!isDragSelecting && !isPanning) {
+      // First time past threshold: decide which mode
+      // If we have a seat or section start point, it would have been handled by their click handlers
+      // So if we get here, it's empty space -> drag-select
+      setIsDragSelecting(true);
+    }
+
+    if (isDragSelecting) {
+      // Update selection end point
+      canvas.setSelectionEnd(canvasPoint);
+
+      // Calculate bounding rectangle
+      if (dragSelectStart) {
+        const rect = calculateBoundingRect(dragSelectStart, canvasPoint);
+        const selectedSeats = getSeatsBoundingRect(rect, seats);
+
+        // Update preview
+        canvas.setSelectionPreview({
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+          seatCount: selectedSeats.size,
+        });
+      }
+    } else {
+      // Pan mode
+      setIsPanning(true);
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+
+      canvas.setPan({
+        x: canvas.pan.x + dx,
+        y: canvas.pan.y + dy,
+      });
+
+      setPanStart(currentPoint);
+    }
+  }, [panStart, isDragSelecting, isPanning, dragSelectStart, canvas, seats]);
 
   const handleCanvasMouseUp = useCallback(() => {
+    if (isDragSelecting && dragSelectStart && canvas.selectionEnd && svgRef.current) {
+      // Finalize drag-select
+      const rect = calculateBoundingRect(dragSelectStart, canvas.selectionEnd);
+      const selectedSeats = getSeatsBoundingRect(rect, seats);
+
+      if (selectedSeats.size > 0) {
+        onSeatsSelect?.(selectedSeats);
+      }
+    }
+
+    // Clear state
     setIsPanning(false);
     setPanStart(null);
-  }, []);
+    setIsDragSelecting(false);
+    setDragSelectStart(null);
+    canvas.clearSelection();
+  }, [isDragSelecting, dragSelectStart, canvas, seats, onSeatsSelect]);
 
   // ============================================================================
   // Zoom Handling
@@ -116,8 +255,15 @@ export function LayoutCanvas({
 
   const handleSectionDoubleClick = useCallback((sectionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+
+    // Zoom to section on double-click
+    const section = sections.find(s => s.id === sectionId);
+    if (section) {
+      zoomToSection(section);
+    }
+
     onSectionDoubleClick?.(sectionId);
-  }, [onSectionDoubleClick]);
+  }, [onSectionDoubleClick, sections, zoomToSection]);
 
   // ============================================================================
   // Render Grid Background
@@ -285,11 +431,67 @@ export function LayoutCanvas({
 
         {/* Transformed content */}
         <g transform={canvas.getTransform()}>
-          {/* Field */}
-          <FieldRenderer fieldConfig={fieldConfig} showMarkings={true} />
+          {/* Field - hidden in section-focus mode */}
+          {viewMode !== 'section-focus' && (
+            <FieldRenderer fieldConfig={fieldConfig} showMarkings={true} />
+          )}
 
-          {/* Sections */}
-          {sections.map(renderSection)}
+          {/* Direction indicator for section-focus mode */}
+          {viewMode === 'section-focus' && selectedSectionId && (
+            <g className="direction-indicator">
+              <text
+                x={width / 2}
+                y={40}
+                textAnchor="middle"
+                fill="#6b7280"
+                fontSize="14"
+                fontWeight="500"
+              >
+                ← Field Direction →
+              </text>
+              <line
+                x1={width / 2 - 100}
+                y1={55}
+                x2={width / 2 + 100}
+                y2={55}
+                stroke="#d1d5db"
+                strokeWidth="2"
+                strokeDasharray="8,4"
+              />
+            </g>
+          )}
+
+          {/* Sections - in section-focus mode, only show selected section */}
+          {viewMode === 'section-focus'
+            ? sections.filter(s => s.id === selectedSectionId).map(renderSection)
+            : sections.map(renderSection)
+          }
+
+        {/* Seats */}
+          <SeatRenderer
+            seats={viewMode === 'section-focus'
+              ? seats.filter(s => s.sectionId === selectedSectionId)
+              : seats
+            }
+            selectedSeatIds={selectedSeatIds}
+            selectedSectionId={selectedSectionId}
+            onSeatClick={(seatId, shiftKey, ctrlKey) => {
+              onSeatClick?.(seatId, shiftKey, ctrlKey);
+            }}
+            viewMode={viewMode === 'section-focus' ? 'seats' : viewMode}
+            zoomLevel={canvas.zoom}
+          />
+
+          {/* Drag-select rectangle preview (Phase 5) */}
+          {canvas.selectionPreview && (
+            <SelectionRectangle
+              x={canvas.selectionPreview.x}
+              y={canvas.selectionPreview.y}
+              width={canvas.selectionPreview.width}
+              height={canvas.selectionPreview.height}
+              seatCount={canvas.selectionPreview.seatCount}
+            />
+          )}
         </g>
       </svg>
 
