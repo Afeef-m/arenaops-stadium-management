@@ -9,10 +9,9 @@ import { SectionCreationModal } from "./SectionCreationModal";
 import { SectionPropertiesPanel } from "./SectionPropertiesPanel";
 import { SeatDetailsPanel } from "./SeatDetailsPanel";
 import { SelectionStats } from "./components/SelectionStats";
-import { LayoutConfigurationPanel, type LayoutConfigParams } from "./components/LayoutConfigurationPanel";
+import { LayoutConfigurationPanel } from "./components/LayoutConfigurationPanel";
 import { BowlFormDialog, type BowlFormData } from "./components/BowlFormDialog";
 import { getRangeSelection } from "./utils/selectionAlgorithms";
-import { generateDefaultLayout } from "./utils/layoutGenerator";
 import { calculateMinimumInnerRadius } from "./utils/geometry";
 import type { BuilderMode, FieldConfig, LayoutSection, Bowl } from "./types";
 
@@ -88,12 +87,10 @@ export function StadiumLayoutBuilder({
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [lastSelectedSeatId, setLastSelectedSeatId] = useState<string | null>(null);  // For Ctrl+click range selection
   const [editingBowlId, setEditingBowlId] = useState<string | null>(null);  // For editing bowl inline
-  const [showGeneratePrompt, setShowGeneratePrompt] = useState(false);  // For auto-layout generation prompt
   const [selectedBowlId, setSelectedBowlId] = useState<string | undefined>(undefined);  // For bowl-specific configuration
   const [showBowlFormDialog, setShowBowlFormDialog] = useState(false);  // For bowl creation/editing dialog
   const [editingBowlData, setEditingBowlData] = useState<Bowl | undefined>(undefined);  // Which bowl to edit (undefined = create new)
   const [showFieldConfigModal, setShowFieldConfigModal] = useState(false);  // Field config as modal
-  const prevFieldConfigRef = useRef<FieldConfig | null>(null);
 
   // ============================================================================
   // Event Handlers
@@ -103,140 +100,26 @@ export function StadiumLayoutBuilder({
     updateFieldConfig(newConfig);
   };
 
-  // ============================================================================
-  // Auto-Layout Generation
-  // ============================================================================
-
-  // Detect field config changes and show generation prompt
-  useEffect(() => {
-    if (prevFieldConfigRef.current === null) {
-      // First render, just store config
-      prevFieldConfigRef.current = fieldConfig;
-      return;
-    }
-
-    // Check if minimumInnerRadius changed (indicates field change)
-    const prevRadius = prevFieldConfigRef.current.minimumInnerRadius;
-    const currentRadius = fieldConfig.minimumInnerRadius;
-
-    if (prevRadius !== currentRadius) {
-      setShowGeneratePrompt(true);
-    }
-
-    prevFieldConfigRef.current = fieldConfig;
-  }, [fieldConfig.minimumInnerRadius]);
-
-  // Handler for generating layout with initial parameters (8/200/5)
-  const handleGenerateDefaultLayout = useCallback((params?: LayoutConfigParams) => {
-    try {
-      const finalParams = params || {
-        numSections: 8,
-        seatsPerSection: 200,
-        rowsPerSection: 5,
-      };
-
-      const { bowl: generatedBowl, sections: autoSections } = generateDefaultLayout(
-        fieldConfig,
-        finalParams.numSections,
-        finalParams.seatsPerSection,
-        finalParams.rowsPerSection
-      );
-
-      // Clear existing selections
-      clearSelectedSeats();
-      selectSection(null);
-
-      // Delete existing sections if regenerating
-      if (sections.length > 0) {
-        sections.forEach(section => deleteSection(section.id));
-      }
-
-      // Delete existing bowls
-      if (bowls.length > 0) {
-        bowls.forEach(bowl => {
-          // Note: assuming there's a deleteBowl method
-          // If not available, we'll handle this differently
-        });
-      }
-
-      // Add all sections (already have correct bowlId from generateDefaultLayout)
-      autoSections.forEach(section => {
-        addSection(section);
-      });
-
-      // Add bowl matching the structure from generateDefaultLayout
-      addBowl();
-
-      // Update the newly-added bowl to reference all section IDs
-      if (bowls.length > 0) {
-        const newestBowl = bowls[bowls.length - 1];
-        updateBowl(newestBowl.id, {
-          name: 'Full Bowl',
-          sectionIds: autoSections.map(s => s.id),
-        });
-      }
-
-      // Generate seats for all sections
-      generateSeats();
-
-      // Hide prompt
-      setShowGeneratePrompt(false);
-      setSelectedBowlId(undefined);
-
-      console.log(`✨ Generated layout: ${finalParams.numSections} sections × ${finalParams.seatsPerSection} seats × ${finalParams.rowsPerSection} rows = ${finalParams.numSections * finalParams.seatsPerSection} total seats`);
-    } catch (error) {
-      console.error('[Generate Layout] Error:', error);
-      alert(`Failed to generate layout: ${(error as Error).message}`);
-    }
-  }, [fieldConfig, bowls, sections, addBowl, addSection, updateBowl, deleteSection, generateSeats, clearSelectedSeats, selectSection]);
-
-  // Handler: Regenerate specific bowl with new parameters
-  const handleRegenerateBowl = useCallback((bowlId: string, config: LayoutConfigParams) => {
-    try {
-      const { sections: autoSections } = generateDefaultLayout(
-        fieldConfig,
-        config.numSections,
-        config.seatsPerSection,
-        config.rowsPerSection
-      );
-
-      // Delete only THIS bowl's sections
-      const bowl = bowls.find(b => b.id === bowlId);
-      if (bowl) {
-        bowl.sectionIds.forEach(sectionId => {
-          deleteSection(sectionId);
-        });
-
-        // Add new sections for this bowl
-        autoSections.forEach(section => {
-          addSection({ ...section, bowlId });
-        });
-
-        // Update bowl's sectionIds
-        updateBowl(bowlId, {
-          sectionIds: autoSections.map(s => s.id),
-        });
-      }
-
-      // Regenerate seats
-      generateSeats();
-
-      console.log(`✨ Regenerated bowl "${bowl?.name}" with ${config.numSections} sections`);
-    } catch (error) {
-      console.error('[Regenerate Bowl] Error:', error);
-      alert(`Failed to regenerate bowl: ${(error as Error).message}`);
-    }
-  }, [fieldConfig, bowls, addSection, updateBowl, deleteSection, generateSeats]);
-
-  // Handler: Regenerate all sections with new parameters
-  const handleRegenerateAllSections = useCallback((config: LayoutConfigParams) => {
-    handleGenerateDefaultLayout(config);
-  }, [handleGenerateDefaultLayout]);
-
-  // Handler: Instant generation when "Generate Layout" is clicked
-  const handleQuickGenerate = useCallback(() => {
-    handleGenerateDefaultLayout();
-  }, [handleGenerateDefaultLayout]);
+  // Helper: Convert HSL to Hex color
+  const hslToHex = (h: number, s: number, l: number): string => {
+    s /= 100;
+    l /= 100;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+    if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+    else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+    else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+    else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+    else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+    else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+    const toHex = (n: number) => {
+      const hex = Math.round((n + m) * 255).toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  };
 
   // Handler: Open bowl form dialog for creating a new bowl
   const handleOpenNewBowlForm = useCallback(() => {
@@ -335,7 +218,7 @@ export function StadiumLayoutBuilder({
           rows: data.rowsPerSection,
           seatsPerRow: Math.ceil(data.seatsPerSection / data.rowsPerSection),
           calculatedCapacity: data.seatsPerSection,
-          color: `hsl(${(i * 360) / data.numSections}, 60%, 70%)`,
+          color: hslToHex((i * 360) / data.numSections, 60, 70),
           bowlId,
           // Required fields with defaults
           width: 0,
@@ -377,20 +260,11 @@ export function StadiumLayoutBuilder({
           addSection(section);
         });
 
-        // Add bowl
-        addBowl();
-
-        // Update the newly-added bowl with correct data
-        // (addBowl creates a generic bowl, we need to update it)
-        setTimeout(() => {
-          const latestBowl = bowls[bowls.length - 1];
-          if (latestBowl) {
-            updateBowl(latestBowl.id, {
-              name: data.name,
-              sectionIds: newSections.map(s => s.id),
-            });
-          }
-        }, 0);
+        // Add bowl with all data at once
+        addBowl({
+          name: data.name,
+          sectionIds: newSections.map(s => s.id),
+        });
 
         console.log(`✨ Created bowl "${data.name}" with ${data.numSections} sections (radius: ${innerRadius} → ${outerRadius})`);
       }
@@ -401,7 +275,6 @@ export function StadiumLayoutBuilder({
       // Close dialog
       setShowBowlFormDialog(false);
       setEditingBowlData(undefined);
-      setShowGeneratePrompt(false);
 
     } catch (error) {
       console.error('[Bowl Form Save] Error:', error);
@@ -557,36 +430,6 @@ export function StadiumLayoutBuilder({
           )}
         </div>
       </div>
-
-      {/* Auto-Generate Layout Prompt */}
-      {showGeneratePrompt && (
-        <div className="auto-generate-prompt">
-          <div className="prompt-content">
-            <p className="prompt-title">Field Updated!</p>
-            <p className="prompt-subtitle">
-              Auto-generate stadium layout? You can customize sections, seats, and rows after generation.
-            </p>
-            {sections.length > 0 && (
-              <p className="prompt-warning">⚠️ This will replace your current {sections.length} section(s)</p>
-            )}
-          </div>
-          <div className="prompt-actions">
-            <button
-              className="btn-primary"
-              onClick={handleQuickGenerate}
-              disabled={!canEdit}
-            >
-              ✨ Generate Layout
-            </button>
-            <button
-              className="btn-secondary"
-              onClick={() => setShowGeneratePrompt(false)}
-            >
-              Skip
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Main Layout Grid */}
       <div className="layout-grid">
@@ -754,8 +597,6 @@ export function StadiumLayoutBuilder({
                 sections={sections}
                 selectedBowlId={selectedBowlId}
                 onBowlSelect={setSelectedBowlId}
-                onRegenerateBowl={handleRegenerateBowl}
-                onRegenerateAllSections={handleRegenerateAllSections}
                 disabled={!canEdit}
               />
             ) : (
@@ -1266,85 +1107,6 @@ export function StadiumLayoutBuilder({
           background: #3b82f6;
           color: #fff;
           border-color: #3b82f6;
-        }
-
-        .auto-generate-prompt {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 2rem;
-          padding: 1rem 2rem;
-          background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-          color: #fff;
-          border-bottom: 2px solid #1e3a8a;
-          box-shadow: 0 4px 6px rgba(30, 58, 138, 0.1);
-        }
-
-        .prompt-content {
-          flex: 1;
-        }
-
-        .prompt-title {
-          margin: 0 0 0.25rem 0;
-          font-size: 1rem;
-          font-weight: 600;
-        }
-
-        .prompt-subtitle {
-          margin: 0 0 0.25rem 0;
-          font-size: 0.875rem;
-          opacity: 0.95;
-        }
-
-        .prompt-warning {
-          margin: 0;
-          font-size: 0.8125rem;
-          opacity: 0.85;
-          color: #fef08a;
-        }
-
-        .prompt-actions {
-          display: flex;
-          gap: 0.75rem;
-        }
-
-        .btn-primary {
-          padding: 0.5rem 1.25rem;
-          border: none;
-          border-radius: 0.375rem;
-          background: #fff;
-          color: #3b82f6;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.15s;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-primary:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-          background: #f3f4f6;
-        }
-
-        .btn-primary:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .btn-secondary {
-          padding: 0.5rem 1.25rem;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          border-radius: 0.375rem;
-          background: transparent;
-          color: #fff;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.15s;
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.5);
         }
 
         .field-settings-button {

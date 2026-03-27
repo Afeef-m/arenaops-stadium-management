@@ -28,7 +28,7 @@ export interface UseLayoutBuilderReturn extends LayoutBuilderState {
   updateFieldConfig: (updates: Partial<FieldConfig>) => void;
 
   // Bowl management
-  addBowl: () => void;
+  addBowl: (bowlData?: Partial<Bowl>) => string;
   updateBowl: (bowlId: string, updates: Partial<Bowl>) => void;
   deleteBowl: (bowlId: string) => void;
   reorderBowl: (bowlId: string, newOrder: number) => void;
@@ -120,17 +120,18 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
   // Bowl Management
   // ============================================================================
 
-  const addBowl = useCallback(() => {
+  const addBowl = useCallback((bowlData?: Partial<Bowl>) => {
     const newBowl: Bowl = {
-      id: `bowl-${Date.now()}`,
-      name: `Bowl ${bowls.length + 1}`,
-      color: ['#4F9CF9', '#34C759', '#FFD60A', '#AF52DE'][bowls.length % 4] || '#4F9CF9',
-      sectionIds: [],
-      isActive: true,
-      displayOrder: bowls.length + 1,
+      id: bowlData?.id || `bowl-${Date.now()}`,
+      name: bowlData?.name || `Bowl ${bowls.length + 1}`,
+      color: bowlData?.color || (['#4F9CF9', '#34C759', '#FFD60A', '#AF52DE'][bowls.length % 4] || '#4F9CF9'),
+      sectionIds: bowlData?.sectionIds || [],
+      isActive: bowlData?.isActive ?? true,
+      displayOrder: bowlData?.displayOrder || (bowls.length + 1),
     };
     setBowls(prev => [...prev, newBowl]);
     setIsDirty(true);
+    return newBowl.id;
   }, [bowls.length]);
 
   const updateBowl = useCallback((bowlId: string, updates: Partial<Bowl>) => {
@@ -139,11 +140,16 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
   }, []);
 
   const deleteBowl = useCallback((bowlId: string) => {
-    // Remove bowl and unassign sections
+    // Remove bowl and DELETE all its sections (not just unassign)
     setBowls(prev => prev.filter(b => b.id !== bowlId));
-    setSections(prev => prev.map(s => s.bowlId === bowlId ? { ...s, bowlId: null } : s));
+    setSections(prev => prev.filter(s => s.bowlId !== bowlId));
+    setSeats(prev => {
+      // Also remove seats belonging to deleted sections
+      const deletedSectionIds = sections.filter(s => s.bowlId === bowlId).map(s => s.id);
+      return prev.filter(seat => !deletedSectionIds.includes(seat.sectionId));
+    });
     setIsDirty(true);
-  }, []);
+  }, [sections]);
 
   const reorderBowl = useCallback((bowlId: string, newOrder: number) => {
     setBowls(prev => {

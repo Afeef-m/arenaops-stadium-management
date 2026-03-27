@@ -29,11 +29,6 @@ export function SeatRenderer({
   const [hoveredSeatId, setHoveredSeatId] = useState<string | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
-  // Only render seats in 'seats' view mode
-  if (viewMode !== 'seats') {
-    return null;
-  }
-
   // Performance optimization: if > threshold seats, only render selected section + selected seats
   const useOptimizedRendering = seats.length > SEAT_RENDER_THRESHOLD;
 
@@ -165,6 +160,11 @@ export function SeatRenderer({
 
     return grouped;
   }, [seatsToRender, selectedSeatIds, hoveredSeatId, hoveredRowLabel, showLabels, disabled, onSeatClick]);
+
+  // Only render seats in 'seats' view mode (after all hooks)
+  if (viewMode !== 'seats') {
+    return null;
+  }
 
   return (
     <g className="seat-layer">

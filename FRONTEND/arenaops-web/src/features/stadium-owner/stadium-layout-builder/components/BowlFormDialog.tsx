@@ -74,6 +74,8 @@ export function BowlFormDialog({
   const [useCustomRadius, setUseCustomRadius] = useState(false);
   const [innerRadius, setInnerRadius] = useState(autoRadius.inner);
   const [outerRadius, setOuterRadius] = useState(autoRadius.outer);
+  const [originalInnerRadius, setOriginalInnerRadius] = useState<number | null>(null);
+  const [originalOuterRadius, setOriginalOuterRadius] = useState<number | null>(null);
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -88,8 +90,15 @@ export function BowlFormDialog({
           setNumSections(bowlSections.length);
           setSeatsPerSection(bowlSections[0].calculatedCapacity || 200);
           setRowsPerSection(bowlSections[0].rows || 5);
-          setInnerRadius(bowlSections[0].innerRadius || autoRadius.inner);
-          setOuterRadius(bowlSections[0].outerRadius || autoRadius.outer);
+
+          // Store original radius for editing
+          const existingInner = bowlSections[0].innerRadius || autoRadius.inner;
+          const existingOuter = bowlSections[0].outerRadius || autoRadius.outer;
+          setInnerRadius(existingInner);
+          setOuterRadius(existingOuter);
+          setOriginalInnerRadius(existingInner);
+          setOriginalOuterRadius(existingOuter);
+          setUseCustomRadius(false); // User hasn't manually changed yet
         }
       } else {
         // New bowl - use defaults with auto-increment name
@@ -100,6 +109,8 @@ export function BowlFormDialog({
         setUseCustomRadius(false);
         setInnerRadius(autoRadius.inner);
         setOuterRadius(autoRadius.outer);
+        setOriginalInnerRadius(null);
+        setOriginalOuterRadius(null);
       }
     }
   }, [isOpen, isEditMode, editingBowl, existingBowls.length, existingSections, autoRadius]);
@@ -135,13 +146,31 @@ export function BowlFormDialog({
   const handleSave = () => {
     if (!isValid) return;
 
+    // Determine which radius values to send
+    let finalInnerRadius: number;
+    let finalOuterRadius: number;
+
+    if (isEditMode && !useCustomRadius && originalInnerRadius && originalOuterRadius) {
+      // Editing mode: use original radius if user didn't manually change
+      finalInnerRadius = originalInnerRadius;
+      finalOuterRadius = originalOuterRadius;
+    } else if (useCustomRadius) {
+      // User manually set custom radius
+      finalInnerRadius = innerRadius;
+      finalOuterRadius = outerRadius;
+    } else {
+      // New bowl with auto radius
+      finalInnerRadius = autoRadius.inner;
+      finalOuterRadius = autoRadius.outer;
+    }
+
     onSave({
       name: name.trim(),
       numSections,
       seatsPerSection,
       rowsPerSection,
-      innerRadius: useCustomRadius ? innerRadius : autoRadius.inner,
-      outerRadius: useCustomRadius ? outerRadius : autoRadius.outer,
+      innerRadius: finalInnerRadius,
+      outerRadius: finalOuterRadius,
     });
   };
 
