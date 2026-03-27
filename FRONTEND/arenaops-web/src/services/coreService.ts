@@ -239,7 +239,11 @@ export const coreService = {
     return {
         data: [],
         success: false,
-        message: 'Unable to load events',
+        message: null,
+        error: {
+            code: 'EVENTS_FETCH_ERROR',
+            message: 'Unable to load events',
+        },
     };
 }
     },

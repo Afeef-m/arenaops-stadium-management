@@ -253,7 +253,7 @@ export default function StadiumDetailPage() {
                     <DialogHeader>
                         <DialogTitle>Delete Stadium</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete "{stadium.name}"? This action cannot
+                            Are you sure you want to delete &quot;{stadium.name}&quot;? This action cannot
                             be undone and will remove all associated data.
                         </DialogDescription>
                     </DialogHeader>

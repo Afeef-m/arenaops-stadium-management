@@ -1,0 +1,1 @@
+npx concurrently -n "FRONTEND,AUTH,CORE,REDIS" "cd FRONTEND/arenaops-web && npm start" "dotnet run --project BACKEND/ArenaOps.AuthService/ArenaOps.AuthService.API" "dotnet run --project BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.API" "docker start redis || docker run -d -p 6379:6379 --name redis redis"

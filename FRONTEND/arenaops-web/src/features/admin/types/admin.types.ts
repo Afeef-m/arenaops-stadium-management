@@ -178,3 +178,50 @@ export interface PendingStadium {
   createdAt: string;
   isActive: boolean;
 }
+
+// Event Management
+export interface EventListItem {
+  eventId: string;
+  stadiumId: string;
+  stadiumName: string;
+  eventManagerId: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  status: EventStatus;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type EventStatus =
+  | "Draft"
+  | "PendingApproval"
+  | "Live"
+  | "Completed"
+  | "Cancelled";
+
+export interface CreateEventRequest {
+  stadiumId: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+}
+
+export interface UpdateEventRequest {
+  name: string;
+  description?: string;
+  imageUrl?: string;
+}
+
+export interface UpdateEventStatusRequest {
+  status: string;
+}
+
+export interface EventFilterRequest {
+  status?: string;
+  stadiumId?: string;
+  eventManagerId?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}

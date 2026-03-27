@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminDashboardService, userManagementService } from "../api/adminService";
+import { adminDashboardService, userManagementService, eventManagementService } from "../api/adminService";
 import type {
   ActivityFilterRequest,
   UserFilterRequest,
   BulkActionRequest,
+  UpdateEventStatusRequest,
 } from "../types/admin.types";
 
 // Dashboard Hooks
@@ -162,6 +163,49 @@ export function useBulkUserAction() {
     mutationFn: (request: BulkActionRequest) => userManagementService.bulkAction(request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+}
+
+// Event Management Hooks
+export function useEvents(status?: string) {
+  return useQuery({
+    queryKey: ["admin", "events", status],
+    queryFn: () => eventManagementService.getAllEvents(status),
+    staleTime: 30_000,
+  });
+}
+
+export function useEvent(eventId: string) {
+  return useQuery({
+    queryKey: ["admin", "events", eventId],
+    queryFn: () => eventManagementService.getEventById(eventId),
+    enabled: !!eventId,
+    staleTime: 30_000,
+  });
+}
+
+export function useUpdateEventStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ eventId, statusData }: { eventId: string; statusData: UpdateEventStatusRequest }) =>
+      eventManagementService.updateEventStatus(eventId, statusData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "events"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+    },
+  });
+}
+
+export function useDeleteEvent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (eventId: string) => eventManagementService.deleteEvent(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "events"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
     },
   });
 }

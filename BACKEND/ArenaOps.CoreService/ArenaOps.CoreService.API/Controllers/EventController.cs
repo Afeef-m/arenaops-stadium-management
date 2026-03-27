@@ -27,7 +27,6 @@ namespace ArenaOps.CoreService.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/events")]
-[Authorize]
 public class EventController : ControllerBase
 {
     private readonly IEventService _eventService;
