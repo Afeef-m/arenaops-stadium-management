@@ -15,14 +15,20 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using StackExchange.Redis;
 
+Console.WriteLine("=== AuthService Starting ===");
+
 try
 {
+    Console.WriteLine("Creating WebApplication builder...");
     var builder = WebApplication.CreateBuilder(args);
+    Console.WriteLine("WebApplication builder created.");
 
     // ---------------- SERILOG ----------------
+    Console.WriteLine("Configuring Serilog...");
     Log.Logger = new LoggerConfiguration()
         .ReadFrom.Configuration(builder.Configuration)
         .CreateLogger();
+    Console.WriteLine("Serilog configured.");
 
     builder.Host.UseSerilog();
 
@@ -30,10 +36,17 @@ try
     builder.Services.AddControllers();
 
     // ---------------- REDIS ----------------
+    Console.WriteLine("Configuring Redis...");
     var redisConnectionString = builder.Configuration.GetValue<string>("Redis:ConnectionString") ?? "localhost:6379";
 
-    builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
-        ConnectionMultiplexer.Connect(redisConnectionString));
+    builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+    {
+        var options = ConfigurationOptions.Parse(redisConnectionString);
+        options.AbortOnConnectFail = false;  // Don't throw if Redis is unavailable
+        options.ConnectTimeout = 5000;       // 5 second timeout
+        options.SyncTimeout = 3000;          // 3 second sync timeout
+        return ConnectionMultiplexer.Connect(options);
+    });
 
     // ---------------- RATE LIMIT ----------------
     builder.Services.Configure<RateLimitSettings>(
