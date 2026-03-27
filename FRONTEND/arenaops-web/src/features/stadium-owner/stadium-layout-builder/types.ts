@@ -111,13 +111,15 @@ export interface LayoutSection {
  * Generated from section configuration with aisles applied
  */
 export interface LayoutSeat {
-  seatId: string;  // Unique identifier
-  sectionId: string;  // Parent section
+  seatId: string;  // Unique identifier (e.g., "section-123-A1")
+  sectionId: string;  // Parent section ID
+  sectionName?: string;  // Parent section name (for backend/display)
+  stadiumId?: string;  // Stadium ID (for backend purposes)
   rowNumber: number;  // 0-indexed row number
   rowLabel: string;  // Display label (A, B, C...)
   seatNumber: number;  // 1-indexed seat number within row
-  x: number;  // Canvas X coordinate
-  y: number;  // Canvas Y coordinate
+  x: number;  // Canvas X coordinate within section
+  y: number;  // Canvas Y coordinate within section
   type: SeatType;  // Can override section default
   price: number;  // Pricing (0 in template mode, set in event mode)
   disabled: boolean;  // Manually disabled seat

@@ -227,6 +227,7 @@ export function generateArcSeats(section: LayoutSection): LayoutSeat[] {
       const seat: LayoutSeat = {
         seatId: `${section.id}-${rowLabel}${seatNumber}`,
         sectionId: section.id,
+        sectionName: section.name,
         rowNumber: rowIndex,
         rowLabel,
         seatNumber,
@@ -309,6 +310,7 @@ export function generateRectangleSeats(section: LayoutSection): LayoutSeat[] {
       const seat: LayoutSeat = {
         seatId: `${section.id}-${rowLabel}${seatNumber}`,
         sectionId: section.id,
+        sectionName: section.name,
         rowNumber: rowIndex,
         rowLabel,
         seatNumber,

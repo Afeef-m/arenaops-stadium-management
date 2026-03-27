@@ -257,13 +257,18 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
   const generateSeats = useCallback(() => {
     try {
       const newSeats = generateAllSeats(sections, fieldConfig);
-      setSeats(newSeats);
+      // Add stadiumId to all generated seats
+      const seatsWithStadiumId = newSeats.map(seat => ({
+        ...seat,
+        stadiumId,
+      }));
+      setSeats(seatsWithStadiumId);
       setIsDirty(true);
-      console.log(`Generated ${newSeats.length} seats from ${sections.length} sections`);
+      console.log(`Generated ${seatsWithStadiumId.length} seats from ${sections.length} sections`);
     } catch (error) {
       console.error('Seat generation failed:', error);
     }
-  }, [sections, fieldConfig]);
+  }, [sections, fieldConfig, stadiumId]);
 
   const updateSeat = useCallback((seatId: string, updates: Partial<LayoutSeat>) => {
     setSeats(prev => prev.map(s =>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useLayoutBuilder } from "./hooks/useLayoutBuilder";
 import { LayoutCanvas } from "./LayoutCanvas";
@@ -11,6 +11,7 @@ import { SeatDetailsPanel } from "./SeatDetailsPanel";
 import { SelectionStats } from "./components/SelectionStats";
 import { LayoutConfigurationPanel } from "./components/LayoutConfigurationPanel";
 import { BowlFormDialog, type BowlFormData } from "./components/BowlFormDialog";
+import { SectionFocusEditor } from "./components/SectionFocusEditor";
 import { getRangeSelection } from "./utils/selectionAlgorithms";
 import { calculateMinimumInnerRadius } from "./utils/geometry";
 import type { BuilderMode, FieldConfig, LayoutSection, Bowl } from "./types";
@@ -91,6 +92,17 @@ export function StadiumLayoutBuilder({
   const [showBowlFormDialog, setShowBowlFormDialog] = useState(false);  // For bowl creation/editing dialog
   const [editingBowlData, setEditingBowlData] = useState<Bowl | undefined>(undefined);  // Which bowl to edit (undefined = create new)
   const [showFieldConfigModal, setShowFieldConfigModal] = useState(false);  // Field config as modal
+
+  // ============================================================================
+  // Effects
+  // ============================================================================
+
+  // Auto-generate seats when entering section-focus mode if none exist
+  useEffect(() => {
+    if (viewMode === 'section-focus' && seats.length === 0 && sections.length > 0) {
+      generateSeats();
+    }
+  }, [viewMode, seats.length, sections.length, generateSeats]);
 
   // ============================================================================
   // Event Handlers
@@ -197,6 +209,9 @@ export function StadiumLayoutBuilder({
         return 'NW';
       };
 
+      // Track sequence numbers per direction for unique naming
+      const directionCounts: Record<string, number> = {};
+
       for (let i = 0; i < data.numSections; i++) {
         const startAngle = i * anglePerSection + (gapAngle / 2);
         const endAngle = startAngle + sectionSpan;
@@ -205,9 +220,13 @@ export function StadiumLayoutBuilder({
         const sectionId = `section-${bowlId}-${i}-${Date.now()}`;
         const dirName = getDirectionalName(centerAngle);
 
+        // Increment sequence number for this direction
+        directionCounts[dirName] = (directionCounts[dirName] || 0) + 1;
+        const sequenceNum = directionCounts[dirName];
+
         const newSection: LayoutSection = {
           id: sectionId,
-          name: `${data.name} ${dirName}`,
+          name: `${data.name} ${dirName} ${sequenceNum}`,
           shape: 'arc',
           centerX: 700, // Canvas center
           centerY: 450,
@@ -288,6 +307,12 @@ export function StadiumLayoutBuilder({
 
   const handleSectionDoubleClick = (sectionId: string) => {
     selectSection(sectionId);
+
+    // Auto-generate seats if none exist yet
+    if (seats.length === 0 && sections.length > 0) {
+      generateSeats();
+    }
+
     setViewMode('section-focus');  // Enter focused section view
   };
 
@@ -397,6 +422,18 @@ export function StadiumLayoutBuilder({
   const handleAddSeat = useCallback((seat: typeof seats[0]) => {
     addSeat(seat);
   }, [addSeat]);
+
+  const handleApplyChanges = useCallback(() => {
+    // Changes are already saved via updateSeat/deleteSeats/addSeat
+    // This is for any additional logic like showing a success message
+    console.log('✅ Seat changes applied');
+  }, []);
+
+  // Get section seats for focus editor
+  const sectionSeats = useMemo(() => {
+    if (!selectedSectionId) return [];
+    return seats.filter(s => s.sectionId === selectedSectionId);
+  }, [seats, selectedSectionId]);
 
   // ============================================================================
   // Render
@@ -538,38 +575,41 @@ export function StadiumLayoutBuilder({
 
         {/* Center: Canvas */}
         <div className="canvas-container">
-          {/* Section Focus Mode Header */}
-          {viewMode === 'section-focus' && selectedSection && (
-            <div className="section-focus-header">
-              <span className="section-focus-title">
-                Editing: {selectedSection.name}
-              </span>
-              <button
-                className="exit-focus-button"
-                onClick={handleExitSectionFocus}
-              >
-                ← Back to Stadium View
-              </button>
-            </div>
+          {/* Section Focus Editor - Full screen section editing */}
+          {viewMode === 'section-focus' && selectedSection ? (
+            <SectionFocusEditor
+              section={selectedSection}
+              seats={sectionSeats}
+              selectedSeatIds={selectedSeatIds}
+              onSeatClick={handleSeatClick}
+              onSeatsSelect={handleSeatsSelect}
+              onSeatUpdate={updateSeat}
+              onSeatsUpdate={updateSeats}
+              onSeatDelete={handleDeleteSeats}
+              onSeatAdd={handleAddSeat}
+              onApplyChanges={handleApplyChanges}
+              onExit={handleExitSectionFocus}
+              disabled={!canEdit}
+            />
+          ) : (
+            <LayoutCanvas
+              width={CANVAS_WIDTH}
+              height={CANVAS_HEIGHT}
+              fieldConfig={fieldConfig}
+              bowls={bowls}
+              sections={sections}
+              seats={seats}
+              selectedSectionId={selectedSectionId}
+              selectedSeatIds={selectedSeatIds}
+              onSectionSelect={handleSectionSelect}
+              onSectionDoubleClick={handleSectionDoubleClick}
+              onSeatClick={handleSeatClick}
+              onSeatsSelect={handleSeatsSelect}
+              viewMode={viewMode}
+              showBowlZones={true}
+              showGrid={true}
+            />
           )}
-
-          <LayoutCanvas
-            width={CANVAS_WIDTH}
-            height={CANVAS_HEIGHT}
-            fieldConfig={fieldConfig}
-            bowls={bowls}
-            sections={sections}
-            seats={seats}
-            selectedSectionId={selectedSectionId}
-            selectedSeatIds={selectedSeatIds}
-            onSectionSelect={handleSectionSelect}
-            onSectionDoubleClick={handleSectionDoubleClick}
-            onSeatClick={handleSeatClick}
-            onSeatsSelect={handleSeatsSelect}
-            viewMode={viewMode}
-            showBowlZones={true}
-            showGrid={true}
-          />
         </div>
 
         {/* Right Sidebar: Properties */}
