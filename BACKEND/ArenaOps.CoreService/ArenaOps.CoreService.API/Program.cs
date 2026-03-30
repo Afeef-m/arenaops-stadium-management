@@ -46,6 +46,7 @@ builder.Services.AddScoped<IEventSlotRepository, EventSlotRepository>();
 builder.Services.AddScoped<ISectionTicketTypeRepository, SectionTicketTypeRepository>();
 builder.Services.AddScoped<IEventSeatRepository, EventSeatRepository>();
 builder.Services.AddScoped<IAdminActivityRepository, AdminActivityRepository>();
+builder.Services.AddScoped<IBowlRepository, BowlRepository>();
 
 // Services
 builder.Services.AddScoped<IStadiumService, StadiumService>();
@@ -63,6 +64,8 @@ builder.Services.AddScoped<ICoreEmailService, CoreEmailService>();
 builder.Services.AddScoped<IEventSlotService, EventSlotService>();
 builder.Services.AddScoped<ISectionTicketTypeService, SectionTicketTypeService>();
 builder.Services.AddScoped<IEventSeatService, EventSeatService>();
+builder.Services.AddScoped<IBowlService, BowlService>();
+builder.Services.AddScoped<IFieldConfigService, FieldConfigService>();
 
 // 3a-redis. Redis Cache
 var redisConnectionString = builder.Configuration.GetValue<string>("Redis:ConnectionString") ?? "localhost:6379";

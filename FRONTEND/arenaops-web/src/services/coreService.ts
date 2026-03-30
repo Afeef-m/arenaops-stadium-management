@@ -367,4 +367,46 @@ export const coreService = {
         const response = await api.get(`/api/core/events/search?${params.toString()}`);
         return response.data;
     },
-};
+
+    // ── Bowl Management ──────────────────────────────────
+    createBowl: async (seatingPlanId: string, payload: { name: string; color?: string; displayOrder: number }): Promise<ApiResponse<any>> => {
+        const response = await api.post(`/api/core/seating-plans/${seatingPlanId}/bowls`, payload);
+        return response.data;
+    },
+
+    getBowls: async (seatingPlanId: string): Promise<ApiResponse<any[]>> => {
+        const response = await api.get(`/api/core/seating-plans/${seatingPlanId}/bowls`);
+        return response.data;
+    },
+
+    getBowl: async (bowlId: string): Promise<ApiResponse<any>> => {
+        const response = await api.get(`/api/core/bowls/${bowlId}`);
+        return response.data;
+    },
+
+    updateBowl: async (bowlId: string, payload: { name?: string; color?: string; displayOrder?: number }): Promise<ApiResponse<any>> => {
+        const response = await api.put(`/api/core/bowls/${bowlId}`, payload);
+        return response.data;
+    },
+
+    deleteBowl: async (bowlId: string): Promise<ApiResponse<void>> => {
+        const response = await api.delete(`/api/core/bowls/${bowlId}`);
+        return response.data;
+    },
+
+    reorderBowl: async (bowlId: string, newDisplayOrder: number): Promise<ApiResponse<any>> => {
+        const response = await api.post(`/api/core/bowls/${bowlId}/reorder`, { newDisplayOrder });
+        return response.data;
+    },
+
+    // ── Field Configuration ──────────────────────────────
+    getFieldConfig: async (seatingPlanId: string): Promise<ApiResponse<any>> => {
+        const response = await api.get(`/api/core/seating-plans/${seatingPlanId}/field-config`);
+        return response.data;
+    },
+
+    updateFieldConfig: async (seatingPlanId: string, payload: { shape: string; length: number; width: number; unit: string; bufferZone: number }): Promise<ApiResponse<any>> => {
+        const response = await api.put(`/api/core/seating-plans/${seatingPlanId}/field-config`, payload);
+        return response.data;
+    },
+}

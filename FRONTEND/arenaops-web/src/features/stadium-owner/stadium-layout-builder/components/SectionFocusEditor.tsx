@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useRef } from "react";
-import type { LayoutSection, LayoutSeat, SeatType } from "../types";
+import type { LayoutSection, LayoutSeat } from "../types";
 import { SEAT_TYPE_COLORS } from "../utils/seatGenerator";
 
 // Large seat radius for easy editing
@@ -46,9 +46,15 @@ export function SectionFocusEditor({
   disabled = false,
 }: SectionFocusEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const gridContainerRef = useRef<HTMLDivElement>(null);
   const [hoveredSeatId, setHoveredSeatId] = useState<string | null>(null);
   const [editMode, setEditMode] = useState<'select' | 'delete' | 'add'>('select');
   const [pendingChanges, setPendingChanges] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
 
   // Group seats by row for display
   const seatsByRow = useMemo(() => {
@@ -69,6 +75,39 @@ export function SectionFocusEditor({
 
     return grouped;
   }, [seats]);
+
+  // Handle scroll wheel zoom
+  const handleScroll = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      setZoom(prev => {
+        const direction = e.deltaY > 0 ? -0.1 : 0.1;
+        const newZoom = Math.max(0.5, Math.min(3, prev + direction));
+        return newZoom;
+      });
+    }
+  }, []);
+
+  // Handle pan with mouse drag (when zoom > 1)
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (zoom > 1 && (e.button === 1 || (e.button === 0 && e.altKey))) {
+      e.preventDefault();
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - panX, y: e.clientY - panY });
+    }
+  }, [zoom, panX, panY]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (isPanning && panStart) {
+      setPanX(e.clientX - panStart.x);
+      setPanY(e.clientY - panStart.y);
+    }
+  }, [isPanning, panStart]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsPanning(false);
+    setPanStart(null);
+  }, []);
 
   // Calculate dimensions for the normalized view
   const layoutDimensions = useMemo(() => {
@@ -119,13 +158,6 @@ export function SectionFocusEditor({
     setPendingChanges(true);
   }, [seatsByRow, section, onSeatAdd]);
 
-  // Handle bulk type change for selected seats
-  const handleBulkTypeChange = useCallback((type: SeatType) => {
-    if (selectedSeatIds.size === 0) return;
-    onSeatsUpdate(Array.from(selectedSeatIds), { type });
-    setPendingChanges(true);
-  }, [selectedSeatIds, onSeatsUpdate]);
-
   // Handle bulk disable/enable
   const handleBulkDisableToggle = useCallback(() => {
     if (selectedSeatIds.size === 0) return;
@@ -159,15 +191,13 @@ export function SectionFocusEditor({
   // Get selected seats info
   const selectedSeatsInfo = useMemo(() => {
     const selected = seats.filter(s => selectedSeatIds.has(s.seatId));
-    const types = new Map<SeatType, number>();
     let disabledCount = 0;
 
     selected.forEach(s => {
-      types.set(s.type, (types.get(s.type) || 0) + 1);
       if (s.disabled) disabledCount++;
     });
 
-    return { count: selected.length, types, disabledCount };
+    return { count: selected.length, disabledCount };
   }, [seats, selectedSeatIds]);
 
   const rowLabels = Array.from(seatsByRow.keys());
@@ -182,7 +212,7 @@ export function SectionFocusEditor({
           </button>
           <div className="section-info">
             <h2>{section.name}</h2>
-            <span className="seat-count">{seats.length} seats • {seatsByRow.size} rows</span>
+            <span className="seat-count">{seats.length} seats • {seatsByRow.size} rows • {section.seatType || 'standard'}</span>
           </div>
         </div>
         <div className="header-right">
@@ -228,34 +258,6 @@ export function SectionFocusEditor({
             <span className="tool-label">{selectedSeatIds.size} selected:</span>
             <button
               className="tool-button"
-              onClick={() => handleBulkTypeChange('vip')}
-              title="Set as VIP"
-            >
-              VIP
-            </button>
-            <button
-              className="tool-button"
-              onClick={() => handleBulkTypeChange('premium')}
-              title="Set as Premium"
-            >
-              Premium
-            </button>
-            <button
-              className="tool-button"
-              onClick={() => handleBulkTypeChange('standard')}
-              title="Set as Standard"
-            >
-              Standard
-            </button>
-            <button
-              className="tool-button"
-              onClick={() => handleBulkTypeChange('economy')}
-              title="Set as Economy"
-            >
-              Economy
-            </button>
-            <button
-              className="tool-button"
               onClick={handleBulkDisableToggle}
               title="Toggle disabled"
             >
@@ -270,14 +272,27 @@ export function SectionFocusEditor({
             </button>
           </div>
         )}
+
+        <div className="tool-group zoom-indicator">
+          <span className="tool-label">Zoom: {Math.round(zoom * 100)}%</span>
+          <span className="tool-hint">(Ctrl + Scroll to zoom{zoom > 1 ? ', Alt+Drag to pan' : ''})</span>
+        </div>
       </div>
 
       {/* Seat Grid */}
-      <div className="seat-grid-container">
-        <div className="seat-grid">
+      <div
+        className="seat-grid-container"
+        ref={gridContainerRef}
+        onWheel={handleScroll}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <div className="seat-grid" style={{ transform: `translate(${panX}px, ${panY}px) scale(${zoom})`, transformOrigin: 'top center', transition: isPanning ? 'none' : 'transform 0.1s ease-out', cursor: zoom > 1 && !isPanning ? 'grab' : zoom > 1 && isPanning ? 'grabbing' : 'default' }}>
           {/* Field direction indicator */}
           <div className="field-indicator">
-            <span>↓ FIELD ↓</span>
+            <span>FIELD</span>
           </div>
 
           {/* Rows */}
@@ -300,7 +315,8 @@ export function SectionFocusEditor({
                   {rowSeats.map((seat, seatIndex) => {
                     const isSelected = selectedSeatIds.has(seat.seatId);
                     const isHovered = hoveredSeatId === seat.seatId;
-                    const seatColor = SEAT_TYPE_COLORS[seat.type] || SEAT_TYPE_COLORS.standard;
+                    // Use section's seatType for color (all seats in section are same type)
+                    const seatColor = SEAT_TYPE_COLORS[section.seatType] || SEAT_TYPE_COLORS.standard;
 
                     return (
                       <div
@@ -313,7 +329,7 @@ export function SectionFocusEditor({
                           backgroundColor: seatColor,
                           cursor: editMode === 'delete' ? 'crosshair' : 'pointer',
                         }}
-                        title={`${seat.rowLabel}${seat.seatNumber} - ${seat.type}`}
+                        title={`${seat.rowLabel}${seat.seatNumber}`}
                       >
                         <span className="seat-number">{seat.seatNumber}</span>
                         {seat.disabled && <span className="disabled-x">✕</span>}
@@ -350,16 +366,6 @@ export function SectionFocusEditor({
               <span className="stat-label">Selected:</span>
               <span className="stat-value">{selectedSeatsInfo.count} seats</span>
             </div>
-            {Array.from(selectedSeatsInfo.types.entries()).map(([type, count]) => (
-              <div key={type} className="stat">
-                <span
-                  className="type-indicator"
-                  style={{ backgroundColor: SEAT_TYPE_COLORS[type] }}
-                />
-                <span className="stat-label">{type}:</span>
-                <span className="stat-value">{count}</span>
-              </div>
-            ))}
             {selectedSeatsInfo.disabledCount > 0 && (
               <div className="stat">
                 <span className="stat-label">Disabled:</span>
@@ -379,7 +385,6 @@ export function SectionFocusEditor({
             return (
               <>
                 <strong>{seat.rowLabel}{seat.seatNumber}</strong>
-                <span>Type: {seat.type}</span>
                 <span>Status: {seat.disabled ? 'Disabled' : 'Active'}</span>
               </>
             );
@@ -527,6 +532,15 @@ export function SectionFocusEditor({
           border-left: 1px solid #475569;
         }
 
+        .zoom-indicator {
+          margin-left: auto;
+        }
+
+        .tool-hint {
+          font-size: 0.75rem;
+          color: #64748b;
+        }
+
         .seat-grid-container {
           flex: 1;
           overflow: auto;
@@ -623,10 +637,11 @@ export function SectionFocusEditor({
         }
 
         .seat-number {
-          font-size: 0.75rem;
-          font-weight: 600;
+          font-size: 0.9rem;
+          font-weight: 700;
           color: #fff;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+          line-height: 1;
         }
 
         .disabled-x {

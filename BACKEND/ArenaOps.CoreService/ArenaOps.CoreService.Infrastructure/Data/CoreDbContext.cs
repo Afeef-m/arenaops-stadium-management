@@ -9,6 +9,7 @@ public class CoreDbContext : DbContext
 
     public DbSet<Stadium> Stadiums => Set<Stadium>();
     public DbSet<SeatingPlan> SeatingPlans => Set<SeatingPlan>();
+    public DbSet<Bowl> Bowls => Set<Bowl>();
     public DbSet<Section> Sections => Set<Section>();
     public DbSet<Seat> Seats => Set<Seat>();
     public DbSet<Landmark> Landmarks => Set<Landmark>();

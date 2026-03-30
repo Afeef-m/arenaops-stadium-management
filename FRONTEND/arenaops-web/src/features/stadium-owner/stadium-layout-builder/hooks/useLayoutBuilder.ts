@@ -14,6 +14,7 @@ import type {
 } from "../types";
 import { DEFAULT_FIELD_CONFIG } from "../types";
 import { generateAllSeats } from "../utils/seatGenerator";
+import { coreService } from "../../../services/coreService";
 
 export interface UseLayoutBuilderOptions {
   mode: BuilderMode;
@@ -25,13 +26,13 @@ export interface UseLayoutBuilderOptions {
 export interface UseLayoutBuilderReturn extends LayoutBuilderState {
   // Field configuration
   setFieldConfig: (config: FieldConfig) => void;
-  updateFieldConfig: (updates: Partial<FieldConfig>) => void;
+  updateFieldConfig: (updates: Partial<FieldConfig>) => Promise<void>;
 
   // Bowl management
-  addBowl: (bowlData?: Partial<Bowl>) => string;
-  updateBowl: (bowlId: string, updates: Partial<Bowl>) => void;
-  deleteBowl: (bowlId: string) => void;
-  reorderBowl: (bowlId: string, newOrder: number) => void;
+  addBowl: (bowlData?: Partial<Bowl>) => Promise<string>;
+  updateBowl: (bowlId: string, updates: Partial<Bowl>) => Promise<void>;
+  deleteBowl: (bowlId: string) => Promise<void>;
+  reorderBowl: (bowlId: string, newOrder: number) => Promise<void>;
 
   // Section management
   addSection: (section: LayoutSection) => void;
@@ -57,6 +58,8 @@ export interface UseLayoutBuilderReturn extends LayoutBuilderState {
   // State flags
   setIsLayoutLocked: (locked: boolean) => void;
   setIsDirty: (dirty: boolean) => void;
+  isLoadingFromApi: boolean;
+  seatingPlanId: string | null;
 
   // Computed
   selectedSection: LayoutSection | null;
@@ -91,6 +94,8 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
   const [validation, setValidation] = useState<CapacityWarning[]>([]);
   const [isLayoutLocked, setIsLayoutLocked] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [isLoadingFromApi, setIsLoadingFromApi] = useState(true);
+  const [seatingPlanId, setSeatingPlanId] = useState<string | null>(null);
 
   // ============================================================================
   // Computed Values
@@ -111,59 +116,156 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
   // Field Configuration
   // ============================================================================
 
-  const updateFieldConfig = useCallback((updates: Partial<FieldConfig>) => {
-    setFieldConfig(prev => ({ ...prev, ...updates }));
-    setIsDirty(true);
-  }, []);
+  const updateFieldConfig = useCallback(async (updates: Partial<FieldConfig>) => {
+    if (!seatingPlanId) {
+      console.error('Cannot update field config: seatingPlanId not set');
+      return;
+    }
+
+    try {
+      const updatedConfig = { ...fieldConfig, ...updates };
+
+      // Call API to update field config
+      const response = await coreService.updateFieldConfig(seatingPlanId, {
+        shape: updatedConfig.shape,
+        length: updatedConfig.length,
+        width: updatedConfig.width,
+        unit: updatedConfig.unit,
+        bufferZone: updatedConfig.bufferZone,
+      });
+
+      if (response.success && response.data) {
+        // Update local state with the minimum radius calculated by backend
+        setFieldConfig(prev => ({
+          ...prev,
+          ...updates,
+          minimumInnerRadius: response.data.minimumInnerRadius,
+        }));
+        setIsDirty(true);
+      } else {
+        console.error('Failed to update field config:', response.error?.message);
+      }
+    } catch (error) {
+      console.error('Error updating field config:', error);
+    }
+  }, [fieldConfig, seatingPlanId]);
 
   // ============================================================================
   // Bowl Management
   // ============================================================================
 
-  const addBowl = useCallback((bowlData?: Partial<Bowl>) => {
-    const newBowl: Bowl = {
-      id: bowlData?.id || `bowl-${Date.now()}`,
-      name: bowlData?.name || `Bowl ${bowls.length + 1}`,
-      color: bowlData?.color || (['#4F9CF9', '#34C759', '#FFD60A', '#AF52DE'][bowls.length % 4] || '#4F9CF9'),
-      sectionIds: bowlData?.sectionIds || [],
-      isActive: bowlData?.isActive ?? true,
-      displayOrder: bowlData?.displayOrder || (bowls.length + 1),
-    };
-    setBowls(prev => [...prev, newBowl]);
-    setIsDirty(true);
-    return newBowl.id;
-  }, [bowls.length]);
+  const addBowl = useCallback(async (bowlData?: Partial<Bowl>) => {
+    if (!seatingPlanId) {
+      console.error('Cannot add bowl: seatingPlanId not set');
+      return '';
+    }
 
-  const updateBowl = useCallback((bowlId: string, updates: Partial<Bowl>) => {
-    setBowls(prev => prev.map(b => b.id === bowlId ? { ...b, ...updates } : b));
-    setIsDirty(true);
+    try {
+      const newBowlData = {
+        name: bowlData?.name || `Bowl ${bowls.length + 1}`,
+        color: bowlData?.color || (['#4F9CF9', '#34C759', '#FFD60A', '#AF52DE'][bowls.length % 4] || '#4F9CF9'),
+        displayOrder: bowlData?.displayOrder || (bowls.length + 1),
+      };
+
+      // Call API to create bowl
+      const response = await coreService.createBowl(seatingPlanId, newBowlData);
+
+      if (response.success && response.data) {
+        // Map API response to local Bowl interface
+        const createdBowl: Bowl = {
+          id: response.data.bowlId,
+          name: response.data.name,
+          color: response.data.color,
+          sectionIds: response.data.sectionIds || [],
+          isActive: response.data.isActive,
+          displayOrder: response.data.displayOrder,
+        };
+
+        setBowls(prev => [...prev, createdBowl]);
+        setIsDirty(true);
+        return createdBowl.id;
+      } else {
+        console.error('Failed to create bowl:', response.error?.message);
+        return '';
+      }
+    } catch (error) {
+      console.error('Error creating bowl:', error);
+      return '';
+    }
+  }, [bowls.length, seatingPlanId]);
+
+  const updateBowl = useCallback(async (bowlId: string, updates: Partial<Bowl>) => {
+    try {
+      // Call API to update bowl
+      const response = await coreService.updateBowl(bowlId, {
+        name: updates.name,
+        color: updates.color,
+        displayOrder: updates.displayOrder,
+      });
+
+      if (response.success) {
+        setBowls(prev => prev.map(b => b.id === bowlId ? { ...b, ...updates } : b));
+        setIsDirty(true);
+      } else {
+        console.error('Failed to update bowl:', response.error?.message);
+      }
+    } catch (error) {
+      console.error('Error updating bowl:', error);
+    }
   }, []);
 
-  const deleteBowl = useCallback((bowlId: string) => {
-    // Remove bowl and DELETE all its sections (not just unassign)
-    setBowls(prev => prev.filter(b => b.id !== bowlId));
-    setSections(prev => prev.filter(s => s.bowlId !== bowlId));
-    setSeats(prev => {
-      // Also remove seats belonging to deleted sections
-      const deletedSectionIds = sections.filter(s => s.bowlId === bowlId).map(s => s.id);
-      return prev.filter(seat => !deletedSectionIds.includes(seat.sectionId));
-    });
-    setIsDirty(true);
-  }, [sections]);
+  const deleteBowl = useCallback(async (bowlId: string) => {
+    try {
+      // Call API to delete bowl
+      const response = await coreService.deleteBowl(bowlId);
 
-  const reorderBowl = useCallback((bowlId: string, newOrder: number) => {
-    setBowls(prev => {
-      const bowlsCopy = [...prev];
-      const bowlIndex = bowlsCopy.findIndex(b => b.id === bowlId);
-      if (bowlIndex === -1) return prev;
+      if (response.success) {
+        // First, identify which sections will be unassigned
+        setSections(prev => {
+          const deletedSectionIds = prev.filter(s => s.bowlId === bowlId).map(s => s.id);
 
-      const [bowl] = bowlsCopy.splice(bowlIndex, 1);
-      bowlsCopy.splice(newOrder - 1, 0, bowl!);
+          // Delete those seats as well
+          setSeats(prevSeats => prevSeats.filter(seat => !deletedSectionIds.includes(seat.sectionId)));
 
-      // Update display orders
-      return bowlsCopy.map((b, i) => ({ ...b, displayOrder: i + 1 }));
-    });
-    setIsDirty(true);
+          // Return filtered sections with bowlId set to null
+          return prev.map(s => s.bowlId === bowlId ? { ...s, bowlId: null } : s);
+        });
+
+        // Remove the bowl itself
+        setBowls(prev => prev.filter(b => b.id !== bowlId));
+        setIsDirty(true);
+      } else {
+        console.error('Failed to delete bowl:', response.error?.message);
+      }
+    } catch (error) {
+      console.error('Error deleting bowl:', error);
+    }
+  }, []);
+
+  const reorderBowl = useCallback(async (bowlId: string, newOrder: number) => {
+    try {
+      // Call API to reorder bowl
+      const response = await coreService.reorderBowl(bowlId, newOrder);
+
+      if (response.success) {
+        setBowls(prev => {
+          const bowlsCopy = [...prev];
+          const bowlIndex = bowlsCopy.findIndex(b => b.id === bowlId);
+          if (bowlIndex === -1) return prev;
+
+          const [bowl] = bowlsCopy.splice(bowlIndex, 1);
+          bowlsCopy.splice(newOrder - 1, 0, bowl!);
+
+          // Update display orders
+          return bowlsCopy.map((b, i) => ({ ...b, displayOrder: i + 1 }));
+        });
+        setIsDirty(true);
+      } else {
+        console.error('Failed to reorder bowl:', response.error?.message);
+      }
+    } catch (error) {
+      console.error('Error reordering bowl:', error);
+    }
   }, []);
 
   // ============================================================================
@@ -354,6 +456,65 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
   }, [stadiumId, mode, templateId]);
 
   // ============================================================================
+  // Load field config and bowls from API
+  // ============================================================================
+
+  useEffect(() => {
+    const loadLayoutData = async () => {
+      // In template mode (stadium owner), we need to get the seating plan ID
+      // For now, we'll use the stadiumId and assume there's a default seating plan
+      // In a real implementation, this would be passed as a prop or fetched
+
+      try {
+        // Try to get seating plans for this stadium
+        const seatingPlansResponse = await coreService.getSeatingPlans(stadiumId);
+
+        if (seatingPlansResponse.success && seatingPlansResponse.data?.length > 0) {
+          const defaultSeatingPlan = seatingPlansResponse.data[0];
+          setSeatingPlanId(defaultSeatingPlan.seatingPlanId);
+
+          // Load field config
+          const fieldConfigResponse = await coreService.getFieldConfig(defaultSeatingPlan.seatingPlanId);
+          if (fieldConfigResponse.success && fieldConfigResponse.data) {
+            setFieldConfig({
+              shape: fieldConfigResponse.data.shape,
+              length: fieldConfigResponse.data.length,
+              width: fieldConfigResponse.data.width,
+              unit: fieldConfigResponse.data.unit,
+              bufferZone: fieldConfigResponse.data.bufferZone,
+              minimumInnerRadius: fieldConfigResponse.data.minimumInnerRadius,
+            });
+          }
+
+          // Load bowls
+          const bowlsResponse = await coreService.getBowls(defaultSeatingPlan.seatingPlanId);
+          if (bowlsResponse.success && bowlsResponse.data?.length > 0) {
+            const loadedBowls: Bowl[] = bowlsResponse.data.map((bowl: any) => ({
+              id: bowl.bowlId,
+              name: bowl.name,
+              color: bowl.color,
+              sectionIds: bowl.sectionIds || [],
+              isActive: bowl.isActive,
+              displayOrder: bowl.displayOrder,
+            }));
+            setBowls(loadedBowls);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load layout data from API:', error);
+        // Fall back to draft or defaults
+      } finally {
+        setIsLoadingFromApi(false);
+      }
+    };
+
+    // Only load from API if we're not already loaded
+    if (isLoadingFromApi && stadiumId && mode === 'template') {
+      loadLayoutData();
+    }
+  }, [stadiumId, mode, isLoadingFromApi]);
+
+  // ============================================================================
   // Return
   // ============================================================================
 
@@ -373,6 +534,8 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
     validation,
     isLayoutLocked,
     isDirty,
+    isLoadingFromApi,
+    seatingPlanId,
 
     // Field
     setFieldConfig,

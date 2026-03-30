@@ -108,8 +108,8 @@ export function StadiumLayoutBuilder({
   // Event Handlers
   // ============================================================================
 
-  const handleFieldConfigChange = (newConfig: Partial<FieldConfig>) => {
-    updateFieldConfig(newConfig);
+  const handleFieldConfigChange = async (newConfig: Partial<FieldConfig>) => {
+    await updateFieldConfig(newConfig);
   };
 
   // Helper: Convert HSL to Hex color
@@ -146,7 +146,7 @@ export function StadiumLayoutBuilder({
   }, []);
 
   // Handler: Save bowl from form dialog (create or edit)
-  const handleBowlFormSave = useCallback((data: BowlFormData) => {
+  const handleBowlFormSave = useCallback(async (data: BowlFormData) => {
     try {
       const minInnerRadius = calculateMinimumInnerRadius(fieldConfig);
 
@@ -266,7 +266,7 @@ export function StadiumLayoutBuilder({
         });
 
         // Update bowl
-        updateBowl(editingBowlData.id, {
+        await updateBowl(editingBowlData.id, {
           name: data.name,
           sectionIds: newSections.map(s => s.id),
         });
@@ -280,7 +280,7 @@ export function StadiumLayoutBuilder({
         });
 
         // Add bowl with all data at once
-        addBowl({
+        await addBowl({
           name: data.name,
           sectionIds: newSections.map(s => s.id),
         });
