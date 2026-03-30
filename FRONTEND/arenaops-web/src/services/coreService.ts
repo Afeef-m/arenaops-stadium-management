@@ -19,14 +19,18 @@ export interface Stadium {
     city: string;
     state: string;
     country: string;
+    pincode: string;
     latitude: number;
     longitude: number;
+    imageUrl: string;
+    imagePublicId: string;
     capacity?: number;
     ownerId?: string;
     isApproved?: boolean;
     imageUrl?: string;
     imagePublicId?: string;
     createdAt?: string;
+    isActive?: boolean;
 }
 
 export interface CreateStadiumPayload {
@@ -35,8 +39,11 @@ export interface CreateStadiumPayload {
     city: string;
     state: string;
     country: string;
+    pincode: string;
     latitude: number;
     longitude: number;
+    imageUrl?: string;
+    imagePublicId?: string;
 }
 
 // Seating Plan
@@ -217,8 +224,24 @@ export const coreService = {
     // ── Events ───────────────────────────────────────────
     getEvents: async (status?: string): Promise<ApiResponse<Event[]>> => {
         const params = status ? `?status=${status}` : '';
-        const response = await api.get(`/api/core/events${params}`);
-        return response.data;
+        try {
+            const response = await api.get(`/api/core/events${params}`);
+            return response.data;
+        } catch (error: any) {
+    if (process.env.NODE_ENV === 'development') {
+        console.warn('getEvents failed:', error?.response?.status);
+    }
+
+    return {
+        data: [],
+        success: false,
+        message: null,
+        error: {
+            code: 'EVENTS_FETCH_ERROR',
+            message: 'Unable to load events',
+        },
+    };
+}
     },
 
     getEvent: async (id: string): Promise<ApiResponse<Event>> => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { AdminSidebar } from "@/features/admin/components/AdminSidebar";
+import { AdminSidebar } from "@/features/admin";
 import { useAppSelector } from "@/store/hooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

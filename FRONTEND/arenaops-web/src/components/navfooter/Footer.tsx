@@ -115,7 +115,7 @@ const SimpleUniqueFooter = () => {
             </p>
             <Link
               href="/event-manager"
-              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full text-[10px] font-bold uppercase tracking-widest text-white hover:shadow-lg hover:shadow-indigo-500/20 transition-all"
+              className="px-6 py-3 bg-linear-to-r from-indigo-600 to-purple-600 rounded-full text-[10px] font-bold uppercase tracking-widest text-white hover:shadow-lg hover:shadow-indigo-500/20 transition-all"
             >
               Become an Event Manager ↗
             </Link>
@@ -135,7 +135,7 @@ const SimpleUniqueFooter = () => {
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6" />
+        <div className="h-px bg-linear-to-r from-transparent via-white/10 to-transparent mb-6" />
 
         {/* Bottom */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -150,7 +150,7 @@ const SimpleUniqueFooter = () => {
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+      <div className="absolute bottom-0 left-0 w-full h-0.5 bg-linear-to-r from-transparent via-emerald-500/50 to-transparent" />
     </footer>
   );
 };

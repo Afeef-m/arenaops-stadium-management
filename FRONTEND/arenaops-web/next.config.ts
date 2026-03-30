@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
 
-/** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   output: 'standalone',
   images: {
@@ -16,6 +15,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "cdn.yourdomain.com",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com", 
       },
     ],
   },

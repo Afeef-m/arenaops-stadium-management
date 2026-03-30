@@ -14,6 +14,8 @@ import type {
   BulkActionRequest,
   BulkActionResult,
   PendingStadium,
+  EventListItem,
+  UpdateEventStatusRequest,
 } from "../types/admin.types";
 
 // Admin Dashboard API
@@ -224,5 +226,56 @@ export const userManagementService = {
     }
 
     return response.data.data;
+  },
+};
+
+// Event Management API
+export const eventManagementService = {
+  async getAllEvents(status?: string): Promise<EventListItem[]> {
+    const params = new URLSearchParams();
+    if (status) params.append("status", status);
+
+    const response = await api.get<ApiEnvelope<EventListItem[]>>(
+      `/api/core/events${params.toString() ? `?${params.toString()}` : ""}`
+    );
+
+    if (!response.data?.success || !response.data.data) {
+      throw new Error(response.data?.error?.message || "Failed to load events");
+    }
+
+    return response.data.data;
+  },
+
+  async getEventById(eventId: string): Promise<EventListItem> {
+    const response = await api.get<ApiEnvelope<EventListItem>>(
+      `/api/core/events/${eventId}`
+    );
+
+    if (!response.data?.success || !response.data.data) {
+      throw new Error(response.data?.error?.message || "Failed to load event");
+    }
+
+    return response.data.data;
+  },
+
+  async updateEventStatus(eventId: string, statusData: UpdateEventStatusRequest): Promise<void> {
+    const response = await api.patch<ApiEnvelope<unknown>>(
+      `/api/core/events/${eventId}/status`,
+      statusData
+    );
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.error?.message || "Failed to update event status");
+    }
+  },
+
+  async deleteEvent(eventId: string): Promise<void> {
+    const response = await api.delete<ApiEnvelope<unknown>>(
+      `/api/core/events/${eventId}`
+    );
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.error?.message || "Failed to delete event");
+    }
   },
 };

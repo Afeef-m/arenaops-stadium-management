@@ -1,0 +1,8 @@
+phase-1-foundation/FILES_LIST.txt
+phase-1-foundation/page.tsx
+phase-1-foundation/PHASE_1_SUMMARY.md
+phase-1-foundation/stadium-owner/stadium-layout-builder/hooks/useCanvas.ts
+phase-1-foundation/stadium-owner/stadium-layout-builder/hooks/useLayoutBuilder.ts
+phase-1-foundation/stadium-owner/stadium-layout-builder/LayoutCanvas.tsx
+phase-1-foundation/stadium-owner/stadium-layout-builder/StadiumLayoutBuilder.tsx
+phase-1-foundation/stadium-owner/stadium-layout-builder/types.ts
