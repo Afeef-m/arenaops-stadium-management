@@ -2,6 +2,7 @@ using ArenaOps.CoreService.Application.DTOs;
 using ArenaOps.CoreService.Application.Interfaces;
 using ArenaOps.CoreService.Domain.Entities;
 using ArenaOps.Shared.Models;
+using System.Text.Json;
 
 namespace ArenaOps.CoreService.Infrastructure.Services;
 
@@ -91,6 +92,225 @@ public class SectionService : ISectionService
             return ApiResponse<object>.Fail("DELETE_FAILED", "Could not delete section");
 
         return ApiResponse<object>.Ok(new { }, "Section deleted successfully");
+    }
+
+    // ============================================================================
+    // Enhanced Geometry Methods
+    // ============================================================================
+
+    public async Task<ApiResponse<SectionGeometryResponse>> CreateArcSectionAsync(
+        Guid seatingPlanId, CreateArcSectionRequest request, Guid userId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Verify seating plan exists
+            var seatingPlanExists = await _repository.SeatingPlanExistsAsync(seatingPlanId, cancellationToken);
+            if (!seatingPlanExists)
+                return ApiResponse<SectionGeometryResponse>.Fail("SEATING_PLAN_NOT_FOUND", "Seating plan not found");
+
+            var section = new Section
+            {
+                SectionId = Guid.NewGuid(),
+                SeatingPlanId = seatingPlanId,
+                Name = request.Name,
+                Type = "Seated",
+                SeatType = request.SeatType,
+                Color = request.Color,
+                PosX = request.CenterX,
+                PosY = request.CenterY,
+
+                // Geometry properties
+                GeometryType = "arc",
+                GeometryData = JsonSerializer.Serialize(new
+                {
+                    request.CenterX,
+                    request.CenterY,
+                    request.InnerRadius,
+                    request.OuterRadius,
+                    request.StartAngle,
+                    request.EndAngle
+                }),
+
+                // Seating configuration
+                Rows = request.Rows,
+                SeatsPerRow = request.SeatsPerRow,
+                VerticalAisles = request.VerticalAisles != null ? JsonSerializer.Serialize(request.VerticalAisles) : null,
+                HorizontalAisles = request.HorizontalAisles != null ? JsonSerializer.Serialize(request.HorizontalAisles) : null,
+
+                // Bowl assignment
+                BowlId = request.BowlId
+            };
+
+            var created = await _repository.CreateAsync(section, cancellationToken);
+            return ApiResponse<SectionGeometryResponse>.Ok(MapToGeometryResponse(created), "Arc section created successfully");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<SectionGeometryResponse>.Fail("CREATE_ARC_SECTION_ERROR", ex.Message);
+        }
+    }
+
+    public async Task<ApiResponse<SectionGeometryResponse>> CreateRectangleSectionAsync(
+        Guid seatingPlanId, CreateRectangleSectionRequest request, Guid userId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Verify seating plan exists
+            var seatingPlanExists = await _repository.SeatingPlanExistsAsync(seatingPlanId, cancellationToken);
+            if (!seatingPlanExists)
+                return ApiResponse<SectionGeometryResponse>.Fail("SEATING_PLAN_NOT_FOUND", "Seating plan not found");
+
+            var section = new Section
+            {
+                SectionId = Guid.NewGuid(),
+                SeatingPlanId = seatingPlanId,
+                Name = request.Name,
+                Type = "Seated",
+                SeatType = request.SeatType,
+                Color = request.Color,
+                PosX = request.CenterX,
+                PosY = request.CenterY,
+
+                // Geometry properties
+                GeometryType = "rectangle",
+                GeometryData = JsonSerializer.Serialize(new
+                {
+                    request.CenterX,
+                    request.CenterY,
+                    request.Width,
+                    request.Height,
+                    request.Rotation
+                }),
+
+                // Seating configuration
+                Rows = request.Rows,
+                SeatsPerRow = request.SeatsPerRow,
+                VerticalAisles = request.VerticalAisles != null ? JsonSerializer.Serialize(request.VerticalAisles) : null,
+                HorizontalAisles = request.HorizontalAisles != null ? JsonSerializer.Serialize(request.HorizontalAisles) : null,
+
+                // Bowl assignment
+                BowlId = request.BowlId
+            };
+
+            var created = await _repository.CreateAsync(section, cancellationToken);
+            return ApiResponse<SectionGeometryResponse>.Ok(MapToGeometryResponse(created), "Rectangle section created successfully");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<SectionGeometryResponse>.Fail("CREATE_RECTANGLE_SECTION_ERROR", ex.Message);
+        }
+    }
+
+    public async Task<ApiResponse<SectionGeometryResponse>> UpdateGeometryAsync(
+        Guid sectionId, UpdateSectionGeometryRequest request, Guid userId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var section = await _repository.GetByIdAsync(sectionId, cancellationToken);
+            if (section == null)
+                return ApiResponse<SectionGeometryResponse>.Fail("SECTION_NOT_FOUND", "Section not found");
+
+            // Update geometry
+            section.GeometryType = request.GeometryType;
+            if (request.CenterX.HasValue)
+                section.PosX = request.CenterX.Value;
+            if (request.CenterY.HasValue)
+                section.PosY = request.CenterY.Value;
+            if (request.Rows.HasValue)
+                section.Rows = request.Rows.Value;
+            if (request.SeatsPerRow.HasValue)
+                section.SeatsPerRow = request.SeatsPerRow.Value;
+
+            if (request.VerticalAisles != null)
+                section.VerticalAisles = request.VerticalAisles;
+            if (request.HorizontalAisles != null)
+                section.HorizontalAisles = request.HorizontalAisles;
+
+            // Update geometry data JSON based on type
+            if (request.GeometryType.ToLower() == "arc")
+            {
+                section.GeometryData = JsonSerializer.Serialize(new
+                {
+                    CenterX = request.CenterX,
+                    CenterY = request.CenterY,
+                    InnerRadius = request.InnerRadius,
+                    OuterRadius = request.OuterRadius,
+                    StartAngle = request.StartAngle,
+                    EndAngle = request.EndAngle
+                });
+            }
+            else if (request.GeometryType.ToLower() == "rectangle")
+            {
+                section.GeometryData = JsonSerializer.Serialize(new
+                {
+                    CenterX = request.CenterX,
+                    CenterY = request.CenterY,
+                    Width = request.Width,
+                    Height = request.Height,
+                    Rotation = request.Rotation
+                });
+            }
+
+            var updated = await _repository.UpdateAsync(section, cancellationToken);
+            return ApiResponse<SectionGeometryResponse>.Ok(MapToGeometryResponse(updated), "Section geometry updated successfully");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<SectionGeometryResponse>.Fail("UPDATE_GEOMETRY_ERROR", ex.Message);
+        }
+    }
+
+    public async Task<ApiResponse<SectionResponse>> AssignBowlAsync(
+        Guid sectionId, Guid? bowlId, Guid userId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var section = await _repository.GetByIdAsync(sectionId, cancellationToken);
+            if (section == null)
+                return ApiResponse<SectionResponse>.Fail("SECTION_NOT_FOUND", "Section not found");
+
+            section.BowlId = bowlId;
+
+            var updated = await _repository.UpdateAsync(section, cancellationToken);
+            return ApiResponse<SectionResponse>.Ok(MapToResponse(updated),
+                bowlId.HasValue ? $"Section assigned to bowl" : "Section unassigned from bowl");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<SectionResponse>.Fail("ASSIGN_BOWL_ERROR", ex.Message);
+        }
+    }
+
+    private static SectionGeometryResponse MapToGeometryResponse(Section section)
+    {
+        return new SectionGeometryResponse
+        {
+            SectionId = section.SectionId,
+            SeatingPlanId = section.SeatingPlanId,
+            Name = section.Name,
+            Type = section.Type,
+            Capacity = section.Capacity,
+            SeatType = section.SeatType,
+            Color = section.Color,
+
+            // Geometry
+            GeometryType = section.GeometryType,
+            GeometryData = section.GeometryData,
+            PosX = section.PosX,
+            PosY = section.PosY,
+
+            // Seating
+            Rows = section.Rows,
+            SeatsPerRow = section.SeatsPerRow,
+            VerticalAisles = section.VerticalAisles != null ? JsonSerializer.Deserialize<int[]>(section.VerticalAisles) : null,
+            HorizontalAisles = section.HorizontalAisles != null ? JsonSerializer.Deserialize<int[]>(section.HorizontalAisles) : null,
+
+            // Bowl
+            BowlId = section.BowlId,
+
+            // Metadata
+            SeatCount = section.Seats?.Count ?? 0
+        };
     }
 
     private static SectionResponse MapToResponse(Section section)

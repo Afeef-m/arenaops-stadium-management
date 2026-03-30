@@ -17,6 +17,7 @@ public class CoreDbContext : DbContext
 
     // ─── Event Layout Tables (cloned from templates) ────────────
     public DbSet<EventSeatingPlan> EventSeatingPlans => Set<EventSeatingPlan>();
+    public DbSet<EventBowl> EventBowls => Set<EventBowl>();
     public DbSet<EventSection> EventSections => Set<EventSection>();
     public DbSet<EventLandmark> EventLandmarks => Set<EventLandmark>();
 
@@ -76,6 +77,13 @@ public class CoreDbContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(500);
 
+            // Phase 4: Layout Builder Fields
+            entity.Property(e => e.FieldConfigMetadata)
+                  .HasColumnType("nvarchar(max)")
+                  .IsRequired(false);
+            entity.Property(e => e.TotalCapacity)
+                  .IsRequired(false);
+
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.HasIndex(e => e.StadiumId);
@@ -85,10 +93,37 @@ public class CoreDbContext : DbContext
                   .HasForeignKey(s => s.SeatingPlanId)
                   .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasMany(e => e.Bowls)
+                  .WithOne(b => b.SeatingPlan)
+                  .HasForeignKey(b => b.SeatingPlanId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasMany(e => e.Landmarks)
                   .WithOne(l => l.SeatingPlan)
                   .HasForeignKey(l => l.SeatingPlanId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ─── Bowl ───────────────────────────────────────────────────
+        modelBuilder.Entity<Bowl>(entity =>
+        {
+            entity.HasKey(e => e.BowlId);
+            entity.Property(e => e.BowlId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Color).HasMaxLength(20);
+
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasIndex(e => e.SeatingPlanId);
+            entity.HasIndex(e => e.DisplayOrder);
+
+            entity.HasMany(e => e.Sections)
+                  .WithOne(s => s.Bowl)
+                  .HasForeignKey(s => s.BowlId)
+                  .OnDelete(DeleteBehavior.NoAction)
+                  .IsRequired(false);
         });
 
         // ─── Section ───────────────────────────────────────────────
@@ -101,7 +136,27 @@ public class CoreDbContext : DbContext
             entity.Property(e => e.Type).HasMaxLength(20).IsRequired();
             entity.Property(e => e.SeatType).HasMaxLength(50);
             entity.Property(e => e.Color).HasMaxLength(20);
+
+            // Phase 4: Geometry & Layout Fields
+            entity.Property(e => e.Rows)
+                  .IsRequired(false);
+            entity.Property(e => e.SeatsPerRow)
+                  .IsRequired(false);
+            entity.Property(e => e.VerticalAisles)
+                  .HasColumnType("nvarchar(max)")
+                  .IsRequired(false);
+            entity.Property(e => e.HorizontalAisles)
+                  .HasColumnType("nvarchar(max)")
+                  .IsRequired(false);
+            entity.Property(e => e.GeometryType)
+                  .HasMaxLength(20)
+                  .IsRequired(false);
+            entity.Property(e => e.GeometryData)
+                  .HasColumnType("nvarchar(max)")
+                  .IsRequired(false);
+
             entity.HasIndex(e => e.SeatingPlanId);
+            entity.HasIndex(e => e.BowlId);
 
             entity.HasMany(e => e.Seats)
                   .WithOne(s => s.Section)
@@ -121,6 +176,12 @@ public class CoreDbContext : DbContext
             // Price is nullable — assigned from SectionTicketType at seat generation time.
             // Precision matches TicketType.Price (10, 2) for consistency.
             entity.Property(e => e.Price).HasPrecision(10, 2).IsRequired(false);
+
+            // Phase 4: Rendering & Layout Fields
+            entity.Property(e => e.RowNumber)
+                  .IsRequired(false);
+            entity.Property(e => e.SeatIndexInRow)
+                  .IsRequired(false);
 
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsAccessible).HasDefaultValue(false);
@@ -185,7 +246,11 @@ public class CoreDbContext : DbContext
                   .HasForeignKey(e => e.SourceSeatingPlanId)
                   .OnDelete(DeleteBehavior.Restrict);
 
-            // Children — Cascade: deleting a layout removes its sections + landmarks
+            entity.HasMany(e => e.EventBowls)
+                  .WithOne(eb => eb.EventSeatingPlan)
+                  .HasForeignKey(eb => eb.EventSeatingPlanId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasMany(e => e.EventSections)
                   .WithOne(es => es.EventSeatingPlan)
                   .HasForeignKey(es => es.EventSeatingPlanId)
@@ -195,6 +260,32 @@ public class CoreDbContext : DbContext
                   .WithOne(el => el.EventSeatingPlan)
                   .HasForeignKey(el => el.EventSeatingPlanId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ─── EventBowl (Event-specific clone of Bowl) ──────────────
+        // WHY SetNull on SourceBowl FK?
+        // If a template bowl is deleted, the event copies should survive.
+        // SetNull preserves the cloned records (SourceBowlId becomes NULL).
+        modelBuilder.Entity<EventBowl>(entity =>
+        {
+            entity.HasKey(e => e.EventBowlId);
+            entity.Property(e => e.EventBowlId).HasDefaultValueSql("NEWSEQUENTIALID()");
+
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Color).HasMaxLength(20);
+
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasIndex(e => e.EventSeatingPlanId);
+            entity.HasIndex(e => e.SourceBowlId);
+
+            // Nullable FK — NULL means organizer added this bowl manually
+            entity.HasOne(e => e.SourceBowl)
+                  .WithMany()
+                  .HasForeignKey(e => e.SourceBowlId)
+                  .OnDelete(DeleteBehavior.SetNull)
+                  .IsRequired(false);
         });
 
         // ─── EventSection (Event-specific clone of Section) ─────────

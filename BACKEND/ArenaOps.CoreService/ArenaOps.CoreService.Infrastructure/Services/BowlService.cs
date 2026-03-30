@@ -21,6 +21,8 @@ public class BowlService : IBowlService
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             // Verify seating plan exists
             var seatingPlan = await _seatingPlanRepository.GetByIdAsync(request.SeatingPlanId, cancellationToken);
             if (seatingPlan == null)
@@ -56,6 +58,10 @@ public class BowlService : IBowlService
 
             return ApiResponse<BowlResponse>.Ok(response, "Bowl created successfully");
         }
+        catch (OperationCanceledException)
+        {
+            return ApiResponse<BowlResponse>.Fail("REQUEST_CANCELLED", "Request was cancelled");
+        }
         catch (Exception ex)
         {
             return ApiResponse<BowlResponse>.Fail("BOWL_CREATE_ERROR", ex.Message);
@@ -66,6 +72,7 @@ public class BowlService : IBowlService
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var bowls = await _bowlRepository.GetBySeatingPlanIdAsync(seatingPlanId);
 
             var responses = bowls.Select(b => new BowlResponse
@@ -82,6 +89,10 @@ public class BowlService : IBowlService
 
             return ApiResponse<List<BowlResponse>>.Ok(responses);
         }
+        catch (OperationCanceledException)
+        {
+            return ApiResponse<List<BowlResponse>>.Fail("REQUEST_CANCELLED", "Request was cancelled");
+        }
         catch (Exception ex)
         {
             return ApiResponse<List<BowlResponse>>.Fail("BOWL_LIST_ERROR", ex.Message);
@@ -92,6 +103,8 @@ public class BowlService : IBowlService
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var bowl = await _bowlRepository.GetByIdAsync(bowlId);
             if (bowl == null)
             {
@@ -112,6 +125,10 @@ public class BowlService : IBowlService
 
             return ApiResponse<BowlResponse>.Ok(response);
         }
+        catch (OperationCanceledException)
+        {
+            return ApiResponse<BowlResponse>.Fail("REQUEST_CANCELLED", "Request was cancelled");
+        }
         catch (Exception ex)
         {
             return ApiResponse<BowlResponse>.Fail("BOWL_GET_ERROR", ex.Message);
@@ -122,6 +139,8 @@ public class BowlService : IBowlService
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var bowl = await _bowlRepository.GetByIdAsync(bowlId);
             if (bowl == null)
             {
@@ -148,6 +167,10 @@ public class BowlService : IBowlService
 
             return ApiResponse<BowlResponse>.Ok(response, "Bowl updated successfully");
         }
+        catch (OperationCanceledException)
+        {
+            return ApiResponse<BowlResponse>.Fail("REQUEST_CANCELLED", "Request was cancelled");
+        }
         catch (Exception ex)
         {
             return ApiResponse<BowlResponse>.Fail("BOWL_UPDATE_ERROR", ex.Message);
@@ -158,6 +181,8 @@ public class BowlService : IBowlService
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var exists = await _bowlRepository.ExistsAsync(bowlId);
             if (!exists)
             {
@@ -166,6 +191,10 @@ public class BowlService : IBowlService
 
             await _bowlRepository.DeleteAsync(bowlId);
             return ApiResponse<bool>.Ok(true, "Bowl deleted successfully");
+        }
+        catch (OperationCanceledException)
+        {
+            return ApiResponse<bool>.Fail("REQUEST_CANCELLED", "Request was cancelled");
         }
         catch (Exception ex)
         {
@@ -177,6 +206,8 @@ public class BowlService : IBowlService
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var bowl = await _bowlRepository.GetByIdAsync(bowlId);
             if (bowl == null)
             {
@@ -199,6 +230,10 @@ public class BowlService : IBowlService
             };
 
             return ApiResponse<BowlResponse>.Ok(response, "Bowl reordered successfully");
+        }
+        catch (OperationCanceledException)
+        {
+            return ApiResponse<BowlResponse>.Fail("REQUEST_CANCELLED", "Request was cancelled");
         }
         catch (Exception ex)
         {

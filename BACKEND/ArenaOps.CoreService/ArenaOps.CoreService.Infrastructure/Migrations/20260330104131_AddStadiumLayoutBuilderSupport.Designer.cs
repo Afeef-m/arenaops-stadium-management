@@ -4,6 +4,7 @@ using ArenaOps.CoreService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArenaOps.CoreService.Infrastructure.Migrations
 {
     [DbContext(typeof(CoreDbContext))]
-    partial class CoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260330104131_AddStadiumLayoutBuilderSupport")]
+    partial class AddStadiumLayoutBuilderSupport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -169,50 +172,6 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                     b.HasIndex("Status");
 
                     b.ToTable("Events");
-                });
-
-            modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventBowl", b =>
-                {
-                    b.Property<Guid>("EventBowlId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasDefaultValueSql("NEWSEQUENTIALID()");
-
-                    b.Property<string>("Color")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("EventSeatingPlanId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<Guid?>("SourceBowlId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("EventBowlId");
-
-                    b.HasIndex("EventSeatingPlanId");
-
-                    b.HasIndex("SourceBowlId");
-
-                    b.ToTable("EventBowls");
                 });
 
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventLandmark", b =>
@@ -799,24 +758,6 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                     b.Navigation("Stadium");
                 });
 
-            modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventBowl", b =>
-                {
-                    b.HasOne("ArenaOps.CoreService.Domain.Entities.EventSeatingPlan", "EventSeatingPlan")
-                        .WithMany("EventBowls")
-                        .HasForeignKey("EventSeatingPlanId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ArenaOps.CoreService.Domain.Entities.Bowl", "SourceBowl")
-                        .WithMany()
-                        .HasForeignKey("SourceBowlId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("EventSeatingPlan");
-
-                    b.Navigation("SourceBowl");
-                });
-
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventLandmark", b =>
                 {
                     b.HasOne("ArenaOps.CoreService.Domain.Entities.EventSeatingPlan", "EventSeatingPlan")
@@ -986,8 +927,6 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
 
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventSeatingPlan", b =>
                 {
-                    b.Navigation("EventBowls");
-
                     b.Navigation("EventLandmarks");
 
                     b.Navigation("EventSections");

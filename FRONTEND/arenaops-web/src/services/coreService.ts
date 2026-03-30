@@ -409,4 +409,25 @@ export const coreService = {
         const response = await api.put(`/api/core/seating-plans/${seatingPlanId}/field-config`, payload);
         return response.data;
     },
+
+    // ── Section Geometry (Stadium Layout Builder) ────────
+    createArcSection: async (seatingPlanId: string, payload: any): Promise<ApiResponse<any>> => {
+        const response = await api.post(`/api/core/seating-plans/${seatingPlanId}/sections/arc`, payload);
+        return response.data;
+    },
+
+    createRectangleSection: async (seatingPlanId: string, payload: any): Promise<ApiResponse<any>> => {
+        const response = await api.post(`/api/core/seating-plans/${seatingPlanId}/sections/rectangle`, payload);
+        return response.data;
+    },
+
+    updateSectionGeometry: async (sectionId: string, payload: any): Promise<ApiResponse<any>> => {
+        const response = await api.put(`/api/core/sections/${sectionId}/geometry`, payload);
+        return response.data;
+    },
+
+    assignBowlToSection: async (sectionId: string, bowlId: string | null): Promise<ApiResponse<any>> => {
+        const response = await api.put(`/api/core/sections/${sectionId}/assign-bowl`, { bowlId });
+        return response.data;
+    },
 }

@@ -105,6 +105,126 @@ public class SectionController : ControllerBase
         return Ok(response);
     }
 
+    // ============================================================================
+    // Enhanced Geometry Endpoints
+    // ============================================================================
+
+    /// <summary>
+    /// Create arc-shaped section with geometry persistence
+    /// </summary>
+    [HttpPost("api/seating-plans/{seatingPlanId:guid}/sections/arc")]
+    [Authorize(Roles = "StadiumOwner,Admin")]
+    public async Task<IActionResult> CreateArcSection(Guid seatingPlanId, [FromBody] CreateArcSectionRequest request, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.Fail("VALIDATION_ERROR", "Invalid request data"));
+        }
+
+        var userId = GetUserId();
+        var response = await _sectionService.CreateArcSectionAsync(seatingPlanId, request, userId, cancellationToken);
+
+        if (!response.Success)
+        {
+            return response.Error?.Code switch
+            {
+                "SEATING_PLAN_NOT_FOUND" => NotFound(response),
+                _ => BadRequest(response)
+            };
+        }
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = response.Data?.SectionId },
+            response
+        );
+    }
+
+    /// <summary>
+    /// Create rectangle-shaped section with geometry persistence
+    /// </summary>
+    [HttpPost("api/seating-plans/{seatingPlanId:guid}/sections/rectangle")]
+    [Authorize(Roles = "StadiumOwner,Admin")]
+    public async Task<IActionResult> CreateRectangleSection(Guid seatingPlanId, [FromBody] CreateRectangleSectionRequest request, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.Fail("VALIDATION_ERROR", "Invalid request data"));
+        }
+
+        var userId = GetUserId();
+        var response = await _sectionService.CreateRectangleSectionAsync(seatingPlanId, request, userId, cancellationToken);
+
+        if (!response.Success)
+        {
+            return response.Error?.Code switch
+            {
+                "SEATING_PLAN_NOT_FOUND" => NotFound(response),
+                _ => BadRequest(response)
+            };
+        }
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = response.Data?.SectionId },
+            response
+        );
+    }
+
+    /// <summary>
+    /// Update section geometry only (shape, position, size, aisles)
+    /// </summary>
+    [HttpPut("api/sections/{id:guid}/geometry")]
+    [Authorize(Roles = "StadiumOwner,Admin")]
+    public async Task<IActionResult> UpdateGeometry(Guid id, [FromBody] UpdateSectionGeometryRequest request, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.Fail("VALIDATION_ERROR", "Invalid request data"));
+        }
+
+        var userId = GetUserId();
+        var response = await _sectionService.UpdateGeometryAsync(id, request, userId, cancellationToken);
+
+        if (!response.Success)
+        {
+            return response.Error?.Code switch
+            {
+                "SECTION_NOT_FOUND" => NotFound(response),
+                _ => BadRequest(response)
+            };
+        }
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Assign or unassign section to a bowl
+    /// </summary>
+    [HttpPut("api/sections/{id:guid}/assign-bowl")]
+    [Authorize(Roles = "StadiumOwner,Admin")]
+    public async Task<IActionResult> AssignBowl(Guid id, [FromBody] AssignBowlRequest request, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.Fail("VALIDATION_ERROR", "Invalid request data"));
+        }
+
+        var userId = GetUserId();
+        var response = await _sectionService.AssignBowlAsync(id, request.BowlId, userId, cancellationToken);
+
+        if (!response.Success)
+        {
+            return response.Error?.Code switch
+            {
+                "SECTION_NOT_FOUND" => NotFound(response),
+                _ => BadRequest(response)
+            };
+        }
+
+        return Ok(response);
+    }
+
     private Guid GetUserId()
     {
         var userIdClaim = User.FindFirst("sub")

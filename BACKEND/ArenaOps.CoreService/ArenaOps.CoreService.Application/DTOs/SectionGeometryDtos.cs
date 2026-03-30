@@ -124,6 +124,13 @@ public class UpdateSectionGeometryRequest
     [RegularExpression("^(arc|rectangle)$")]
     public string GeometryType { get; set; } = "arc";
 
+    // Position (optional - can update with only geometry changes)
+    [Range(0, double.MaxValue)]
+    public double? CenterX { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public double? CenterY { get; set; }
+
     // Arc geometry (for arc sections)
     [Range(0, double.MaxValue)]
     public double? InnerRadius { get; set; }
@@ -147,12 +154,23 @@ public class UpdateSectionGeometryRequest
     [Range(0, 360)]
     public double? Rotation { get; set; }
 
-    // Common
-    [Range(0, double.MaxValue)]
-    public double? CenterX { get; set; }
+    // Seating configuration
+    [Range(1, 100)]
+    public int? Rows { get; set; }
 
-    [Range(0, double.MaxValue)]
-    public double? CenterY { get; set; }
+    [Range(1, 100)]
+    public int? SeatsPerRow { get; set; }
+
+    public string? VerticalAisles { get; set; }
+    public string? HorizontalAisles { get; set; }
+}
+
+/// <summary>
+/// Request to assign or unassign a section to/from a bowl
+/// </summary>
+public class AssignBowlRequest
+{
+    public Guid? BowlId { get; set; } // null to unassign
 }
 
 /// <summary>
@@ -172,7 +190,7 @@ public class SectionGeometryResponse
 
     // Geometry
     public string? GeometryType { get; set; } // "arc" or "rectangle"
-    public object? GeometryData { get; set; } // Deserialized JSON
+    public string? GeometryData { get; set; } // Serialized JSON
 
     // Seating
     public int? Rows { get; set; }
@@ -183,9 +201,7 @@ public class SectionGeometryResponse
 
     // Bowl
     public Guid? BowlId { get; set; }
-    public string? BowlName { get; set; }
 
     // Metadata
     public int SeatCount { get; set; }
-    public DateTime CreatedAt { get; set; }
 }
