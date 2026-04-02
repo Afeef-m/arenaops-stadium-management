@@ -24,7 +24,8 @@ export interface BowlFormDialogProps {
   fieldConfig: FieldConfig;
   existingBowls: Bowl[];
   existingSections: LayoutSection[];
-  editingBowl?: Bowl;  // If provided, we're editing
+  editingBowl?: Bowl;
+  isSaving?: boolean;      // true while API calls are in-flight
   onSave: (data: BowlFormData) => void;
   onCancel: () => void;
 }
@@ -35,6 +36,7 @@ export function BowlFormDialog({
   existingBowls,
   existingSections,
   editingBowl,
+  isSaving = false,
   onSave,
   onCancel,
 }: BowlFormDialogProps) {
@@ -350,9 +352,12 @@ export function BowlFormDialog({
           <button
             className="btn-save"
             onClick={handleSave}
-            disabled={!isValid}
+            disabled={!isValid || isSaving}
           >
-            {isEditMode ? 'Save Changes' : 'Create Bowl'}
+            {isSaving
+              ? (isEditMode ? 'Saving…' : 'Creating…')
+              : (isEditMode ? 'Save Changes' : 'Create Bowl')
+            }
           </button>
         </div>
       </div>

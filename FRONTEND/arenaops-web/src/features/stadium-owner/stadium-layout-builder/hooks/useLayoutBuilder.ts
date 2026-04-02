@@ -10,11 +10,9 @@ import type {
   LayoutSeat,
   EditorMode,
   ViewMode,
-  CapacityWarning,
   BuilderMode,
 } from "../types";
 import { DEFAULT_FIELD_CONFIG } from "../types";
-import { generateAllSeats } from "../utils/seatGenerator";
 import { calculateMinimumInnerRadius } from "../utils/geometry";
 
 export interface UseLayoutBuilderOptions {
@@ -38,11 +36,12 @@ export interface UseLayoutBuilderReturn extends LayoutBuilderState {
   // Section management
   addSection: (section: LayoutSection) => void;
   updateSection: (sectionId: string, updates: Partial<LayoutSection>) => void;
+  updateSectionGeometry: (sectionId: string, updates: Partial<LayoutSection>) => void;
   deleteSection: (sectionId: string) => void;
   assignSectionToBowl: (sectionId: string, bowlId: string | null) => void;
 
   // Seat generation & selection
-  generateSeats: () => void;
+  setSeats: React.Dispatch<React.SetStateAction<LayoutSeat[]>>;
   selectSection: (sectionId: string | null) => void;
   selectSeat: (seatId: string, multiSelect?: boolean) => void;
   selectSeats: (seatIds: Set<string>) => void;
@@ -94,7 +93,7 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
   const [selectedSeatIds, setSelectedSeatIds] = useState<Set<string>>(new Set());
   const [editorMode, setEditorMode] = useState<EditorMode>('stadium');
   const [viewMode, setViewMode] = useState<ViewMode>('overview');
-  const [validation, setValidation] = useState<CapacityWarning[]>([]);
+
   const [isLayoutLocked, setIsLayoutLocked] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
@@ -369,26 +368,74 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
     }
   }, [planId]);
 
+  /**
+   * Update section display metadata (name, seatType, color).
+   * Called from the Info tab "Apply" button.
+   * Maps to PUT /api/sections/{id}  →  UpdateSectionRequest { Name, SeatType, Color }
+   */
   const updateSection = useCallback((sectionId: string, updates: Partial<LayoutSection>) => {
     setSections(prev => prev.map(s =>
       s.id === sectionId ? { ...s, ...updates } : s
     ));
     setIsDirty(true);
 
-    if (updates.centerX !== undefined || updates.width !== undefined || updates.innerRadius !== undefined) {
-      // It's a geometry update
-      const sec = sections.find(s => s.id === sectionId);
-      const merged = { ...sec, ...updates } as LayoutSection;
-      
-      const payload = merged.shape === 'arc' 
-        ? { geometryType: 'arc', centerX: merged.centerX, centerY: merged.centerY, innerRadius: merged.innerRadius, outerRadius: merged.outerRadius, startAngle: merged.startAngle, endAngle: merged.endAngle }
-        : { geometryType: 'rectangle', centerX: merged.centerX, centerY: merged.centerY, width: merged.width, height: merged.height, rotation: merged.rotation };
+    const merged = { ...sections.find(s => s.id === sectionId), ...updates } as LayoutSection;
 
-      coreService.updateSectionGeometry(sectionId, payload).catch(console.error);
-    } else {
-      // Normal update
-      coreService.updateSection(sectionId, updates).catch(console.error);
-    }
+    // Only send the three fields the backend endpoint accepts
+    const metadataPayload = {
+      name: merged.name,
+      seatType: merged.seatType ?? null,
+      color: merged.color ?? null,
+    };
+
+    coreService.updateSection(sectionId, metadataPayload).catch(error => {
+      console.error('Failed to update section metadata:', error);
+    });
+  }, [sections]);
+
+  /**
+   * Update section geometry (shape, position, radii, angles, seating config, aisles).
+   * Called from Geometry / Seating / Aisles "Apply" buttons.
+   * Maps to PUT /api/sections/{id}/geometry
+   */
+  const updateSectionGeometry = useCallback((sectionId: string, updates: Partial<LayoutSection>) => {
+    setSections(prev => prev.map(s =>
+      s.id === sectionId ? { ...s, ...updates } : s
+    ));
+    setIsDirty(true);
+
+    const merged = { ...sections.find(s => s.id === sectionId), ...updates } as LayoutSection;
+
+    const geometryPayload = merged.shape === 'arc'
+      ? {
+        geometryType: 'arc',
+        centerX: merged.centerX,
+        centerY: merged.centerY,
+        innerRadius: merged.innerRadius,
+        outerRadius: merged.outerRadius,
+        startAngle: merged.startAngle,
+        endAngle: merged.endAngle,
+        rows: merged.rows,
+        seatsPerRow: merged.seatsPerRow,
+        verticalAisles: merged.verticalAisles,
+        horizontalAisles: merged.horizontalAisles,
+      }
+      : {
+        geometryType: 'rectangle',
+        centerX: merged.centerX,
+        centerY: merged.centerY,
+        width: merged.width,
+        height: merged.height,
+        rotation: merged.rotation,
+        rows: merged.rows,
+        seatsPerRow: merged.seatsPerRow,
+        verticalAisles: merged.verticalAisles,
+        horizontalAisles: merged.horizontalAisles,
+      };
+
+    coreService.updateSectionGeometry(sectionId, geometryPayload).catch(error => {
+      console.error('Failed to update section geometry:', error);
+    });
   }, [sections]);
 
   const deleteSection = useCallback((sectionId: string) => {
@@ -472,37 +519,60 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
     setSelectedSeatIds(new Set());
   }, []);
 
-  const generateSeats = useCallback(() => {
-    try {
-      const newSeats = generateAllSeats(sections, fieldConfig);
-      // Add stadiumId to all generated seats
-      const seatsWithStadiumId = newSeats.map(seat => ({
-        ...seat,
-        stadiumId,
-      }));
-      setSeats(seatsWithStadiumId);
-      setIsDirty(true);
-      console.log(`Generated ${seatsWithStadiumId.length} seats from ${sections.length} sections`);
-    } catch (error) {
-      console.error('Seat generation failed:', error);
-    }
-  }, [sections, fieldConfig, stadiumId]);
 
-  const updateSeat = useCallback((seatId: string, updates: Partial<LayoutSeat>) => {
+
+  const updateSeat = useCallback(async (seatId: string, updates: Partial<LayoutSeat>) => {
+    // Optimistic local update
     setSeats(prev => prev.map(s =>
       s.seatId === seatId ? { ...s, ...updates } : s
     ));
     setIsDirty(true);
+
+    // Backend sync
+    if (seatId && !seatId.startsWith('seat-')) {
+      try {
+        await coreService.updateSeat(seatId, {
+          rowLabel: updates.rowLabel,
+          seatNumber: updates.seatNumber,
+          posX: updates.x,
+          posY: updates.y,
+          isActive: !updates.disabled,
+          isAccessible: updates.type === 'accessible'
+        });
+      } catch (err) {
+        console.error('Failed to update seat in backend:', err);
+      }
+    }
   }, []);
 
-  const updateSeats = useCallback((seatIds: string[], updates: Partial<LayoutSeat>) => {
+  const updateSeats = useCallback(async (seatIds: string[], updates: Partial<LayoutSeat>) => {
+    // Optimistic local update
     setSeats(prev => prev.map(s =>
       seatIds.includes(s.seatId) ? { ...s, ...updates } : s
     ));
     setIsDirty(true);
+
+    // Backend sync
+    for (const seatId of seatIds) {
+      if (seatId && !seatId.startsWith('seat-')) {
+        try {
+          await coreService.updateSeat(seatId, {
+            rowLabel: updates.rowLabel,
+            seatNumber: updates.seatNumber,
+            posX: updates.x,
+            posY: updates.y,
+            isActive: updates.disabled !== undefined ? !updates.disabled : undefined,
+            isAccessible: updates.type !== undefined ? updates.type === 'accessible' : undefined
+          });
+        } catch (err) {
+          console.error(`Failed to update seat ${seatId} in backend:`, err);
+        }
+      }
+    }
   }, []);
 
-  const deleteSeats = useCallback((seatIds: string[]) => {
+  const deleteSeats = useCallback(async (seatIds: string[]) => {
+    // Optimistic local update
     setSeats(prev => prev.filter(s => !seatIds.includes(s.seatId)));
     setSelectedSeatIds(prev => {
       const next = new Set(prev);
@@ -510,70 +580,52 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
       return next;
     });
     setIsDirty(true);
-  }, []);
 
-  const addSeat = useCallback((seat: LayoutSeat) => {
-    setSeats(prev => [...prev, seat]);
-    setIsDirty(true);
-  }, []);
-
-  // ============================================================================
-  // Auto-save to localStorage (draft)
-  // ============================================================================
-
-  useEffect(() => {
-    if (!isDirty) return;
-
-    const draftKey = `stadium-layout-draft-${stadiumId}-${mode}`;
-    const timeout = setTimeout(() => {
-      const draft = {
-        fieldConfig,
-        bowls,
-        sections,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(draftKey, JSON.stringify(draft));
-      console.log('[Auto-save] Draft saved to localStorage');
-    }, 5000); // Auto-save every 5 seconds after changes
-
-    return () => clearInterval(timeout);
-  }, [mode, stadiumId, fieldConfig, bowls, sections, isDirty]);
-
-  // ============================================================================
-  // Load draft on mount (if exists)
-  // ============================================================================
-
-  useEffect(() => {
-    const draftKey = `stadium-layout-draft-${stadiumId}-${mode}`;
-    const draftJson = localStorage.getItem(draftKey);
-    let draftRestored = false;
-
-    if (draftJson && !templateId) {
-      try {
-        const draft = JSON.parse(draftJson);
-        const ageMinutes = (Date.now() - draft.timestamp) / 1000 / 60;
-
-        if (ageMinutes < 60 * 24) { // Draft < 24 hours old
-          const shouldRestore = confirm(
-            `Found unsaved draft from ${Math.round(ageMinutes)} minutes ago. Restore?`
-          );
-
-          if (shouldRestore) {
-            setFieldConfig(draft.fieldConfig);
-            setBowls(draft.bowls);
-            setSections(draft.sections);
-            setIsDirty(true);
-            draftRestored = true;
-            console.log('[Auto-save] Draft restored');
-          }
+    // Backend sync
+    for (const seatId of seatIds) {
+      if (seatId && !seatId.startsWith('seat-')) {
+        try {
+          await coreService.deleteSeat(seatId);
+        } catch (err) {
+          console.error(`Failed to delete seat ${seatId} in backend:`, err);
         }
-      } catch (error) {
-        console.error('[Auto-save] Failed to load draft:', error);
       }
     }
+  }, []);
 
-    if (!draftRestored && planId) {
-      // Fetch Bowls setup from the API asynchronously if no draft was restored
+  const addSeat = useCallback(async (seat: LayoutSeat) => {
+    // Optimistic
+    setSeats(prev => [...prev, seat]);
+    setIsDirty(true);
+
+    // Backend sync
+    if (seat.sectionId && !seat.sectionId.startsWith('section-')) {
+        try {
+            const result = await coreService.createSeat(seat.sectionId, {
+                rowLabel: seat.rowLabel,
+                seatNumber: seat.seatNumber,
+                posX: seat.x,
+                posY: seat.y,
+                isActive: !seat.disabled,
+                isAccessible: seat.type === 'accessible'
+            });
+            if (result.success && result.data) {
+                // Update with true backend ID
+                setSeats(prev => prev.map(s => s.seatId === seat.seatId ? { ...s, seatId: result.data.seatId } : s));
+            }
+        } catch (err) {
+            console.error('Failed to create seat in backend:', err);
+        }
+    }
+  }, []);
+
+  // ============================================================================
+  // Load initial APIs once planId is available
+  // ============================================================================
+
+  useEffect(() => {
+    if (planId) {
+      // Fetch Bowls setup from the API asynchronously
       coreService.getBowls(planId)
         .then(res => {
           if (res.success && res.data) {
@@ -582,7 +634,7 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
         })
         .catch(err => console.error("Failed to fetch bowls via API", err));
     }
-  }, [stadiumId, mode, templateId, planId]);
+  }, [planId]);
 
   // ============================================================================
   // Return
@@ -602,7 +654,6 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
     selectedSeatIds,
     editorMode,
     viewMode,
-    validation,
     isLayoutLocked,
     isDirty,
 
@@ -619,11 +670,12 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
     // Sections
     addSection,
     updateSection,
+    updateSectionGeometry,
     deleteSection,
     assignSectionToBowl,
 
     // Seats
-    generateSeats,
+    setSeats,
     selectSeat,
     clearSelectedSeats,
     updateSeat,

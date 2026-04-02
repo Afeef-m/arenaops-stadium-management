@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { validateSectionGeometry, createArcPath, createRectanglePath } from "./utils/geometry";
+import { createArcPath, createRectanglePath } from "./utils/geometry";
 import type { LayoutSection, FieldConfig, SectionCreateRequest } from "./types";
 
 export interface SectionCreationModalProps {
@@ -73,13 +73,7 @@ export function SectionCreationModal({
       return;
     }
 
-    // Validate geometry
-    const validation = validateSectionGeometry(form, fieldConfig, 1400, 900);
-    if (!validation.valid) {
-      setErrors(validation.errors);
-      setWarnings(validation.warnings);
-      return;
-    }
+
 
     // Create section object
     const newSection: LayoutSection = {

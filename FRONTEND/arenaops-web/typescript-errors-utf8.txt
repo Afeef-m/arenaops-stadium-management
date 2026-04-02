@@ -1,0 +1,25 @@
+﻿src/app/(dashboard)/event-manager/events/[id]/page.tsx(12,27): error TS2306: File 'C:/Users/aflah/OneDrive/Desktop/ARENAOPS/FRONTEND/arenaops-web/src/components/event-manager/ConfirmDialog.tsx' is not a module.
+src/app/(dashboard)/event-manager/events/[id]/page.tsx(45,16): error TS2448: Block-scoped variable 'fetchEventData' used before its declaration.
+src/app/(dashboard)/event-manager/events/[id]/page.tsx(45,16): error TS2454: Variable 'fetchEventData' is used before being assigned.
+src/app/(dashboard)/event-manager/events/create/page.tsx(15,26): error TS2551: Property 'role' does not exist on type 'UserData'. Did you mean 'roles'?
+src/app/(dashboard)/event-manager/events/create/page.tsx(15,58): error TS2551: Property 'role' does not exist on type 'UserData'. Did you mean 'roles'?
+src/app/(dashboard)/event-manager/events/page.tsx(18,23): error TS2306: File 'C:/Users/aflah/OneDrive/Desktop/ARENAOPS/FRONTEND/arenaops-web/src/components/event-manager/EventCard.tsx' is not a module.
+src/app/(dashboard)/manager/stadiums/[id]/page.tsx(529,56): error TS2339: Property 'startDate' does not exist on type 'Event'.
+src/app/(dashboard)/manager/stadiums/[id]/page.tsx(530,70): error TS2339: Property 'startDate' does not exist on type 'Event'.
+src/components/event-manager/EventCreateEditForm.tsx(4,25): error TS2307: Cannot find module 'react-hook-form' or its corresponding type declarations.
+src/components/event-manager/EventCreateEditForm.tsx(5,29): error TS2307: Cannot find module '@hookform/resolvers/zod' or its corresponding type declarations.
+src/components/landing/EventDiscovery.tsx(64,91): error TS2339: Property 'eventType' does not exist on type 'Event'.
+src/components/landing/EventDiscovery.tsx(66,83): error TS2339: Property 'eventType' does not exist on type 'Event'.
+src/components/landing/EventDiscovery.tsx(69,52): error TS2339: Property 'eventType' does not exist on type 'Event'.
+src/components/landing/EventDiscovery.tsx(86,54): error TS2339: Property 'startDate' does not exist on type 'Event'.
+src/components/landing/EventDiscovery.tsx(86,81): error TS2339: Property 'startDate' does not exist on type 'Event'.
+src/services/coreService.ts(25,5): error TS2300: Duplicate identifier 'imageUrl'.
+src/services/coreService.ts(25,5): error TS2687: All declarations of 'imageUrl' must have identical modifiers.
+src/services/coreService.ts(26,5): error TS2300: Duplicate identifier 'imagePublicId'.
+src/services/coreService.ts(26,5): error TS2687: All declarations of 'imagePublicId' must have identical modifiers.
+src/services/coreService.ts(30,5): error TS2300: Duplicate identifier 'imageUrl'.
+src/services/coreService.ts(30,5): error TS2687: All declarations of 'imageUrl' must have identical modifiers.
+src/services/coreService.ts(30,5): error TS2717: Subsequent property declarations must have the same type.  Property 'imageUrl' must be of type 'string', but here has type 'string | undefined'.
+src/services/coreService.ts(31,5): error TS2300: Duplicate identifier 'imagePublicId'.
+src/services/coreService.ts(31,5): error TS2687: All declarations of 'imagePublicId' must have identical modifiers.
+src/services/coreService.ts(31,5): error TS2717: Subsequent property declarations must have the same type.  Property 'imagePublicId' must be of type 'string', but here has type 'string | undefined'.

@@ -15,7 +15,7 @@ import { SectionFocusEditor } from "./components/SectionFocusEditor";
 import { getRangeSelection } from "./utils/selectionAlgorithms";
 import { calculateMinimumInnerRadius } from "./utils/geometry";
 import { coreService } from "@/services/coreService";
-import type { BuilderMode, FieldConfig, LayoutSection, Bowl } from "./types";   
+import type { BuilderMode, FieldConfig, LayoutSection, Bowl, LayoutSeat } from "./types";   
 
 const CANVAS_WIDTH = 1400;
 const CANVAS_HEIGHT = 900;
@@ -57,13 +57,14 @@ export function StadiumLayoutBuilder({
     sections,
     addSection,
     updateSection,
+    updateSectionGeometry,
     deleteSection,
     selectedSectionId,
     selectedSection,
     selectSection,
     seats,
+    setSeats,
     selectedSeatIds,
-    generateSeats,
     selectSeat,
     selectSeats,
     clearSelectedSeats,
@@ -95,17 +96,13 @@ export function StadiumLayoutBuilder({
   const [showBowlFormDialog, setShowBowlFormDialog] = useState(false);  // For bowl creation/editing dialog
   const [editingBowlData, setEditingBowlData] = useState<Bowl | undefined>(undefined);  // Which bowl to edit (undefined = create new)
   const [showFieldConfigModal, setShowFieldConfigModal] = useState(false);  // Field config as modal
+  const [generatingBowlId, setGeneratingBowlId] = useState<string | null>(null); // Track generating state
 
   // ============================================================================
   // Effects
   // ============================================================================
 
-  // Auto-generate seats when entering section-focus mode if none exist
-  useEffect(() => {
-    if (viewMode === 'section-focus' && seats.length === 0 && sections.length > 0) {
-      generateSeats();
-    }
-  }, [viewMode, seats.length, sections.length, generateSeats]);
+
 
   // ============================================================================
   // Event Handlers
@@ -134,6 +131,79 @@ export function StadiumLayoutBuilder({
       return hex.length === 1 ? '0' + hex : hex;
     };
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  };
+
+  // Handler: Generate seats for a specific Bowl
+  const handleGenerateBowlSeats = async (bowlId: string) => {
+    if (!planId) return;
+
+    setGeneratingBowlId(bowlId);
+    try {
+      // Find all sections belonging to this bowl
+      const bowlSections = sections.filter(s => s.bowlId === bowlId);
+      
+      let generatedCount = 0;
+      for (const section of bowlSections) {
+        // We only generate for Seated sections
+        if (section.type === 'Seated') {
+          const result = await coreService.bulkGenerateSeats(section.id, {
+            rows: section.rows || 10,
+            seatsPerRow: section.seatsPerRow || 20,
+            startRowLabel: 'A',
+            // Coordinates and spacing could be derived from section geometry, but 
+            // for the grid bulk generator, we use defaults or simple offsets.
+            startPosX: section.centerX || 0,
+            startPosY: section.centerY || 0,
+            spacingX: 30,
+            spacingY: 35
+          });
+          
+          if (result.success && result.data) {
+             generatedCount += result.data.length;
+          }
+        }
+      }
+      
+      alert(`Successfully generated ${generatedCount} seats for the bowl in the backend!`);
+      
+      // Fetch the updated seats from the API for the canvas
+      let fetchedSeats: LayoutSeat[] = [];
+      for (const section of bowlSections) {
+         if (section.type === 'Seated') {
+            const seatsRes = await coreService.getSectionSeats(section.id);
+            if (seatsRes.success && seatsRes.data) {
+                // Map backend DTO to LayoutSeat
+                const mappedSeats = seatsRes.data.map((bs: any): LayoutSeat => ({
+                    seatId: bs.id,
+                    sectionId: section.id,
+                    stadiumId: stadiumId,
+                    rowLabel: bs.rowLabel,
+                    rowNumber: bs.rowLabel.charCodeAt(0) - 65 || 0, // Fallback conversion
+                    seatNumber: bs.seatNumber,
+                    type: bs.isAccessible ? 'accessible' : 'standard',
+                    price: 0,
+                    x: bs.posX,
+                    y: bs.posY,
+                    disabled: !bs.isActive
+                }));
+                fetchedSeats = [...fetchedSeats, ...mappedSeats];
+            }
+         }
+      }
+      
+      // Update canvas without triggering local mock generator
+      // We retain existing seats from other bowls
+      setSeats(prev => [
+          ...prev.filter(s => !bowlSections.some(sec => sec.id === s.sectionId)), // Remove old seats for this bowl
+          ...fetchedSeats
+      ]);
+
+    } catch (e: any) {
+      console.error('[Generate Bowl Seats]', e);
+      alert(`Failed to generate bowl seats: ${e.message}`);
+    } finally {
+      setGeneratingBowlId(null);
+    }
   };
 
   // Handler: Open bowl form dialog for creating a new bowl
@@ -290,15 +360,35 @@ export function StadiumLayoutBuilder({
     selectSection(sectionId);
   };
 
-  const handleSectionDoubleClick = (sectionId: string) => {
+  const handleSectionDoubleClick = async (sectionId: string) => {
     selectSection(sectionId);
-
-    // Auto-generate seats if none exist yet
-    if (seats.length === 0 && sections.length > 0) {
-      generateSeats();
-    }
-
     setViewMode('section-focus');  // Enter focused section view
+
+    try {
+      const seatsRes = await coreService.getSectionSeats(sectionId);
+      if (seatsRes.success && seatsRes.data) {
+        const mappedSeats = seatsRes.data.map((bs: any): LayoutSeat => ({
+          seatId: bs.id,
+          sectionId: sectionId,
+          stadiumId: stadiumId,
+          rowLabel: bs.rowLabel,
+          rowNumber: bs.rowLabel.charCodeAt(0) - 65 || 0,
+          seatNumber: bs.seatNumber,
+          type: bs.isAccessible ? 'accessible' : 'standard',
+          price: 0,
+          x: bs.posX,
+          y: bs.posY,
+          disabled: !bs.isActive
+        }));
+        
+        setSeats(prev => [
+          ...prev.filter(s => s.sectionId !== sectionId),
+          ...mappedSeats
+        ]);
+      }
+    } catch (e) {
+      console.error('Failed to fetch section seats', e);
+    }
   };
 
   const handleExitSectionFocus = () => {
@@ -370,13 +460,16 @@ export function StadiumLayoutBuilder({
     }
     
     try {
-      // Inform the API to generate seats structurally, then generate locally
+      // Inform the API to generate seats structurally
       if (eventId) {
         await coreService.generateSeats(eventId);
+        setViewMode('seats'); // Auto-switch to seats view
+        alert('Seats generated successfully on backend!');
+        // Refresh layout to get new data
+        refreshLayout();
+      } else {
+        alert('No Event ID found. Cannot generate seats without an event context.');
       }
-      generateSeats();
-      setViewMode('seats'); // Auto-switch to seats view
-      alert(`Generated ${seats.length} seats via API!`);
     } catch (error) {
       alert('Seat generation failed: ' + (error as Error).message);
     }
@@ -556,12 +649,24 @@ export function StadiumLayoutBuilder({
                   {/* Action buttons - shown when selected or on hover */}
                   <div className={`bowl-actions ${isSelected ? 'visible' : ''}`}>
                     <button
+                      className="generate-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleGenerateBowlSeats(bowl.id);
+                      }}
+                      disabled={!canEdit || generatingBowlId === bowl.id}
+                      title="Generate Seats"
+                      style={{ filter: generatingBowlId === bowl.id ? 'grayscale(1)' : 'none' }}
+                    >
+                      {generatingBowlId === bowl.id ? '⏳' : '⚡'}
+                    </button>
+                    <button
                       className="edit-button"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleOpenEditBowlForm(bowl);
                       }}
-                      disabled={!canEdit}
+                      disabled={!canEdit || generatingBowlId === bowl.id}
                       title="Edit bowl configuration"
                     >
                       ✏️
@@ -575,7 +680,7 @@ export function StadiumLayoutBuilder({
                           if (isSelected) setSelectedBowlId(undefined);
                         }
                       }}
-                      disabled={!canEdit}
+                      disabled={!canEdit || generatingBowlId === bowl.id}
                       title="Delete bowl"
                     >
                       🗑️
@@ -682,6 +787,7 @@ export function StadiumLayoutBuilder({
               bowls={bowls}
               fieldConfig={fieldConfig}
               onChange={updateSection}
+              onChangeGeometry={updateSectionGeometry}
               onDelete={handleSectionDelete}
               disabled={!canEdit}
             />
@@ -743,6 +849,7 @@ export function StadiumLayoutBuilder({
         existingBowls={bowls}
         existingSections={sections}
         editingBowl={editingBowlData}
+        isSaving={saving}
         onSave={handleBowlFormSave}
         onCancel={() => {
           setShowBowlFormDialog(false);

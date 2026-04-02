@@ -140,6 +140,19 @@ public class SeatService : ISeatService
         return ApiResponse<SeatResponse>.Ok(MapToResponse(updated), "Seat updated successfully");
     }
 
+    public async Task<ApiResponse<bool>> DeleteAsync(Guid seatId, Guid ownerId, CancellationToken cancellationToken = default)
+    {
+        var seat = await _repository.GetByIdAsync(seatId, cancellationToken);
+        if (seat == null)
+            return ApiResponse<bool>.Fail("NOT_FOUND", "Seat not found");
+
+        var deleted = await _repository.DeleteAsync(seatId, cancellationToken);
+        if (!deleted)
+            return ApiResponse<bool>.Fail("DELETE_FAILED", "Failed to delete seat");
+
+        return ApiResponse<bool>.Ok(true, "Seat deleted successfully");
+    }
+
     // ─── Private Helpers ────────────────────────────────────────────
 
     private static SeatResponse MapToResponse(Seat seat)

@@ -70,14 +70,10 @@ public class SectionService : ISectionService
         if (section == null)
             return ApiResponse<SectionResponse>.Fail("NOT_FOUND", "Section not found");
 
-        // Update properties
-        section.Name = request.Name;
-        section.Type = request.Type;
-        section.Capacity = request.Capacity;
+        // Only update display metadata — geometry/position are owned by the geometry endpoint
+        section.Name     = request.Name;
         section.SeatType = request.SeatType;
-        section.Color = request.Color;
-        section.PosX = request.PosX;
-        section.PosY = request.PosY;
+        section.Color    = request.Color;
 
         var updated = await _repository.UpdateAsync(section, cancellationToken);
         return ApiResponse<SectionResponse>.Ok(MapToResponse(updated), "Section updated successfully");

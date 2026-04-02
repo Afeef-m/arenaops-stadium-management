@@ -86,53 +86,7 @@ export function updateFieldConfigWithRadius(fieldConfig: FieldConfig): FieldConf
   };
 }
 
-// ============================================================================
-// Validation
-// ============================================================================
 
-/**
- * Validate field dimensions are within acceptable ranges
- *
- * @param fieldConfig - Field configuration to validate
- * @returns Validation result with error message if invalid
- */
-export function validateFieldDimensions(fieldConfig: FieldConfig): {
-  valid: boolean;
-  error?: string;
-} {
-  const { shape, length, width, bufferZone, unit } = fieldConfig;
-
-  // Dimension limits (in original units)
-  const MIN_LENGTH = unit === 'yards' ? 50 : 45;
-  const MAX_LENGTH = unit === 'yards' ? 150 : 135;
-  const MIN_WIDTH = unit === 'yards' ? 40 : 35;
-  const MAX_WIDTH = unit === 'yards' ? 100 : 90;
-  const MIN_BUFFER = unit === 'yards' ? 10 : 9;
-  const MAX_BUFFER = unit === 'yards' ? 30 : 27;
-
-  if (length < MIN_LENGTH || length > MAX_LENGTH) {
-    return {
-      valid: false,
-      error: `Length must be between ${MIN_LENGTH} and ${MAX_LENGTH} ${unit}`,
-    };
-  }
-
-  if (shape === 'rectangle' && (width < MIN_WIDTH || width > MAX_WIDTH)) {
-    return {
-      valid: false,
-      error: `Width must be between ${MIN_WIDTH} and ${MAX_WIDTH} ${unit}`,
-    };
-  }
-
-  if (bufferZone < MIN_BUFFER || bufferZone > MAX_BUFFER) {
-    return {
-      valid: false,
-      error: `Buffer zone must be between ${MIN_BUFFER} and ${MAX_BUFFER} ${unit}`,
-    };
-  }
-
-  return { valid: true };
-}
 
 // ============================================================================
 // Coordinate Transformations
@@ -417,117 +371,7 @@ export function createRectanglePath(
  *
  * @param section - Section to validate (partial)
  * @param fieldConfig - Field configuration for constraints
- * @param canvasWidth - Canvas width (for bounds checking)
- * @param canvasHeight - Canvas height (for bounds checking)
- * @returns Validation result with error/warning messages
- */
-export function validateSectionGeometry(
-  section: {
-    shape: 'arc' | 'rectangle';
-    centerX: number;
-    centerY: number;
-    innerRadius?: number;
-    outerRadius?: number;
-    width?: number;
-    height?: number;
-    rotation?: number;
-    rows?: number;
-    seatsPerRow?: number;
-  },
-  fieldConfig?: FieldConfig,
-  canvasWidth: number = 1400,
-  canvasHeight: number = 900
-): {
-  valid: boolean;
-  errors: string[];
-  warnings: string[];
-} {
-  const errors: string[] = [];
-  const warnings: string[] = [];
 
-  // Canvas bounds check
-  if (section.centerX < 0 || section.centerX > canvasWidth) {
-    errors.push(`Center X must be between 0 and ${canvasWidth}`);
-  }
-  if (section.centerY < 0 || section.centerY > canvasHeight) {
-    errors.push(`Center Y must be between 0 and ${canvasHeight}`);
-  }
-
-  if (section.shape === 'arc') {
-    const innerRadius = section.innerRadius || 0;
-    const outerRadius = section.outerRadius || 0;
-
-    if (innerRadius <= 0) {
-      errors.push('Inner radius must be greater than 0');
-    }
-    if (outerRadius <= 0) {
-      errors.push('Outer radius must be greater than 0');
-    }
-    if (innerRadius >= outerRadius) {
-      errors.push('Inner radius must be less than outer radius');
-    }
-
-    // Check minimum inner radius constraint
-    if (fieldConfig && innerRadius < fieldConfig.minimumInnerRadius) {
-      errors.push(
-        `Inner radius must be at least ${Math.round(fieldConfig.minimumInnerRadius)} pixels ` +
-        `to respect field minimum constraint`
-      );
-    }
-
-    // Check if arc extends beyond canvas
-    const maxRadius = Math.max(
-      Math.hypot(section.centerX, section.centerY),
-      Math.hypot(section.centerX - canvasWidth, section.centerY),
-      Math.hypot(section.centerX, section.centerY - canvasHeight),
-      Math.hypot(section.centerX - canvasWidth, section.centerY - canvasHeight)
-    );
-    if (outerRadius > maxRadius + 100) {
-      warnings.push('Section may extend beyond canvas boundaries');
-    }
-  }
-
-  if (section.shape === 'rectangle') {
-    const width = section.width || 0;
-    const height = section.height || 0;
-
-    if (width <= 0) {
-      errors.push('Width must be greater than 0');
-    }
-    if (height <= 0) {
-      errors.push('Height must be greater than 0');
-    }
-
-    // Check if bounds exceed canvas
-    const halfWidth = width / 2;
-    const halfHeight = height / 2;
-    if (
-      section.centerX - halfWidth < 0 ||
-      section.centerX + halfWidth > canvasWidth ||
-      section.centerY - halfHeight < 0 ||
-      section.centerY + halfHeight > canvasHeight
-    ) {
-      warnings.push('Section extends beyond canvas boundaries');
-    }
-  }
-
-  // Capacity check
-  if (section.rows && section.seatsPerRow) {
-    const capacity = section.rows * section.seatsPerRow;
-    if (capacity < 300) {
-      warnings.push(`Capacity (${capacity}) is below typical minimum of 300 seats`);
-    }
-    if (capacity > 2000) {
-      warnings.push(`Capacity (${capacity}) is above typical maximum of 2000 seats`);
-    }
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-    warnings,
-  };
-}
 
 /**
  * Calculate section capacity
@@ -557,7 +401,6 @@ export const GeometryUtils = {
   calculateMinimumInnerRadius,
   getFieldDimensionsInPixels,
   updateFieldConfigWithRadius,
-  validateFieldDimensions,
   polarToCartesian,
   cartesianToPolar,
   createArcPath,
@@ -570,6 +413,5 @@ export const GeometryUtils = {
   snapAngle,
   getFieldShapeDisplayName,
   getDefaultFieldWidth,
-  validateSectionGeometry,
   calculateSectionCapacity,
 };

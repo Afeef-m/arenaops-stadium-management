@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import type { LayoutSeat, ViewMode } from "../types";
-import { SEAT_TYPE_COLORS, SEAT_RADIUS_BASE, SEAT_RADIUS_HOVER, SEAT_RADIUS_SELECTED, SEAT_LABEL_ZOOM_THRESHOLD } from "../utils/seatGenerator";
+import { LayoutSeat, ViewMode, SEAT_TYPE_COLORS, SEAT_RADIUS_BASE, SEAT_RADIUS_HOVER, SEAT_RADIUS_SELECTED, SEAT_LABEL_ZOOM_THRESHOLD } from "../types";
 
 // Performance threshold: above this, only render selected section's seats
 const SEAT_RENDER_THRESHOLD = 5000;

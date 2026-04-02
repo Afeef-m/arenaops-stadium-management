@@ -468,19 +468,18 @@ export function LayoutCanvas({
           }
 
         {/* Seats */}
-          <SeatRenderer
-            seats={viewMode === 'section-focus'
-              ? seats.filter(s => s.sectionId === selectedSectionId)
-              : seats
-            }
-            selectedSeatIds={selectedSeatIds}
-            selectedSectionId={selectedSectionId}
-            onSeatClick={(seatId, shiftKey, ctrlKey) => {
-              onSeatClick?.(seatId, shiftKey, ctrlKey);
-            }}
-            viewMode={viewMode === 'section-focus' ? 'seats' : viewMode}
-            zoomLevel={canvas.zoom}
-          />
+          {viewMode === 'section-focus' && (
+            <SeatRenderer
+              seats={seats.filter(s => s.sectionId === selectedSectionId)}
+              selectedSeatIds={selectedSeatIds}
+              selectedSectionId={selectedSectionId}
+              onSeatClick={(seatId, shiftKey, ctrlKey) => {
+                onSeatClick?.(seatId, shiftKey, ctrlKey);
+              }}
+              viewMode="seats"
+              zoomLevel={canvas.zoom}
+            />
+          )}
 
           {/* Drag-select rectangle preview (Phase 5) */}
           {canvas.selectionPreview && (

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useRef } from "react";
 import type { LayoutSection, LayoutSeat } from "../types";
-import { SEAT_TYPE_COLORS } from "../utils/seatGenerator";
+import { SEAT_TYPE_COLORS } from "../types";
 
 // Large seat radius for easy editing
 const SEAT_RADIUS = 14;

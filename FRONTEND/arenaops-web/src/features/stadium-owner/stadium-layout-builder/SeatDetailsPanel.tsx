@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import type { LayoutSeat } from "./types";
-import { SEAT_TYPE_COLORS } from "./utils/seatGenerator";
-import type { SeatType } from "./types";
+import type { LayoutSeat, SeatType } from "./types";
+import { SEAT_TYPE_COLORS } from "./types";
 
 export interface SeatDetailsPanelProps {
   selectedSeats: LayoutSeat[];

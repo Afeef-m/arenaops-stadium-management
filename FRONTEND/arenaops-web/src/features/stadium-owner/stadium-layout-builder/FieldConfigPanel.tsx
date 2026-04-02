@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import type { FieldConfig, FieldShape, FieldUnit } from "./types";
 import {
   calculateMinimumInnerRadius,
-  validateFieldDimensions,
   getDefaultFieldWidth,
   getFieldShapeDisplayName,
 } from "./utils/geometry";
@@ -33,7 +32,7 @@ export function FieldConfigPanel({
   disabled = false,
 }: FieldConfigPanelProps) {
   const [localConfig, setLocalConfig] = useState<FieldConfig>(fieldConfig);
-  const [validationError, setValidationError] = useState<string | null>(null);
+
 
   // Sync with parent when fieldConfig changes
   useEffect(() => {
@@ -97,16 +96,9 @@ export function FieldConfigPanel({
     updateConfig({ ...localConfig, bufferZone });
   };
 
+
+
   const updateConfig = (updated: FieldConfig) => {
-    // Validate
-    const validation = validateFieldDimensions(updated);
-
-    if (!validation.valid) {
-      setValidationError(validation.error || null);
-    } else {
-      setValidationError(null);
-    }
-
     // Calculate minimum inner radius
     const withRadius = {
       ...updated,
@@ -254,12 +246,7 @@ export function FieldConfigPanel({
         </p>
       </div>
 
-      {/* Validation Error */}
-      {validationError && (
-        <div className="validation-error">
-          ⚠️ {validationError}
-        </div>
-      )}
+
 
       {/* Visual Preview */}
       <div className="preview-section">

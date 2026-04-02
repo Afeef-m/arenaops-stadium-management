@@ -27,8 +27,6 @@ export interface Stadium {
     capacity?: number;
     ownerId?: string;
     isApproved?: boolean;
-    imageUrl?: string;
-    imagePublicId?: string;
     createdAt?: string;
     isActive?: boolean;
 }
@@ -242,25 +240,20 @@ export const coreService = {
             const response = await api.get(`/api/core/events${params}`);
             return response.data;
         } catch (error: any) {
-    if (process.env.NODE_ENV === 'development') {
-        console.warn('getEvents failed:', error?.response?.status);
-    }
+            if (process.env.NODE_ENV === 'development') {
+                console.warn('getEvents failed:', error?.response?.status);
+            }
 
-    return {
-        data: [],
-        success: false,
-<<<<<<< HEAD
-        message: 'Unable to load events',
-        error: { code: 'FETCH_ERROR', message: 'Unable to load events' }
-=======
-        message: null,
-        error: {
-            code: 'EVENTS_FETCH_ERROR',
-            message: 'Unable to load events',
-        },
->>>>>>> main
-    };
-}
+            return {
+                data: [],
+                success: false,
+                message: 'Unable to load events',
+                error: {
+                    code: 'EVENTS_FETCH_ERROR',
+                    message: 'Unable to load events',
+                },
+            };
+        }
     },
 
     getEvent: async (id: string): Promise<ApiResponse<Event>> => {
@@ -487,6 +480,32 @@ export const coreService = {
 
     assignBowlToSection: async (sectionId: string, bowlId: string | null): Promise<ApiResponse<any>> => {
         const response = await api.put(`/api/core/sections/${sectionId}/assign-bowl`, { bowlId });
+        return response.data;
+    },
+
+    // ── Template Seats ───────────────────────────────────────
+    getSectionSeats: async (sectionId: string): Promise<ApiResponse<any[]>> => {
+        const response = await api.get(`/api/core/sections/${sectionId}/seats`);
+        return response.data;
+    },
+
+    createSeat: async (sectionId: string, payload: any): Promise<ApiResponse<any>> => {
+        const response = await api.post(`/api/core/sections/${sectionId}/seats`, payload);
+        return response.data;
+    },
+
+    bulkGenerateSeats: async (sectionId: string, payload: any): Promise<ApiResponse<any[]>> => {
+        const response = await api.post(`/api/core/sections/${sectionId}/seats/bulk`, payload);
+        return response.data;
+    },
+
+    updateSeat: async (seatId: string, payload: any): Promise<ApiResponse<any>> => {
+        const response = await api.put(`/api/core/seats/${seatId}`, payload);
+        return response.data;
+    },
+
+    deleteSeat: async (seatId: string): Promise<ApiResponse<void>> => {
+        const response = await api.delete(`/api/core/seats/${seatId}`);
         return response.data;
     },
 }

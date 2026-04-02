@@ -111,6 +111,25 @@ export interface LayoutSection {
 }
 
 // ============================================================================
+// Seating Visual Constants
+// ============================================================================
+
+export const SEAT_TYPE_COLORS: Record<string, string> = {
+  standard: "#CBD5E1", // Slate-300
+  vip: "#F59E0B",      // Amber-500
+  premium: "#3B82F6",  // Blue-500
+  accessible: "#10B981", // Emerald-500
+  restricted: "#EF4444", // Red-500
+  aisle: "transparent",
+};
+
+export const SEAT_RADIUS_BASE = 5;
+export const SEAT_RADIUS_HOVER = 6.5;
+export const SEAT_RADIUS_SELECTED = 7.5;
+
+export const SEAT_LABEL_ZOOM_THRESHOLD = 2.5;
+
+// ============================================================================
 // Seat Configuration
 // ============================================================================
 
@@ -137,33 +156,7 @@ export interface LayoutSeat {
 // Capacity Validation
 // ============================================================================
 
-export interface CapacityConstraints {
-  section: { min: number; max: number };
-  total: { min: number; max: number };
-  sectionsCount: { min: number; max: number };
-  rowsPerSection: { min: number; max: number };
-  seatsPerRow: { min: number; max: number };
-}
 
-export const DEFAULT_CONSTRAINTS: CapacityConstraints = {
-  section: { min: 600, max: 1200 },
-  total: { min: 20000, max: 90000 },
-  sectionsCount: { min: 40, max: 80 },
-  rowsPerSection: { min: 25, max: 40 },
-  seatsPerRow: { min: 20, max: 30 },
-};
-
-export type WarningSeverity = 'info' | 'warning' | 'error';
-
-export interface CapacityWarning {
-  id: string;
-  severity: WarningSeverity;
-  message: string;
-  sectionId?: string;  // If warning relates to specific section
-  field: string;  // 'totalCapacity' | 'sectionCount' | 'sectionCapacity'
-  current: number;
-  expected: { min: number; max: number };
-}
 
 // ============================================================================
 // Layout Builder State
@@ -194,8 +187,6 @@ export interface LayoutBuilderState {
   editorMode: EditorMode;  // 'stadium' (overview) or 'section-detail' (zoomed)
   viewMode: ViewMode;  // How to render seats
 
-  // Validation
-  validation: CapacityWarning[];
 
   // Flags
   isLayoutLocked: boolean;  // For event mode: prevents editing after lock
@@ -393,6 +384,4 @@ export function isRectangleSection(section: LayoutSection): boolean {
   return section.shape === 'rectangle';
 }
 
-export function hasWarnings(warnings: CapacityWarning[], severity: WarningSeverity): boolean {
-  return warnings.some(w => w.severity === severity);
-}
+
