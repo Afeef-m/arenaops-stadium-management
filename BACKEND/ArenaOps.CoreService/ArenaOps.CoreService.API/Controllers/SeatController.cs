@@ -147,6 +147,22 @@ public class SeatController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Delete a seat
+    /// </summary>
+    [HttpDelete("api/seats/{id:guid}")]
+    [Authorize(Roles = "StadiumOwner,Admin")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        var response = await _seatService.DeleteAsync(id, userId, cancellationToken);
+
+        if (!response.Success)
+            return NotFound(response);
+
+        return Ok(response);
+    }
+
     private Guid GetUserId()
     {
         var userIdClaim = User.FindFirst("sub")

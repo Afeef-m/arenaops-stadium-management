@@ -125,12 +125,15 @@ const SimpleUniqueFooter = () => {
             >
               Browse Events ↗
             </Link>
+            {/* Layout Editor - removed (access from stadium detail page instead) */}
+            {/*
             <Link
-              href="/manager/stadiumLayout"
+              href="/manager/stadiums"
               className="px-6 py-2.5 border border-emerald-400 rounded-full text-[10px] uppercase tracking-widest text-emerald-200 hover:bg-emerald-400/20 transition-all duration-300"
             >
-              Layout Editor
+              Manage Stadiums
             </Link>
+            */}
           </div>
         </div>
 

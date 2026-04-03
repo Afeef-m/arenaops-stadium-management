@@ -310,7 +310,7 @@ export default function StadiumDetailPage() {
                             )}
                         </div>
                         <div className={styles.headerActions}>
-                            <Link href={`/manager/stadiumLayout?stadiumId=${stadiumId}`}>
+                            <Link href={`/manager/stadiums/${stadiumId}/layout/builder`}>
                                 <Button variant="outline" className={styles.layoutButton}>
                                     <Grid3X3 size={16} className="mr-2" />
                                     Stadium Layout

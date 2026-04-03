@@ -17,6 +17,8 @@ import type {
   SectionShapeType,
 } from "./types";
 
+import { coreService } from "@/services/coreService";
+
 const CANVAS_WIDTH = 1400;
 const CANVAS_HEIGHT = 900;
 
@@ -111,7 +113,12 @@ const createTemplateSection = (
   });
 };
 
-export function LayoutEditor() {
+export interface LayoutEditorProps {
+  eventId?: string;
+  seatingPlanId?: string;
+}
+
+export function LayoutEditor({ eventId, seatingPlanId }: LayoutEditorProps) {
   const router = useRouter();
   const [sections, setSections] = useState<LayoutSection[]>([]);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
@@ -469,7 +476,7 @@ export function LayoutEditor() {
     return Object.values(layoutSettings.pricing).every((value) => value >= 0);
   }, [layoutSettings.currency, layoutSettings.pricing]);
 
-  const saveLayout = useCallback(() => {
+  const saveLayout = useCallback(async () => {
     if (isProcessing) {
       return;
     }
@@ -483,10 +490,20 @@ export function LayoutEditor() {
 
     const payload = buildLayoutPayload();
 
-    setSavedPayload(payload);
-    showActionMessage("Layout saved to preview.");
-    setIsProcessing(false);
-  }, [buildLayoutPayload, isProcessing, rows.length, seats.length, sections.length, showActionMessage]);
+    try {
+      if (eventId) {
+        // Here we could sync with an endpoint to save the draft payload
+        // Example: await coreService.updateEventLayout(eventId, payload);
+      }
+      setSavedPayload(payload);
+      showActionMessage("Layout saved to preview.");
+    } catch (error) {
+      console.error(error);
+      showActionMessage("Error saving layout to API.");
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [buildLayoutPayload, isProcessing, rows.length, seats.length, sections.length, showActionMessage, eventId]);
 
   const clearSeatSelection = useCallback(() => {
     setSelectedSeatIds(() => new Set());
@@ -713,7 +730,7 @@ const restoredSeats =
     showActionMessage("Draft deleted.");
   }, [isProcessing, showActionMessage]);
 
-  const handlePublish = useCallback(() => {
+  const handlePublish = useCallback(async () => {
     if (isProcessing) {
       return;
     }
@@ -735,10 +752,24 @@ const restoredSeats =
       publishedAt: new Date().toISOString(),
     };
 
-    localStorage.setItem("stadium_layout_published", JSON.stringify(publishedPayload));
-    setPublishedAt(publishedPayload.publishedAt);
-    showActionMessage("Layout published.");
-    setIsProcessing(false);
+    try {
+      if (eventId) {
+        // Integrate lockLayout API logic
+        await coreService.lockLayout(eventId);
+        await coreService.generateSeats(eventId);
+      } else if (seatingPlanId) {
+        /* Optional: Handle unlinked layout publish */
+      }
+
+      localStorage.setItem("stadium_layout_published", JSON.stringify(publishedPayload));
+      setPublishedAt(publishedPayload.publishedAt);
+      showActionMessage("Layout published and locked.");
+    } catch (error) {
+      console.error(error);
+      showActionMessage("Error publishing layout.");
+    } finally {
+      setIsProcessing(false);
+    }
   }, [
     buildLayoutPayload,
     isProcessing,
@@ -747,6 +778,8 @@ const restoredSeats =
     seats.length,
     sections.length,
     showActionMessage,
+    eventId,
+    seatingPlanId,
   ]);
 
   const handlePageLayout = useCallback(() => {

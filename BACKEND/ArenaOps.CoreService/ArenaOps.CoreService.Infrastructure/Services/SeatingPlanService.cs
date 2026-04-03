@@ -48,6 +48,14 @@ public class SeatingPlanService : ISeatingPlanService
         if (!stadiumExists)
             return ApiResponse<SeatingPlanResponse>.Fail("STADIUM_NOT_FOUND", "Stadium not found");
 
+        // Ensure 1:1 relationship between stadium and seating plan
+        var existingPlans = await _repository.GetByStadiumIdAsync(request.StadiumId, cancellationToken);
+        var existingPlan = existingPlans.FirstOrDefault();
+        if (existingPlan != null)
+        {
+            return ApiResponse<SeatingPlanResponse>.Ok(MapToResponse(existingPlan), "Seating plan already exists");
+        }
+
         var seatingPlan = new SeatingPlan
         {
             SeatingPlanId = Guid.NewGuid(),

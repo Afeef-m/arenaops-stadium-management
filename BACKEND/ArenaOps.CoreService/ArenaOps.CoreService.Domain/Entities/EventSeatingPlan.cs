@@ -19,6 +19,7 @@ public class EventSeatingPlan
 
     // Navigation Properties
     public SeatingPlan SourceSeatingPlan { get; set; } = null!;
+    public ICollection<EventBowl> EventBowls { get; set; } = new List<EventBowl>();
     public ICollection<EventSection> EventSections { get; set; } = new List<EventSection>();
     public ICollection<EventLandmark> EventLandmarks { get; set; } = new List<EventLandmark>();
 }

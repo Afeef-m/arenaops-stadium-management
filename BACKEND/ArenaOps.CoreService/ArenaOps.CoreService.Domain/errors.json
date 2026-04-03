@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json.schemastore.org/sarif-1.0.0",
+  "version": "1.0.0",
+  "runs": [
+    {
+      "tool": {
+        "name": "Microsoft (R) Visual C# Compiler",
+        "version": "5.0.0.0",
+        "fileVersion": "5.0.0-2.25612.105 (44525024)",
+        "semanticVersion": "5.0.0",
+        "language": "en-US"
+      },
+      "results": [
+        {
+          "ruleId": "CA1859",
+          "level": "note",
+          "message": "Change type of field 'AllowedTransitions' from 'System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IReadOnlyList<string>>' to 'System.Collections.Generic.Dictionary<string, System.Collections.Generic.IReadOnlyList<string>>' for improved performance",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Domain/Entities/Event.cs",
+                "region": {
+                  "startLine": 42,
+                  "startColumn": 80,
+                  "endLine": 42,
+                  "endColumn": 98
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        }
+      ],
+      "rules": {
+        "CA1859": {
+          "id": "CA1859",
+          "shortDescription": "Use concrete types when possible for improved performance",
+          "fullDescription": "Using concrete types avoids virtual or interface call overhead and enables inlining.",
+          "defaultLevel": "note",
+          "helpUri": "https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1859",
+          "properties": {
+            "category": "Performance",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Telemetry",
+              "EnabledRuleInAggressiveMode"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -10,7 +10,7 @@
         "dependencies": {
           "ArenaOps.AuthService.Core": "1.0.0",
           "ArenaOps.AuthService.Infrastructure": "1.0.0",
-          "AspNetCore.HealthChecks.SqlServer": "9.0.0",
+          "AspNetCore.HealthChecks.SqlServer": "8.0.2",
           "Microsoft.AspNetCore.OpenApi": "8.0.13",
           "Serilog.AspNetCore": "10.0.0",
           "Serilog.Sinks.Console": "6.1.1",
@@ -21,15 +21,14 @@
           "ArenaOps.AuthService.API.dll": {}
         }
       },
-      "AspNetCore.HealthChecks.SqlServer/9.0.0": {
+      "AspNetCore.HealthChecks.SqlServer/8.0.2": {
         "dependencies": {
-          "Microsoft.Data.SqlClient": "6.1.4",
-          "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.11"
+          "Microsoft.Data.SqlClient": "6.1.4"
         },
         "runtime": {
-          "lib/net8.0/HealthChecks.SqlServer.dll": {
-            "assemblyVersion": "9.0.0.0",
-            "fileVersion": "9.0.0.0"
+          "lib/net6.0/HealthChecks.SqlServer.dll": {
+            "assemblyVersion": "8.0.2.0",
+            "fileVersion": "8.0.2.0"
           }
         }
       },
@@ -355,28 +354,6 @@
           "lib/net8.0/Microsoft.Extensions.Diagnostics.Abstractions.dll": {
             "assemblyVersion": "10.0.0.0",
             "fileVersion": "10.0.25.52411"
-          }
-        }
-      },
-      "Microsoft.Extensions.Diagnostics.HealthChecks/8.0.11": {
-        "dependencies": {
-          "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": "8.0.11",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Options": "10.0.0"
-        },
-        "runtime": {
-          "lib/net8.0/Microsoft.Extensions.Diagnostics.HealthChecks.dll": {
-            "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.1124.52116"
-          }
-        }
-      },
-      "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions/8.0.11": {
-        "runtime": {
-          "lib/net8.0/Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll": {
-            "assemblyVersion": "8.0.0.0",
-            "fileVersion": "8.0.1124.52116"
           }
         }
       },
@@ -922,12 +899,12 @@
       "serviceable": false,
       "sha512": ""
     },
-    "AspNetCore.HealthChecks.SqlServer/9.0.0": {
+    "AspNetCore.HealthChecks.SqlServer/8.0.2": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-UxCf65iCF2nU1u7AcB320abjL4CRg5swCgJECY6mKk1j5lrGMfVtskWwriGs1T29pYdRig9Vra3SPnP+4G82pA==",
-      "path": "aspnetcore.healthchecks.sqlserver/9.0.0",
-      "hashPath": "aspnetcore.healthchecks.sqlserver.9.0.0.nupkg.sha512"
+      "sha512": "sha512-sTcVVq7/zhfUrSTs0WAktvPdpU1He/sj14gRTogq4eFhn0oImolxNNhJczkYMgFF92RMMW+O+rlcFO7HVOpfiQ==",
+      "path": "aspnetcore.healthchecks.sqlserver/8.0.2",
+      "hashPath": "aspnetcore.healthchecks.sqlserver.8.0.2.nupkg.sha512"
     },
     "Azure.Core/1.50.0": {
       "type": "package",
@@ -1089,20 +1066,6 @@
       "sha512": "sha512-SfK89ytD61S7DgzorFljSkUeluC1ncn6dtZgwc0ot39f/BEYWBl5jpgvodxduoYAs1d9HG8faCDRZxE95UMo2A==",
       "path": "microsoft.extensions.diagnostics.abstractions/10.0.0",
       "hashPath": "microsoft.extensions.diagnostics.abstractions.10.0.0.nupkg.sha512"
-    },
-    "Microsoft.Extensions.Diagnostics.HealthChecks/8.0.11": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-zLgN22Zp9pk8RHlwssRTexw4+a6wqOnKWN+VejdPn5Yhjql4XiBhkFo35Nu8mmqHIk/UEmmCnMGLWq75aFfkOw==",
-      "path": "microsoft.extensions.diagnostics.healthchecks/8.0.11",
-      "hashPath": "microsoft.extensions.diagnostics.healthchecks.8.0.11.nupkg.sha512"
-    },
-    "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions/8.0.11": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-So3JUdRxozRjvQ3cxU6F3nI/i4emDnjane6yMYcJhvTTTu29ltlIdoXjkFGRceIWz8yKvuEpzXItZ0x5GvN2nQ==",
-      "path": "microsoft.extensions.diagnostics.healthchecks.abstractions/8.0.11",
-      "hashPath": "microsoft.extensions.diagnostics.healthchecks.abstractions.8.0.11.nupkg.sha512"
     },
     "Microsoft.Extensions.FileProviders.Abstractions/10.0.0": {
       "type": "package",

@@ -52,6 +52,13 @@ export interface Bowl {
   sectionIds: string[];  // Sections assigned to this bowl
   isActive: boolean;  // For event managers: can deactivate entire bowl
   displayOrder: number;  // Visual hierarchy (1 = closest to field, 2, 3...)
+  
+  // Template intent (Stored for reference/re-generation)
+  numSections?: number;
+  templateRows?: number;
+  templateSeatsPerRow?: number;
+  templateInnerRadius?: number;
+  templateOuterRadius?: number;
 }
 
 // ============================================================================
@@ -87,6 +94,7 @@ export interface LayoutSection {
   rotation: number;  // Degrees
 
   // Seating configuration
+  type: 'Seated' | 'Standing';
   rows: number;  // Typical: 25-40
   seatsPerRow: number;  // Typical: 20-30
   calculatedCapacity: number;  // rows × seatsPerRow (minus aisles)
@@ -103,6 +111,25 @@ export interface LayoutSection {
 }
 
 // ============================================================================
+// Seating Visual Constants
+// ============================================================================
+
+export const SEAT_TYPE_COLORS: Record<string, string> = {
+  standard: "#CBD5E1", // Slate-300
+  vip: "#F59E0B",      // Amber-500
+  premium: "#3B82F6",  // Blue-500
+  accessible: "#10B981", // Emerald-500
+  restricted: "#EF4444", // Red-500
+  aisle: "transparent",
+};
+
+export const SEAT_RADIUS_BASE = 5;
+export const SEAT_RADIUS_HOVER = 6.5;
+export const SEAT_RADIUS_SELECTED = 7.5;
+
+export const SEAT_LABEL_ZOOM_THRESHOLD = 2.5;
+
+// ============================================================================
 // Seat Configuration
 // ============================================================================
 
@@ -111,13 +138,15 @@ export interface LayoutSection {
  * Generated from section configuration with aisles applied
  */
 export interface LayoutSeat {
-  seatId: string;  // Unique identifier
-  sectionId: string;  // Parent section
+  seatId: string;  // Unique identifier (e.g., "section-123-A1")
+  sectionId: string;  // Parent section ID
+  sectionName?: string;  // Parent section name (for backend/display)
+  stadiumId?: string;  // Stadium ID (for backend purposes)
   rowNumber: number;  // 0-indexed row number
   rowLabel: string;  // Display label (A, B, C...)
   seatNumber: number;  // 1-indexed seat number within row
-  x: number;  // Canvas X coordinate
-  y: number;  // Canvas Y coordinate
+  x: number;  // Canvas X coordinate within section
+  y: number;  // Canvas Y coordinate within section
   type: SeatType;  // Can override section default
   price: number;  // Pricing (0 in template mode, set in event mode)
   disabled: boolean;  // Manually disabled seat
@@ -127,40 +156,14 @@ export interface LayoutSeat {
 // Capacity Validation
 // ============================================================================
 
-export interface CapacityConstraints {
-  section: { min: number; max: number };
-  total: { min: number; max: number };
-  sectionsCount: { min: number; max: number };
-  rowsPerSection: { min: number; max: number };
-  seatsPerRow: { min: number; max: number };
-}
 
-export const DEFAULT_CONSTRAINTS: CapacityConstraints = {
-  section: { min: 600, max: 1200 },
-  total: { min: 20000, max: 90000 },
-  sectionsCount: { min: 40, max: 80 },
-  rowsPerSection: { min: 25, max: 40 },
-  seatsPerRow: { min: 20, max: 30 },
-};
-
-export type WarningSevert = 'info' | 'warning' | 'error';
-
-export interface CapacityWarning {
-  id: string;
-  severity: WarningSevert;
-  message: string;
-  sectionId?: string;  // If warning relates to specific section
-  field: string;  // 'totalCapacity' | 'sectionCount' | 'sectionCapacity'
-  current: number;
-  expected: { min: number; max: number };
-}
 
 // ============================================================================
 // Layout Builder State
 // ============================================================================
 
 export type EditorMode = 'stadium' | 'section-detail';
-export type ViewMode = 'overview' | 'rows' | 'seats';
+export type ViewMode = 'overview' | 'rows' | 'seats' | 'section-focus';
 export type BuilderMode = 'template' | 'event';
 
 /**
@@ -176,6 +179,7 @@ export interface LayoutBuilderState {
   fieldConfig: FieldConfig;
   bowls: Bowl[];
   sections: LayoutSection[];
+  seats: LayoutSeat[];  // Generated from sections
 
   // UI State
   selectedSectionId: string | null;
@@ -183,8 +187,6 @@ export interface LayoutBuilderState {
   editorMode: EditorMode;  // 'stadium' (overview) or 'section-detail' (zoomed)
   viewMode: ViewMode;  // How to render seats
 
-  // Validation
-  validation: CapacityWarning[];
 
   // Flags
   isLayoutLocked: boolean;  // For event mode: prevents editing after lock
@@ -213,6 +215,28 @@ export interface DragState {
   offsetY: number;
   startX: number;
   startY: number;
+}
+
+// ============================================================================
+// Selection State (Phase 5)
+// ============================================================================
+
+export type SelectionMode = 'click' | 'drag-rect' | 'range';
+
+export interface SelectionRectangle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  seatCount: number;  // Number of seats within bounds
+}
+
+export interface SelectionState {
+  selectionStart?: Point;  // mouseDown point
+  selectionEnd?: Point;    // current point during drag
+  selectionMode: SelectionMode;  // Current mode
+  selectionPreview: SelectionRectangle | null;  // For rectangle visualization
+  lastSelectedSeatId: string | null;  // For Ctrl+click range selection
 }
 
 // ============================================================================
@@ -313,6 +337,42 @@ export const DEFAULT_PRICING: SeatPricing = {
 };
 
 // ============================================================================
+// Section Create/Update Requests
+// ============================================================================
+
+export interface SectionCreateRequest {
+  name: string;
+  shape: SectionShape;
+  centerX: number;
+  centerY: number;
+
+  // Arc geometry (if shape === 'arc')
+  innerRadius?: number;
+  outerRadius?: number;
+  startAngle?: number;
+  endAngle?: number;
+
+  // Rectangle geometry (if shape === 'rectangle')
+  width?: number;
+  height?: number;
+  rotation?: number;
+
+  // Seating configuration
+  rows: number;
+  seatsPerRow: number;
+  seatType: SeatType;
+  verticalAisles?: number[];
+  horizontalAisles?: number[];
+
+  // Bowl assignment (optional)
+  bowlId?: string | null;
+
+  // Display
+  color?: string;
+  isActive?: boolean;
+}
+
+// ============================================================================
 // Helper Type Guards
 // ============================================================================
 
@@ -324,6 +384,4 @@ export function isRectangleSection(section: LayoutSection): boolean {
   return section.shape === 'rectangle';
 }
 
-export function hasWarnings(warnings: CapacityWarning[], severity: WarningSevert): boolean {
-  return warnings.some(w => w.severity === severity);
-}
+

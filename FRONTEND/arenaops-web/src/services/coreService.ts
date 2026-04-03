@@ -27,8 +27,6 @@ export interface Stadium {
     capacity?: number;
     ownerId?: string;
     isApproved?: boolean;
-    imageUrl?: string;
-    imagePublicId?: string;
     createdAt?: string;
     isActive?: boolean;
 }
@@ -144,6 +142,17 @@ export interface BookingSeat {
     sectionType: 'Seated' | 'Standing';
 }
 
+export interface CreateBowlPayload {
+    name: string;
+    color?: string;
+    displayOrder: number;
+    numSections?: number;
+    templateRows?: number;
+    templateSeatsPerRow?: number;
+    templateInnerRadius?: number;
+    templateOuterRadius?: number;
+}
+
 // Event Layout
 export interface EventLayout {
     eventSeatingPlanId: string;
@@ -220,7 +229,10 @@ export const coreService = {
         const response = await api.get(`/api/core/seating-plans/${id}`);
         return response.data;
     },
-
+    createSeatingPlan: async (stadiumId: string, payload: { name: string; description?: string }): Promise<ApiResponse<SeatingPlan>> => {
+        const response = await api.post(`/api/core/stadiums/${stadiumId}/seating-plans`, payload);
+        return response.data;
+    },
     // ── Events ───────────────────────────────────────────
     getEvents: async (status?: string): Promise<ApiResponse<Event[]>> => {
         const params = status ? `?status=${status}` : '';
@@ -228,20 +240,20 @@ export const coreService = {
             const response = await api.get(`/api/core/events${params}`);
             return response.data;
         } catch (error: any) {
-    if (process.env.NODE_ENV === 'development') {
-        console.warn('getEvents failed:', error?.response?.status);
-    }
+            if (process.env.NODE_ENV === 'development') {
+                console.warn('getEvents failed:', error?.response?.status);
+            }
 
-    return {
-        data: [],
-        success: false,
-        message: null,
-        error: {
-            code: 'EVENTS_FETCH_ERROR',
-            message: 'Unable to load events',
-        },
-    };
-}
+            return {
+                data: [],
+                success: false,
+                message: 'Unable to load events',
+                error: {
+                    code: 'EVENTS_FETCH_ERROR',
+                    message: 'Unable to load events',
+                },
+            };
+        }
     },
 
     getEvent: async (id: string): Promise<ApiResponse<Event>> => {
@@ -360,6 +372,11 @@ export const coreService = {
         return response.data;
     },
 
+    getSeat: async (seatId: string): Promise<ApiResponse<any>> => {
+        const response = await api.get(`/api/core/seats/${seatId}`);
+        return response.data;
+    },
+
     holdStanding: async (eventId: string, sectionId: string, quantity: number): Promise<ApiResponse<unknown>> => {
         const response = await api.post(`/api/core/events/${eventId}/standing/${sectionId}/hold`, { quantity });
         return response.data;
@@ -382,4 +399,113 @@ export const coreService = {
         const response = await api.get(`/api/core/events/search?${params.toString()}`);
         return response.data;
     },
-};
+
+    // ── Bowl Management ──────────────────────────────────
+    createBowl: async (seatingPlanId: string, payload: CreateBowlPayload): Promise<ApiResponse<any>> => {
+        const response = await api.post(`/api/core/seating-plans/${seatingPlanId}/bowls`, payload);
+        return response.data;
+    },
+
+    getBowls: async (seatingPlanId: string): Promise<ApiResponse<any[]>> => {
+        const response = await api.get(`/api/core/seating-plans/${seatingPlanId}/bowls`);
+        return response.data;
+    },
+
+    getBowl: async (bowlId: string): Promise<ApiResponse<any>> => {
+        const response = await api.get(`/api/core/bowls/${bowlId}`);
+        return response.data;
+    },
+
+    updateBowl: async (bowlId: string, payload: { name?: string; color?: string; displayOrder?: number }): Promise<ApiResponse<any>> => {
+        const response = await api.put(`/api/core/bowls/${bowlId}`, payload);
+        return response.data;
+    },
+
+    deleteBowl: async (bowlId: string): Promise<ApiResponse<void>> => {
+        const response = await api.delete(`/api/core/bowls/${bowlId}`);
+        return response.data;
+    },
+
+    reorderBowl: async (bowlId: string, newDisplayOrder: number): Promise<ApiResponse<any>> => {
+        const response = await api.post(`/api/core/bowls/${bowlId}/reorder`, { newDisplayOrder });
+        return response.data;
+    },
+
+    // ── Field Configuration ──────────────────────────────
+    getFieldConfig: async (seatingPlanId: string): Promise<ApiResponse<any>> => {
+        const response = await api.get(`/api/core/seating-plans/${seatingPlanId}/field-config`);
+        return response.data;
+    },
+
+    updateFieldConfig: async (seatingPlanId: string, payload: { shape: string; length: number; width: number; unit: string; bufferZone: number }): Promise<ApiResponse<any>> => {
+        const response = await api.put(`/api/core/seating-plans/${seatingPlanId}/field-config`, payload);
+        return response.data;
+    },
+
+    // ── Section Geometry (Stadium Layout Builder) ────────
+    createArcSection: async (seatingPlanId: string, payload: any): Promise<ApiResponse<any>> => {
+        const response = await api.post(`/api/core/seating-plans/${seatingPlanId}/sections/arc`, payload);
+        return response.data;
+    },
+
+    createRectangleSection: async (seatingPlanId: string, payload: any): Promise<ApiResponse<any>> => {
+        const response = await api.post(`/api/core/seating-plans/${seatingPlanId}/sections/rectangle`, payload);
+        return response.data;
+    },
+
+    updateSectionGeometry: async (sectionId: string, payload: any): Promise<ApiResponse<any>> => {
+        const response = await api.put(`/api/core/sections/${sectionId}/geometry`, payload);
+        return response.data;
+    },
+
+    updateSection: async (sectionId: string, payload: any): Promise<ApiResponse<any>> => {
+        const response = await api.put(`/api/core/sections/${sectionId}`, payload);
+        return response.data;
+    },
+
+    deleteSection: async (sectionId: string): Promise<ApiResponse<any>> => {
+        const response = await api.delete(`/api/core/sections/${sectionId}`);
+        return response.data;
+    },
+
+    getSections: async (seatingPlanId: string): Promise<ApiResponse<any[]>> => {
+        const response = await api.get(`/api/core/seating-plans/${seatingPlanId}/sections`);
+        return response.data;
+    },
+
+    getSection: async (sectionId: string): Promise<ApiResponse<any>> => {
+        const response = await api.get(`/api/core/sections/${sectionId}`);
+        return response.data;
+    },
+
+    assignBowlToSection: async (sectionId: string, bowlId: string | null): Promise<ApiResponse<any>> => {
+        const response = await api.put(`/api/core/sections/${sectionId}/assign-bowl`, { bowlId });
+        return response.data;
+    },
+
+    // ── Template Seats ───────────────────────────────────────
+    getSectionSeats: async (sectionId: string): Promise<ApiResponse<any[]>> => {
+        const response = await api.get(`/api/core/sections/${sectionId}/seats`);
+        return response.data;
+    },
+
+    createSeat: async (sectionId: string, payload: any): Promise<ApiResponse<any>> => {
+        const response = await api.post(`/api/core/sections/${sectionId}/seats`, payload);
+        return response.data;
+    },
+
+    bulkGenerateSeats: async (sectionId: string, payload: any): Promise<ApiResponse<any[]>> => {
+        const response = await api.post(`/api/core/sections/${sectionId}/seats/bulk`, payload);
+        return response.data;
+    },
+
+    updateSeat: async (seatId: string, payload: any): Promise<ApiResponse<any>> => {
+        const response = await api.put(`/api/core/seats/${seatId}`, payload);
+        return response.data;
+    },
+
+    deleteSeat: async (seatId: string): Promise<ApiResponse<void>> => {
+        const response = await api.delete(`/api/core/seats/${seatId}`);
+        return response.data;
+    },
+}

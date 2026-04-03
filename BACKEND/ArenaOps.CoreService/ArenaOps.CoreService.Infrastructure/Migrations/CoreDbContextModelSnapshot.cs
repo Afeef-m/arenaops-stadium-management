@@ -78,6 +78,62 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                     b.ToTable("AdminActivities");
                 });
 
+            modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.Bowl", b =>
+                {
+                    b.Property<Guid>("BowlId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("NumSections")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SeatingPlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<double?>("TemplateInnerRadius")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("TemplateOuterRadius")
+                        .HasColumnType("float");
+
+                    b.Property<int?>("TemplateRows")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TemplateSeatsPerRow")
+                        .HasColumnType("int");
+
+                    b.HasKey("BowlId");
+
+                    b.HasIndex("DisplayOrder");
+
+                    b.HasIndex("SeatingPlanId");
+
+                    b.ToTable("Bowls");
+                });
+
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.Event", b =>
                 {
                     b.Property<Guid>("EventId")
@@ -128,6 +184,50 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                     b.HasIndex("Status");
 
                     b.ToTable("Events");
+                });
+
+            modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventBowl", b =>
+                {
+                    b.Property<Guid>("EventBowlId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("EventSeatingPlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("SourceBowlId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("EventBowlId");
+
+                    b.HasIndex("EventSeatingPlanId");
+
+                    b.HasIndex("SourceBowlId");
+
+                    b.ToTable("EventBowls");
                 });
 
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventLandmark", b =>
@@ -432,6 +532,12 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("nvarchar(5)");
 
+                    b.Property<int?>("RowNumber")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SeatIndexInRow")
+                        .HasColumnType("int");
+
                     b.Property<string>("SeatLabel")
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
@@ -467,6 +573,9 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("FieldConfigMetadata")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -479,6 +588,9 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
 
                     b.Property<Guid>("StadiumId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("TotalCapacity")
+                        .HasColumnType("int");
 
                     b.HasKey("SeatingPlanId");
 
@@ -494,12 +606,25 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("NEWSEQUENTIALID()");
 
+                    b.Property<Guid?>("BowlId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Capacity")
                         .HasColumnType("int");
 
                     b.Property<string>("Color")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("GeometryData")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GeometryType")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("HorizontalAisles")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -512,6 +637,9 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                     b.Property<double>("PosY")
                         .HasColumnType("float");
 
+                    b.Property<int?>("Rows")
+                        .HasColumnType("int");
+
                     b.Property<string>("SeatType")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -519,12 +647,20 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                     b.Property<Guid>("SeatingPlanId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int?>("SeatsPerRow")
+                        .HasColumnType("int");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("VerticalAisles")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("SectionId");
+
+                    b.HasIndex("BowlId");
 
                     b.HasIndex("SeatingPlanId");
 
@@ -656,6 +792,17 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                     b.ToTable("TicketTypes");
                 });
 
+            modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.Bowl", b =>
+                {
+                    b.HasOne("ArenaOps.CoreService.Domain.Entities.SeatingPlan", "SeatingPlan")
+                        .WithMany("Bowls")
+                        .HasForeignKey("SeatingPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SeatingPlan");
+                });
+
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.Event", b =>
                 {
                     b.HasOne("ArenaOps.CoreService.Domain.Entities.Stadium", "Stadium")
@@ -665,6 +812,24 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Stadium");
+                });
+
+            modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventBowl", b =>
+                {
+                    b.HasOne("ArenaOps.CoreService.Domain.Entities.EventSeatingPlan", "EventSeatingPlan")
+                        .WithMany("EventBowls")
+                        .HasForeignKey("EventSeatingPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ArenaOps.CoreService.Domain.Entities.Bowl", "SourceBowl")
+                        .WithMany()
+                        .HasForeignKey("SourceBowlId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("EventSeatingPlan");
+
+                    b.Navigation("SourceBowl");
                 });
 
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventLandmark", b =>
@@ -778,11 +943,18 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
 
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.Section", b =>
                 {
+                    b.HasOne("ArenaOps.CoreService.Domain.Entities.Bowl", "Bowl")
+                        .WithMany("Sections")
+                        .HasForeignKey("BowlId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("ArenaOps.CoreService.Domain.Entities.SeatingPlan", "SeatingPlan")
                         .WithMany("Sections")
                         .HasForeignKey("SeatingPlanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Bowl");
 
                     b.Navigation("SeatingPlan");
                 });
@@ -817,6 +989,11 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
                     b.Navigation("Event");
                 });
 
+            modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.Bowl", b =>
+                {
+                    b.Navigation("Sections");
+                });
+
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.Event", b =>
                 {
                     b.Navigation("EventSlots");
@@ -824,6 +1001,8 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
 
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.EventSeatingPlan", b =>
                 {
+                    b.Navigation("EventBowls");
+
                     b.Navigation("EventLandmarks");
 
                     b.Navigation("EventSections");
@@ -838,6 +1017,8 @@ namespace ArenaOps.CoreService.Infrastructure.Migrations
 
             modelBuilder.Entity("ArenaOps.CoreService.Domain.Entities.SeatingPlan", b =>
                 {
+                    b.Navigation("Bowls");
+
                     b.Navigation("Landmarks");
 
                     b.Navigation("Sections");

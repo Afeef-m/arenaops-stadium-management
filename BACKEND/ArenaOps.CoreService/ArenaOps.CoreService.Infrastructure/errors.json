@@ -1,0 +1,392 @@
+{
+  "$schema": "http://json.schemastore.org/sarif-1.0.0",
+  "version": "1.0.0",
+  "runs": [
+    {
+      "tool": {
+        "name": "Microsoft (R) Visual C# Compiler",
+        "version": "5.0.0.0",
+        "fileVersion": "5.0.0-2.25612.105 (44525024)",
+        "semanticVersion": "5.0.0",
+        "language": "en-US"
+      },
+      "results": [
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "'CreateBowlRequest' does not contain a definition for 'DisplayOrder' and no accessible extension method 'DisplayOrder' accepting a first argument of type 'CreateBowlRequest' could be found (are you missing a using directive or an assembly reference?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Services/BowlService.cs",
+                "region": {
+                  "startLine": 40,
+                  "startColumn": 40,
+                  "endLine": 40,
+                  "endColumn": 52
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS0162",
+          "level": "warning",
+          "message": "Unreachable code detected",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Services/BowlService.cs",
+                "region": {
+                  "startLine": 75,
+                  "startColumn": 13,
+                  "endLine": 75,
+                  "endColumn": 19
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 2
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Dereference of a possibly null reference.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Services/EventService.cs",
+                "region": {
+                  "startLine": 134,
+                  "startColumn": 21,
+                  "endLine": 134,
+                  "endColumn": 40
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "level": "warning",
+          "message": "Dereference of a possibly null reference.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Services/EventService.cs",
+                "region": {
+                  "startLine": 137,
+                  "startColumn": 21,
+                  "endLine": 137,
+                  "endColumn": 40
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA1862",
+          "level": "note",
+          "message": "Prefer using 'string.Equals(string, StringComparison)' to perform a case-insensitive comparison, but keep in mind that this might cause subtle changes in behavior, so make sure to conduct thorough testing after applying the suggestion, or if culturally sensitive comparison is not required, consider using 'StringComparison.OrdinalIgnoreCase'",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Services/SectionService.cs",
+                "region": {
+                  "startLine": 232,
+                  "startColumn": 17,
+                  "endLine": 232,
+                  "endColumn": 56
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "LeftOffendingMethod": "ToLower",
+              "RightOffendingMethod": null
+            }
+          }
+        },
+        {
+          "ruleId": "CA1862",
+          "level": "note",
+          "message": "Prefer using 'string.Equals(string, StringComparison)' to perform a case-insensitive comparison, but keep in mind that this might cause subtle changes in behavior, so make sure to conduct thorough testing after applying the suggestion, or if culturally sensitive comparison is not required, consider using 'StringComparison.OrdinalIgnoreCase'",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Services/SectionService.cs",
+                "region": {
+                  "startLine": 244,
+                  "startColumn": 22,
+                  "endLine": 244,
+                  "endColumn": 67
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "LeftOffendingMethod": "ToLower",
+              "RightOffendingMethod": null
+            }
+          }
+        },
+        {
+          "ruleId": "CA1861",
+          "level": "note",
+          "message": "Prefer 'static readonly' fields over constant array arguments if the called method is called repeatedly and is not mutating the passed array",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Migrations/20260310051634_ARENA-78_AddMissingEventSeatColumns.cs",
+                "region": {
+                  "startLine": 53,
+                  "startColumn": 26,
+                  "endLine": 53,
+                  "endColumn": 55
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "paramName": "columns"
+            }
+          }
+        },
+        {
+          "ruleId": "CA2017",
+          "level": "warning",
+          "message": "Number of parameters supplied in the logging message template do not match the number of named placeholders",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Services/CoreEmailService.cs",
+                "region": {
+                  "startLine": 35,
+                  "startColumn": 13,
+                  "endLine": 43,
+                  "endColumn": 73
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA2017",
+          "level": "warning",
+          "message": "Number of parameters supplied in the logging message template do not match the number of named placeholders",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Services/CoreEmailService.cs",
+                "region": {
+                  "startLine": 52,
+                  "startColumn": 13,
+                  "endLine": 61,
+                  "endColumn": 73
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA1862",
+          "level": "note",
+          "message": "Prefer using 'string.Equals(string, StringComparison)' to perform a case-insensitive comparison, but keep in mind that this might cause subtle changes in behavior, so make sure to conduct thorough testing after applying the suggestion, or if culturally sensitive comparison is not required, consider using 'StringComparison.OrdinalIgnoreCase'",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Services/FieldConfigService.cs",
+                "region": {
+                  "startLine": 100,
+                  "startColumn": 13,
+                  "endLine": 100,
+                  "endColumn": 44
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "LeftOffendingMethod": "ToLower",
+              "RightOffendingMethod": null
+            }
+          }
+        },
+        {
+          "ruleId": "CA1862",
+          "level": "note",
+          "message": "Prefer using 'string.Equals(string, StringComparison)' to perform a case-insensitive comparison, but keep in mind that this might cause subtle changes in behavior, so make sure to conduct thorough testing after applying the suggestion, or if culturally sensitive comparison is not required, consider using 'StringComparison.OrdinalIgnoreCase'",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Services/FieldConfigService.cs",
+                "region": {
+                  "startLine": 105,
+                  "startColumn": 18,
+                  "endLine": 105,
+                  "endColumn": 53
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "LeftOffendingMethod": "ToLower",
+              "RightOffendingMethod": null
+            }
+          }
+        },
+        {
+          "ruleId": "CA1860",
+          "level": "note",
+          "message": "Prefer comparing 'Count' to 0 rather than using 'Any()', both for clarity and for performance",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/Users/aflah/OneDrive/Desktop/ARENAOPS/BACKEND/ArenaOps.CoreService/ArenaOps.CoreService.Infrastructure/Services/EventLayoutService.cs",
+                "region": {
+                  "startLine": 206,
+                  "startColumn": 14,
+                  "endLine": 206,
+                  "endColumn": 40
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "DiagnosticPropertyKey": "Count"
+            }
+          }
+        }
+      ],
+      "rules": {
+        "CA1860": {
+          "id": "CA1860",
+          "shortDescription": "Avoid using 'Enumerable.Any()' extension method",
+          "fullDescription": "Prefer using 'IsEmpty', 'Count' or 'Length' properties whichever available, rather than calling 'Enumerable.Any()'. The intent is clearer and it is more performant than using 'Enumerable.Any()' extension method.",
+          "defaultLevel": "note",
+          "helpUri": "https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1860",
+          "properties": {
+            "category": "Performance",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Telemetry",
+              "EnabledRuleInAggressiveMode"
+            ]
+          }
+        },
+        "CA1861": {
+          "id": "CA1861",
+          "shortDescription": "Avoid constant arrays as arguments",
+          "fullDescription": "Constant arrays passed as arguments are not reused when called repeatedly, which implies a new array is created each time. Consider extracting them to 'static readonly' fields to improve performance if the passed array is not mutated within the called method.",
+          "defaultLevel": "note",
+          "helpUri": "https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1861",
+          "properties": {
+            "category": "Performance",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Telemetry",
+              "EnabledRuleInAggressiveMode"
+            ]
+          }
+        },
+        "CA1862": {
+          "id": "CA1862",
+          "shortDescription": "Use the 'StringComparison' method overloads to perform case-insensitive string comparisons",
+          "fullDescription": "Avoid calling 'ToLower', 'ToUpper', 'ToLowerInvariant' and 'ToUpperInvariant' to perform case-insensitive string comparisons, as in 'string.ToLower() == string.ToLower()', because they lead to an allocation. Instead, use 'string.Equals(string, StringComparison)' to perform case-insensitive comparisons. Switching to using an overload that takes a 'StringComparison' might cause subtle changes in behavior, so it's important to conduct thorough testing after applying the suggestion. Additionally, if a culturally sensitive comparison is not required, consider using 'StringComparison.OrdinalIgnoreCase'.",
+          "defaultLevel": "note",
+          "helpUri": "https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1862",
+          "properties": {
+            "category": "Performance",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Telemetry",
+              "EnabledRuleInAggressiveMode"
+            ]
+          }
+        },
+        "CA2017": {
+          "id": "CA2017",
+          "shortDescription": "Parameter count mismatch",
+          "fullDescription": "Number of parameters supplied in the logging message template do not match the number of named placeholders.",
+          "defaultLevel": "warning",
+          "helpUri": "https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca2017",
+          "properties": {
+            "category": "Reliability",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Telemetry",
+              "EnabledRuleInAggressiveMode"
+            ]
+          }
+        },
+        "CS0162": {
+          "id": "CS0162",
+          "shortDescription": "Unreachable code detected",
+          "defaultLevel": "warning",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS0162)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry"
+            ]
+          }
+        },
+        "CS1061": {
+          "id": "CS1061",
+          "defaultLevel": "error",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS1061)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry",
+              "NotConfigurable"
+            ]
+          }
+        },
+        "CS8602": {
+          "id": "CS8602",
+          "shortDescription": "Dereference of a possibly null reference.",
+          "defaultLevel": "warning",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS8602)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
