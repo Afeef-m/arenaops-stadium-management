@@ -1,4 +1,5 @@
 import { api } from './axios';
+import { getSeatingPlan as getNormalizedSeatingPlan, type SeatingPlan as StadiumViewSeatingPlan } from './stadiumViewService';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -228,6 +229,9 @@ export const coreService = {
     getSeatingPlan: async (id: string): Promise<ApiResponse<SeatingPlan>> => {
         const response = await api.get(`/api/core/seating-plans/${id}`);
         return response.data;
+    },
+    getStadiumViewSeatingPlan: async (stadiumId: string): Promise<StadiumViewSeatingPlan> => {
+        return getNormalizedSeatingPlan();
     },
     createSeatingPlan: async (stadiumId: string, payload: { name: string; description?: string }): Promise<ApiResponse<SeatingPlan>> => {
         const response = await api.post(`/api/core/stadiums/${stadiumId}/seating-plans`, payload);
