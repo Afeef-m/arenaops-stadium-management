@@ -1,0 +1,89 @@
+{
+  "seatingPlanId": "sp_mock_001",
+  "stadiumId": "stadium_mock_001",
+  "name": "Mock Stadium Plan",
+  "description": "Mock seating plan for Stadium View (arc + rectangle).",
+  "fieldConfigMetadata": "{\"field\":{\"centerX\":0,\"centerY\":0,\"width\":800,\"height\":420,\"rotation\":0,\"fillColor\":\"#0b3d2e\",\"strokeColor\":\"#1f2937\",\"strokeWidth\":2},\"stage\":{\"enabled\":true,\"centerX\":0,\"centerY\":-260,\"width\":420,\"height\":120,\"rotation\":0,\"fillColor\":\"#111827\"},\"labels\":{\"show\":true,\"fieldLabel\":\"FIELD\"}}",
+  "totalCapacity": 5500,
+  "sections": [
+    {
+      "sectionId": "sec_arc_vip_01",
+      "seatingPlanId": "sp_mock_001",
+      "name": "VIP Arc North",
+      "type": "Seated",
+      "capacity": 1500,
+      "seatType": "VIP",
+      "color": "#FFD700",
+      "posX": 0,
+      "posY": -50,
+      "rows": 30,
+      "seatsPerRow": 50,
+      "geometryType": "arc",
+      "geometryData": "{\"innerRadius\":220,\"outerRadius\":320,\"startAngle\":3.6,\"endAngle\":5.8}"
+    },
+    {
+      "sectionId": "sec_arc_premium_01",
+      "seatingPlanId": "sp_mock_001",
+      "name": "Premium Arc South",
+      "type": "Seated",
+      "capacity": 1200,
+      "seatType": "Premium",
+      "color": "#A78BFA",
+      "posX": 0,
+      "posY": 50,
+      "rows": 24,
+      "seatsPerRow": 50,
+      "geometryType": "arc",
+      "geometryData": "{\"innerRadius\":220,\"outerRadius\":320,\"startAngle\":0.4,\"endAngle\":2.7}"
+    },
+    {
+      "sectionId": "sec_rect_standard_01",
+      "seatingPlanId": "sp_mock_001",
+      "name": "Standard East",
+      "type": "Standing",
+      "capacity": 800,
+      "seatType": "Standard",
+      "color": "#60A5FA",
+      "posX": 520,
+      "posY": 0,
+      "geometryType": "rectangle",
+      "geometryData": "{\"width\":180,\"height\":360,\"rotation\":0.15}"
+    },
+    {
+      "sectionId": "sec_rect_economy_01",
+      "seatingPlanId": "sp_mock_001",
+      "name": "Economy West",
+      "type": "Standing",
+      "capacity": 2000,
+      "seatType": "Economy",
+      "color": "#34D399",
+      "posX": -520,
+      "posY": 0,
+      "geometryType": "rectangle",
+      "geometryData": "{\"width\":180,\"height\":360,\"rotation\":-0.15}"
+    }
+  ],
+  "landmarks": [
+    {
+      "featureId": "lm_stage_01",
+      "seatingPlanId": "sp_mock_001",
+      "type": "STAGE",
+      "label": "Main Stage",
+      "posX": 0,
+      "posY": -260,
+      "width": 120,
+      "height": 60
+    },
+    {
+      "featureId": "lm_exit_01",
+      "seatingPlanId": "sp_mock_001",
+      "type": "EXIT",
+      "label": "Exit A",
+      "posX": 0,
+      "posY": 420,
+      "width": 40,
+      "height": 40
+    }
+  ]
+}
+

@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/services/stadiumViewService.ts", "src/mocks/seatingPlanMock.json"],
+  "exclude": ["node_modules", ".next"]
+}
+
