@@ -1,9 +1,12 @@
 "use client";
 
-import type { MouseEvent, WheelEvent } from "react";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useRef, useState, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import type { FieldConfig, Landmark, Section } from "@/services/stadiumViewService";
+import { useCanvas } from "@/features/stadium-owner/stadium-layout-builder/hooks/useCanvas";
+import { FieldRenderer, FieldGradientDefs } from "@/features/stadium-owner/stadium-layout-builder/components/FieldRenderer";
+import { createArcPath, createRectanglePath } from "@/features/stadium-owner/stadium-layout-builder/utils/geometry";
+
+import type { Section, Landmark, FieldConfig, Bowl } from "@/services/stadiumViewService";
 import { GeometryType, LandmarkType, SeatType } from "@/services/stadiumViewService";
 
 interface HoverPayload {
@@ -17,11 +20,11 @@ interface StadiumCanvasProps {
   sections: Section[];
   landmarks: Landmark[];
   fieldConfig?: FieldConfig;
+  bowls?: Bowl[];
   className?: string;
   onHoverChange?: (payload: HoverPayload) => void;
-  minZoom?: number;
-  maxZoom?: number;
-  initialZoom?: number;
+  width?: number;
+  height?: number;
 }
 
 const seatTypeFallbackColors: Record<SeatType, string> = {
@@ -39,363 +42,321 @@ const landmarkColors: Record<LandmarkType, string> = {
   [LandmarkType.Restroom]: "#A78BFA",
 };
 
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-
-const normalizeAngle = (angle: number) => {
-  const twoPi = Math.PI * 2;
-  let result = angle % twoPi;
-  if (result < 0) result += twoPi;
-  return result;
-};
-
-const isAngleBetween = (angle: number, start: number, end: number) => {
-  const a = normalizeAngle(angle);
-  const s = normalizeAngle(start);
-  const e = normalizeAngle(end);
-  if (s <= e) return a >= s && a <= e;
-  return a >= s || a <= e;
-};
-
 export function StadiumCanvas({
   sections,
   landmarks,
   fieldConfig,
+  bowls = [],
   className,
   onHoverChange,
-  minZoom = 0.5,
-  maxZoom = 4,
-  initialZoom = 1,
+  width = 1400,
+  height = 900,
 }: StadiumCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
-  const frameRef = useRef<number | null>(null);
-  const dprRef = useRef<number>(1);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const canvas = useCanvas({ canvasWidth: width, canvasHeight: height, minZoom: 0.3, maxZoom: 5.0 });
 
-  const panRef = useRef({ x: 0, y: 0 });
-  const zoomRef = useRef(initialZoom);
-  const isPanningRef = useRef(false);
-  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
 
-  const hoverRef = useRef<HoverPayload>({
-    sectionId: null,
-    position: null,
-    world: null,
-    section: null,
-  });
+  // Hover state
+  const [hoveredSectionId, setHoveredSectionId] = useState<string | null>(null);
 
-  const requestRender = useCallback(() => {
-    if (frameRef.current !== null) return;
-    frameRef.current = window.requestAnimationFrame(() => {
-      frameRef.current = null;
-      render();
-    });
-  }, []);
-
-  const resizeCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const nextDpr = window.devicePixelRatio || 1;
-    dprRef.current = nextDpr;
-    canvas.width = Math.max(1, Math.floor(rect.width * nextDpr));
-    canvas.height = Math.max(1, Math.floor(rect.height * nextDpr));
-    requestRender();
-  }, [requestRender]);
-
-  const worldFromScreen = useCallback((screenX: number, screenY: number) => {
-    const { x: panX, y: panY } = panRef.current;
-    const zoom = zoomRef.current;
+  // Convert stadiumViewService FieldConfig to Layout Builder's FieldConfig equivalent
+  const builderFieldConfig = useMemo(() => {
+    if (!fieldConfig || !fieldConfig.field) {
+      return {
+        shape: "round" as const,
+        length: 100,
+        width: 100,
+        unit: "meters" as const,
+        bufferZone: 15,
+        minimumInnerRadius: 65,
+      };
+    }
+    const isRound = Math.abs(fieldConfig.field.width - fieldConfig.field.height) < 5;
     return {
-      x: (screenX - panX) / zoom,
-      y: (screenY - panY) / zoom,
+      shape: (isRound ? "round" : "rectangle") as "round" | "rectangle",
+      length: fieldConfig.field.width,
+      width: fieldConfig.field.height,
+      unit: "meters" as const,
+      bufferZone: 15,
+      minimumInnerRadius: 65,
     };
-  }, []);
-
-  const setHover = useCallback(
-    (payload: HoverPayload) => {
-      const prev = hoverRef.current;
-      const same =
-        prev.sectionId === payload.sectionId &&
-        prev.position?.x === payload.position?.x &&
-        prev.position?.y === payload.position?.y;
-      if (!same) {
-        hoverRef.current = payload;
-        onHoverChange?.(payload);
-        requestRender();
-      }
-    },
-    [onHoverChange, requestRender]
-  );
-
-  const hitTest = useCallback(
-    (worldX: number, worldY: number) => {
-      for (let i = sections.length - 1; i >= 0; i -= 1) {
-        const section = sections[i];
-        const dx = worldX - section.posX;
-        const dy = worldY - section.posY;
-
-        if (section.geometryType === GeometryType.Arc && section.geometry) {
-          const { innerRadius, outerRadius, startAngle, endAngle } = section.geometry;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < innerRadius || distance > outerRadius) continue;
-          const angle = Math.atan2(dy, dx);
-          if (isAngleBetween(angle, startAngle, endAngle)) {
-            return section;
-          }
-        }
-
-        if (section.geometryType === GeometryType.Rectangle && section.geometry) {
-          const { width, height } = section.geometry;
-          if (Math.abs(dx) <= width / 2 && Math.abs(dy) <= height / 2) {
-            return section;
-          }
-        }
-
-        if (!section.geometryType) {
-          if (Math.abs(dx) <= 25 && Math.abs(dy) <= 25) {
-            return section;
-          }
-        }
-      }
-      return null;
-    },
-    [sections]
-  );
-
-  const drawField = useCallback((ctx: CanvasRenderingContext2D) => {
-    if (!fieldConfig?.field) return;
-    const { field, stage, labels } = fieldConfig;
-
-    ctx.save();
-    ctx.translate(field.centerX, field.centerY);
-    ctx.rotate(field.rotation);
-    ctx.fillStyle = field.fillColor ?? "#0b3d2e";
-    ctx.strokeStyle = field.strokeColor ?? "#1f2937";
-    ctx.lineWidth = field.strokeWidth ?? 2;
-    ctx.beginPath();
-    ctx.rect(-field.width / 2, -field.height / 2, field.width, field.height);
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-
-    if (stage?.enabled) {
-      ctx.save();
-      ctx.translate(stage.centerX, stage.centerY);
-      ctx.rotate(stage.rotation);
-      ctx.fillStyle = stage.fillColor ?? "#111827";
-      ctx.fillRect(-stage.width / 2, -stage.height / 2, stage.width, stage.height);
-      ctx.restore();
-    }
-
-    if (labels?.show && labels.fieldLabel) {
-      ctx.save();
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
-      ctx.font = "bold 12px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(labels.fieldLabel, field.centerX, field.centerY);
-      ctx.restore();
-    }
   }, [fieldConfig]);
 
-  const drawSections = useCallback(
-    (ctx: CanvasRenderingContext2D) => {
-      const hoveredId = hoverRef.current.sectionId;
-      sections.forEach((section) => {
-        const fillColor = section.color ?? (section.seatType ? seatTypeFallbackColors[section.seatType] : "#64748B");
-        const isHovered = hoveredId === section.sectionId;
-
-        if (section.geometryType === GeometryType.Arc && section.geometry) {
-          const { innerRadius, outerRadius, startAngle, endAngle } = section.geometry;
-          ctx.beginPath();
-          ctx.arc(section.posX, section.posY, outerRadius, startAngle, endAngle);
-          ctx.arc(section.posX, section.posY, innerRadius, endAngle, startAngle, true);
-          ctx.closePath();
-          ctx.fillStyle = fillColor;
-          ctx.fill();
-          if (isHovered) {
-            ctx.strokeStyle = "rgba(255,255,255,0.8)";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-          }
-          return;
-        }
-
-        if (section.geometryType === GeometryType.Rectangle && section.geometry) {
-          const { width, height, rotation } = section.geometry;
-          ctx.save();
-          ctx.translate(section.posX, section.posY);
-          ctx.rotate(rotation);
-          ctx.fillStyle = fillColor;
-          ctx.fillRect(-width / 2, -height / 2, width, height);
-          if (isHovered) {
-            ctx.strokeStyle = "rgba(255,255,255,0.8)";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(-width / 2, -height / 2, width, height);
-          }
-          ctx.restore();
-          return;
-        }
-
-        ctx.save();
-        ctx.translate(section.posX, section.posY);
-        ctx.fillStyle = fillColor;
-        ctx.fillRect(-25, -25, 50, 50);
-        if (isHovered) {
-          ctx.strokeStyle = "rgba(255,255,255,0.8)";
-          ctx.lineWidth = 2;
-          ctx.strokeRect(-25, -25, 50, 50);
-        }
-        ctx.restore();
-      });
+  // Canvas Handlers
+  const handleCanvasMouseDown = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (e.button !== 0) return;
+      setIsPanning(false);
+      setPanStart({ x: e.clientX, y: e.clientY });
     },
-    [sections]
+    []
   );
 
-  const drawLandmarks = useCallback(
-    (ctx: CanvasRenderingContext2D) => {
-      landmarks.forEach((landmark) => {
-        const color = landmarkColors[landmark.type] ?? "#94A3B8";
-        ctx.save();
-        ctx.translate(landmark.posX, landmark.posY);
-        ctx.fillStyle = color;
-        ctx.fillRect(-landmark.width / 2, -landmark.height / 2, landmark.width, landmark.height);
-        ctx.strokeStyle = "rgba(0,0,0,0.4)";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(-landmark.width / 2, -landmark.height / 2, landmark.width, landmark.height);
-        ctx.restore();
-      });
-    },
-    [landmarks]
-  );
-
-  const render = useCallback(() => {
-    const canvas = canvasRef.current;
-    const ctx = contextRef.current;
-    if (!canvas || !ctx) return;
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const dpr = dprRef.current;
-    const { x: panX, y: panY } = panRef.current;
-    const zoom = zoomRef.current;
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.translate(panX, panY);
-    ctx.scale(zoom, zoom);
-
-    drawField(ctx);
-    drawSections(ctx);
-    drawLandmarks(ctx);
-  }, [drawField, drawSections, drawLandmarks]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    contextRef.current = ctx;
-
-    resizeCanvas();
-
-    const observer = new ResizeObserver(() => resizeCanvas());
-    observer.observe(canvas);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [resizeCanvas]);
-
-  useEffect(() => {
-    requestRender();
-  }, [sections, landmarks, fieldConfig, requestRender]);
-
-  const handleMouseMove = useCallback(
-    (event: MouseEvent<HTMLCanvasElement>) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const screenX = event.clientX - rect.left;
-      const screenY = event.clientY - rect.top;
-
-      if (isPanningRef.current && lastPointerRef.current) {
-        const dx = screenX - lastPointerRef.current.x;
-        const dy = screenY - lastPointerRef.current.y;
-        panRef.current = { x: panRef.current.x + dx, y: panRef.current.y + dy };
-        lastPointerRef.current = { x: screenX, y: screenY };
-        requestRender();
+  const handleCanvasMouseMove = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (!panStart) {
+        // Handle Hover
+        if (svgRef.current) {
+          const pt = canvas.clientToCanvas(e.clientX, e.clientY, svgRef.current);
+          // Very basic hit test bounding check (could be improved mathematically)
+          // Simplified hit detection for hover (since sections are SVGs, we can rely on mouseEnter of the path instead)
+        }
         return;
       }
 
-      const world = worldFromScreen(screenX, screenY);
-      const section = hitTest(world.x, world.y);
-      setHover({
-        sectionId: section?.sectionId ?? null,
-        position: { x: screenX, y: screenY },
-        world,
-        section,
+      setIsPanning(true);
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+      canvas.setPan({
+        x: canvas.pan.x + dx,
+        y: canvas.pan.y + dy,
       });
+      setPanStart({ x: e.clientX, y: e.clientY });
     },
-    [hitTest, requestRender, setHover, worldFromScreen]
+    [panStart, canvas]
   );
 
-  const handleMouseLeave = useCallback(() => {
-    setHover({ sectionId: null, position: null, world: null, section: null });
-  }, [setHover]);
-
-  const handleMouseDown = useCallback((event: MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    isPanningRef.current = true;
-    lastPointerRef.current = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    isPanningRef.current = false;
-    lastPointerRef.current = null;
+  const handleCanvasMouseUp = useCallback(() => {
+    setIsPanning(false);
+    setPanStart(null);
   }, []);
 
   const handleWheel = useCallback(
-    (event: WheelEvent<HTMLCanvasElement>) => {
-      event.preventDefault();
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const screenX = event.clientX - rect.left;
-      const screenY = event.clientY - rect.top;
-
-      const zoom = zoomRef.current;
-      const zoomDelta = event.deltaY < 0 ? 1.1 : 0.9;
-      const nextZoom = clamp(zoom * zoomDelta, minZoom, maxZoom);
-
-      const world = worldFromScreen(screenX, screenY);
-      panRef.current = {
-        x: screenX - world.x * nextZoom,
-        y: screenY - world.y * nextZoom,
-      };
-      zoomRef.current = nextZoom;
-      requestRender();
+    (e: React.WheelEvent<SVGSVGElement>) => {
+      e.preventDefault();
+      if (!svgRef.current) return;
+      const delta = -e.deltaY * 0.001;
+      const newZoom = canvas.zoom * (1 + delta);
+      const mousePos = canvas.clientToCanvas(e.clientX, e.clientY, svgRef.current);
+      canvas.zoomTo(newZoom, mousePos);
     },
-    [maxZoom, minZoom, requestRender, worldFromScreen]
+    [canvas]
   );
 
-  const canvasProps = useMemo(
-    () => ({
-      onMouseMove: handleMouseMove,
-      onMouseLeave: handleMouseLeave,
-      onMouseDown: handleMouseDown,
-      onMouseUp: handleMouseUp,
-      onMouseOut: handleMouseUp,
-      onWheel: handleWheel,
-    }),
-    [handleMouseDown, handleMouseLeave, handleMouseMove, handleMouseUp, handleWheel]
-  );
+  const renderGrid = () => {
+    const gridSize = 50;
+    const lines = [];
+
+    for (let x = 0; x <= width; x += gridSize) {
+      lines.push(
+        <line
+          key={`v-${x}`}
+          x1={x}
+          y1={0}
+          x2={x}
+          y2={height}
+          stroke="#1e293b" // dark theme grid
+          strokeWidth={x % (gridSize * 2) === 0 ? 1 : 0.5}
+        />
+      );
+    }
+    for (let y = 0; y <= height; y += gridSize) {
+      lines.push(
+        <line
+          key={`h-${y}`}
+          x1={0}
+          y1={y}
+          x2={width}
+          y2={y}
+          stroke="#1e293b"
+          strokeWidth={y % (gridSize * 2) === 0 ? 1 : 0.5}
+        />
+      );
+    }
+    return <g id="grid">{lines}</g>;
+  };
+
+  const notifyHover = (section: Section | null, evt: React.MouseEvent) => {
+    setHoveredSectionId(section?.sectionId || null);
+    if (!onHoverChange) return;
+
+    if (section && svgRef.current) {
+      const rect = svgRef.current.getBoundingClientRect();
+      onHoverChange({
+        sectionId: section.sectionId,
+        position: { x: evt.clientX - rect.left, y: evt.clientY - rect.top },
+        world: { x: section.posX, y: section.posY },
+        section,
+      });
+    } else {
+      onHoverChange({ sectionId: null, position: null, world: null, section: null });
+    }
+  };
+
+  const renderSection = (section: Section) => {
+    // Find matching bowl
+    const bowl = bowls.find((b) => b.sectionIds.includes(section.sectionId));
+    let displayColor = bowl?.color;
+    if (!displayColor) {
+      displayColor = section.color ?? (section.seatType ? seatTypeFallbackColors[section.seatType] : "#64748B");
+    }
+
+    const isHovered = hoveredSectionId === section.sectionId;
+
+    let path = "";
+    if (section.geometryType === GeometryType.Arc && section.geometry) {
+      path = createArcPath(
+        section.posX,
+        section.posY,
+        section.geometry.innerRadius,
+        section.geometry.outerRadius,
+        section.geometry.startAngle,
+        section.geometry.endAngle
+      );
+    } else if (section.geometryType === GeometryType.Rectangle && section.geometry) {
+      path = createRectanglePath(
+        section.posX,
+        section.posY,
+        section.geometry.width,
+        section.geometry.height,
+        section.geometry.rotation
+      );
+    } else {
+      // Fallback tiny rectangle
+      path = createRectanglePath(section.posX, section.posY, 50, 50, 0);
+    }
+
+    return (
+      <g
+        key={section.sectionId}
+        className="section transition-all duration-150"
+        onMouseEnter={(e) => notifyHover(section, e)}
+        onMouseMove={(e) => notifyHover(section, e)}
+        onMouseLeave={(e) => notifyHover(null, e)}
+        style={{ cursor: "pointer" }}
+      >
+        <path
+          d={path}
+          fill={displayColor}
+          fillOpacity={isHovered ? 0.8 : 0.5}
+          stroke={isHovered ? "#ffffff" : "#9ca3af"}
+          strokeWidth={isHovered ? 2 : 1.5}
+          className="transition-all duration-150"
+        />
+        {/* Outline / Center dot */}
+        <circle cx={section.posX} cy={section.posY} r={4} fill="#6b7280" opacity={0.5} pointerEvents="none" />
+
+        {/* Name / capacity at sufficient zoom */}
+        {canvas.zoom > 0.5 && (
+          <g pointerEvents="none">
+            <text
+              x={section.posX}
+              y={section.posY - 5}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="#ffffff"
+              fontSize="12"
+              fontWeight={isHovered ? 600 : 400}
+              style={{ textShadow: "0 0 2px rgba(0,0,0,0.8)" }}
+            >
+              {section.name}
+            </text>
+            <text
+              x={section.posX}
+              y={section.posY + 12}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="#e2e8f0"
+              fontSize="10"
+              style={{ textShadow: "0 0 2px rgba(0,0,0,0.8)" }}
+            >
+              {section.capacity} seats
+            </text>
+          </g>
+        )}
+      </g>
+    );
+  };
 
   return (
-    <div className={cn("relative h-full w-full overflow-hidden", className)}>
-      <canvas ref={canvasRef} className="h-full w-full cursor-grab active:cursor-grabbing" {...canvasProps} />
+    <div className={cn("relative w-full h-full bg-[#030712] overflow-hidden rounded-2xl", className)}>
+      <svg
+        ref={svgRef}
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${width} ${height}`}
+        onMouseDown={handleCanvasMouseDown}
+        onMouseMove={handleCanvasMouseMove}
+        onMouseUp={handleCanvasMouseUp}
+        onMouseLeave={handleCanvasMouseUp}
+        onWheel={handleWheel}
+        style={{ cursor: isPanning ? "grabbing" : "grab", userSelect: "none" }}
+      >
+        {/* Define dynamic field gradients */}
+        <FieldGradientDefs />
+
+        {/* Grid lines */}
+        {renderGrid()}
+
+        {/* Main Transformed Canvas Content */}
+        <g transform={canvas.getTransform()}>
+          {/* Field Component from Event Builder */}
+          <FieldRenderer fieldConfig={builderFieldConfig} showMarkings={true} opacity={1.0} />
+
+          {/* Landmarks (like stages, exits) */}
+          {landmarks.map((landmark) => {
+            const color = landmarkColors[landmark.type] ?? "#94A3B8";
+            return (
+              <g key={landmark.featureId}>
+                <rect
+                  x={landmark.posX - landmark.width / 2}
+                  y={landmark.posY - landmark.height / 2}
+                  width={landmark.width}
+                  height={landmark.height}
+                  fill={color}
+                  stroke="rgba(255,255,255,0.4)"
+                  strokeWidth="1.5"
+                />
+                <text
+                  x={landmark.posX}
+                  y={landmark.posY}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill="#fff"
+                  fontSize="12"
+                  fontWeight="bold"
+                >
+                  {landmark.label || landmark.type}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Render Sections (colored accurately via bowls) */}
+          {sections.map(renderSection)}
+        </g>
+      </svg>
+
+      {/* Zoom UI Overlays */}
+      <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-[#0f172a]/90 border border-white/10 rounded-lg p-1.5 shadow-xl backdrop-blur-sm">
+        <button
+          onClick={canvas.zoomIn}
+          className="w-8 h-8 flex flex-col justify-center items-center rounded bg-transparent hover:bg-white/10 text-white font-bold transition-colors"
+          title="Zoom In"
+        >
+          +
+        </button>
+        <span className="text-sm min-w-[50px] text-center text-white/80 font-medium">
+          {Math.round(canvas.zoom * 100)}%
+        </span>
+        <button
+          onClick={canvas.zoomOut}
+          className="w-8 h-8 flex flex-col justify-center items-center rounded bg-transparent hover:bg-white/10 text-white font-bold transition-colors"
+          title="Zoom Out"
+        >
+          -
+        </button>
+        <div className="w-px h-6 bg-white/10 mx-1"></div>
+        <button
+          onClick={canvas.zoomToFit}
+          className="w-8 h-8 flex flex-col justify-center items-center rounded bg-transparent hover:bg-white/10 text-white font-bold transition-colors"
+          title="Reset View"
+        >
+          ⌂
+        </button>
+      </div>
     </div>
   );
 }

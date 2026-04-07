@@ -40,10 +40,6 @@ export default function EventDetailPage() {
     variant: "info",
   });
 
-  useEffect(() => {
-    fetchEventData();
-  }, [eventId, fetchEventData]);
-
   const fetchEventData = useCallback(async () => {
     try {
       const [eventRes, slotsRes] = await Promise.all([
@@ -70,6 +66,10 @@ export default function EventDetailPage() {
       setLoading(false);
     }
   }, [eventId, showError, router]);
+
+  useEffect(() => {
+    fetchEventData();
+  }, [eventId, fetchEventData]);
 
   const handleStatusChange = async (newStatus: string) => {
     setActionLoading(true);

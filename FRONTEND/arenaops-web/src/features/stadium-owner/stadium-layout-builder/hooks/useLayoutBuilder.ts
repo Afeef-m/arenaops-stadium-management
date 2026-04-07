@@ -180,8 +180,10 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
             rows: s.rows || 10,
             seatsPerRow: s.seatsPerRow || 20,
             color: s.color || '#4F9CF9',
+            verticalAisles: s.verticalAisles ?? [],
+            horizontalAisles: s.horizontalAisles ?? [],
             isActive: true,
-            isSymmetrical: true
+            isLocked: s.isLocked ?? false,
           } as unknown as LayoutSection;
         });
         setSections(fetchedSections);
@@ -619,22 +621,10 @@ export function useLayoutBuilder(options: UseLayoutBuilderOptions): UseLayoutBui
     }
   }, []);
 
-  // ============================================================================
-  // Load initial APIs once planId is available
-  // ============================================================================
-
-  useEffect(() => {
-    if (planId) {
-      // Fetch Bowls setup from the API asynchronously
-      coreService.getBowls(planId)
-        .then(res => {
-          if (res.success && res.data) {
-            setBowls(res.data as Bowl[]);
-          }
-        })
-        .catch(err => console.error("Failed to fetch bowls via API", err));
-    }
-  }, [planId]);
+  // NOTE: Bowls are already fetched together with sections in the combined
+  // useEffect above (lines ~133-205) which properly maps sectionIds.
+  // A duplicate bowls-only fetch was removed here to prevent overwriting
+  // the properly-mapped bowl data with raw API data lacking sectionIds.
 
   // ============================================================================
   // Return

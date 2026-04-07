@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { LayoutDashboard, Menu, X, PlusCircle, User, LogOut } from "lucide-react";
+import { LayoutDashboard, Menu, X, PlusCircle, User, LogOut, Grid3X3 } from "lucide-react";
 import { AppDispatch } from "@/store/store";
 import { logoutUser } from "@/store/authSlice";
 import {
@@ -29,6 +29,11 @@ const menu = [
     name: "Create Stadium",
     href: "/manager/stadiums/create",
     icon: PlusCircle,
+  },
+  {
+    name: "Stadium Layout",
+    href: "/manager/stadiumLayout",
+    icon: Grid3X3,
   },
   {
     name: "Profile",

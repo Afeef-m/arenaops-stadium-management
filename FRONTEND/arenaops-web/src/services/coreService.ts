@@ -230,8 +230,25 @@ export const coreService = {
         const response = await api.get(`/api/core/seating-plans/${id}`);
         return response.data;
     },
-    getStadiumViewSeatingPlan: async (stadiumId: string): Promise<StadiumViewSeatingPlan> => {
-        return getNormalizedSeatingPlan();
+    getStadiumViewSeatingPlan: async (seatingPlanId: string): Promise<StadiumViewSeatingPlan> => {
+        const seatingPlan = await getNormalizedSeatingPlan(seatingPlanId, api);
+        
+        try {
+            const bowlsRes = await api.get(`/api/core/seating-plans/${seatingPlanId}/bowls`);
+            if (bowlsRes.data?.success && Array.isArray(bowlsRes.data.data)) {
+                seatingPlan.bowls = bowlsRes.data.data.map((b: any) => ({
+                    id: b.bowlId || b.id,
+                    name: b.name || '',
+                    color: b.color || '#64748B',
+                    sectionIds: Array.isArray(b.sectionIds) ? b.sectionIds : []
+                }));
+            }
+        } catch (e) {
+            console.warn("Failed to fetch bowls for seating plan view", e);
+            seatingPlan.bowls = [];
+        }
+        
+        return seatingPlan;
     },
     createSeatingPlan: async (stadiumId: string, payload: { name: string; description?: string }): Promise<ApiResponse<SeatingPlan>> => {
         const response = await api.post(`/api/core/stadiums/${stadiumId}/seating-plans`, payload);

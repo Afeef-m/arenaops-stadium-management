@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { cn } from "@/lib/utils";
 import { LandmarkType, SeatType } from "@/services/stadiumViewService";
 
@@ -62,7 +63,7 @@ const IconRestroom = () => (
   </svg>
 );
 
-const landmarkIcons: Record<LandmarkType, JSX.Element> = {
+const landmarkIcons: Record<LandmarkType, React.ReactElement> = {
   [LandmarkType.Stage]: <IconStage />,
   [LandmarkType.Gate]: <IconGate />,
   [LandmarkType.Exit]: <IconExit />,

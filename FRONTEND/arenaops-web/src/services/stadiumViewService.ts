@@ -103,6 +103,14 @@ export interface SeatingPlan {
   totalCapacity?: number;
   sections: Section[];
   landmarks: Landmark[];
+  bowls?: Bowl[];
+}
+
+export interface Bowl {
+  id: string;
+  name: string;
+  color: string;
+  sectionIds: string[];
 }
 
 type GeometryDataRaw = string | Record<string, unknown> | null | undefined;
@@ -298,8 +306,19 @@ const normalizeSeatingPlan = (plan: SeatingPlanApi): SeatingPlan => {
   };
 };
 
-export const getSeatingPlan = async (): Promise<SeatingPlan> => {
-  // Task 1 uses mock data by default; API integration comes later.
-  return normalizeSeatingPlan(seatingPlanMock as SeatingPlanApi);
+export const getSeatingPlan = async (seatingPlanId: string, apiClient: any): Promise<SeatingPlan> => {
+  try {
+    const response = await apiClient.get(`/api/seating-plans/${seatingPlanId}`);
+    
+    if (!response.data?.success || !response.data?.data) {
+      console.warn('Invalid API response, falling back to mock data');
+      return normalizeSeatingPlan(seatingPlanMock as SeatingPlanApi);
+    }
+    
+    return normalizeSeatingPlan(response.data.data as SeatingPlanApi);
+  } catch (error) {
+    console.error('Failed to fetch seating plan from API, falling back to mock data:', error);
+    return normalizeSeatingPlan(seatingPlanMock as SeatingPlanApi);
+  }
 };
 

@@ -12,6 +12,7 @@ import { StadiumLayoutBuilder } from "@/features/stadium-owner/stadium-layout-bu
  * for their stadiums. These templates can be cloned and customized by
  * event managers when creating events.
  */
+
 export default function StadiumLayoutBuilderPage() {
   const params = useParams();
   const stadiumId = params.id as string;

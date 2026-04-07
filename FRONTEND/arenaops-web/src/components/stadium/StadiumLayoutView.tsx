@@ -27,14 +27,31 @@ export function StadiumLayoutView({ stadiumId, className }: StadiumLayoutViewPro
     setLoading(true);
     setError(null);
 
+    // First, fetch the seating plans for the stadium
     coreService
-      .getStadiumViewSeatingPlan(stadiumId)
-      .then((plan) => {
+      .getSeatingPlans(stadiumId)
+      .then((response) => {
         if (!active) return;
+        
+        if (!response.success || !response.data || response.data.length === 0) {
+          setError("No seating plan found for this stadium.");
+          setLoading(false);
+          return;
+        }
+        
+        // Get the first seating plan (assuming 1:1 relationship)
+        const seatingPlanId = response.data[0].seatingPlanId;
+        
+        // Now fetch the full seating plan with sections and landmarks
+        return coreService.getStadiumViewSeatingPlan(seatingPlanId);
+      })
+      .then((plan) => {
+        if (!active || !plan) return;
         setSeatingPlan(plan);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!active) return;
+        console.error("Failed to load stadium layout:", err);
         setError("Unable to load stadium layout.");
       })
       .finally(() => {
@@ -84,6 +101,7 @@ export function StadiumLayoutView({ stadiumId, className }: StadiumLayoutViewPro
             sections={seatingPlan.sections}
             landmarks={seatingPlan.landmarks}
             fieldConfig={seatingPlan.fieldConfig}
+            bowls={seatingPlan.bowls}
             onHoverChange={(payload) => {
               setHoveredSection(payload.section);
               setCursorPosition(payload.position);
