@@ -55,6 +55,7 @@ export default function StadiumDetailPage() {
 
     const [stadium, setStadium] = useState<Stadium | null>(null);
     const [events, setEvents] = useState<Event[]>([]);
+    const [eventStartDates, setEventStartDates] = useState<Record<string, string>>({});
 
     // Image state
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -102,6 +103,21 @@ export default function StadiumDetailPage() {
 
             if (eventsRes.success && eventsRes.data) {
                 setEvents(eventsRes.data);
+
+                const eventStartDateEntries = await Promise.all(
+                    eventsRes.data.map(async (event) => {
+                        try {
+                            const slotsRes = await coreService.getEventSlots(event.eventId);
+                            const firstSlotStart = slotsRes.data?.[0]?.startTime;
+
+                            return [event.eventId, firstSlotStart ?? ""] as const;
+                        } catch {
+                            return [event.eventId, ""] as const;
+                        }
+                    })
+                );
+
+                setEventStartDates(Object.fromEntries(eventStartDateEntries));
             }
         } catch {
             showNotification("error", "Failed to load stadium");
@@ -113,6 +129,16 @@ export default function StadiumDetailPage() {
     const showNotification = (type: "success" | "error", message: string) => {
         setNotification({ type, message });
         setTimeout(() => setNotification(null), 4000);
+    };
+
+    const formatEventDate = (eventId: string) => {
+        const startTime = eventStartDates[eventId];
+
+        if (!startTime) {
+            return "Schedule TBD";
+        }
+
+        return new Date(startTime).toLocaleDateString();
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -526,9 +552,7 @@ export default function StadiumDetailPage() {
                                         <div className={styles.eventInfo}>
                                             <h3 className={styles.eventName}>{event.name}</h3>
                                             <p className={styles.eventDate}>
-                                                {event.startDate
-                                                    ? new Date(event.startDate).toLocaleDateString()
-                                                    : "No date"}
+                                                {formatEventDate(event.eventId)}
                                             </p>
                                         </div>
                                         <span

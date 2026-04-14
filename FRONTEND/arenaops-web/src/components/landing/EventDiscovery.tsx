@@ -61,12 +61,14 @@ export function EventDiscovery({ events: _events = [] }: EventDiscoveryProps) {
                                 {/* Image Placeholder with Gradient */}
                                 <div
                                     className={styles.imagePlaceholder}
-                                    style={{ background: `linear-gradient(135deg, ${event.eventType ? '#1e3a8a' : '#581c87'} 0%, #3b82f6 100%)` }}
+                                    style={{ background: `linear-gradient(135deg, ${event.status === 'Live' ? '#1e3a8a' : '#581c87'} 0%, #3b82f6 100%)` }}
                                 >
-                                    <span className={styles.categoryBadge}>{event.eventType || 'Event'}</span>
+                                    <span className={styles.categoryBadge}>
+                                        {event.status === 'Live' ? 'Live Event' : 'Event'}
+                                    </span>
                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
                                         <h3 className="text-4xl font-black text-white italic tracking-tighter">
-                                            {event.eventType?.toUpperCase() || 'EVENT'}
+                                            {event.status === 'Live' ? 'LIVE' : 'EVENT'}
                                         </h3>
                                     </div>
                                 </div>
@@ -83,7 +85,7 @@ export function EventDiscovery({ events: _events = [] }: EventDiscoveryProps) {
                                 <CardContent className="space-y-4">
                                     <div className={styles.iconLabel}>
                                         <Calendar className="w-4 h-4" />
-                                        <span>{event.startDate ? new Date(event.startDate).toLocaleDateString() : 'Date TBD'}</span>
+                                        <span>Schedule TBD</span>
                                     </div>
                                     <div className={styles.iconLabel}>
                                         <Users className="w-4 h-4" />

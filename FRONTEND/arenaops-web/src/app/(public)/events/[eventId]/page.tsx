@@ -57,8 +57,8 @@ export default async function EventDetailPage({ params }: Props) {
     );
   }
 
-  const startDate = event.startDate ? new Date(event.startDate) : null;
   const firstSlot = slots[0];
+  const startDate = firstSlot?.startTime ? new Date(firstSlot.startTime) : null;
 
   return (
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
@@ -138,7 +138,7 @@ export default async function EventDetailPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Type</p>
-                  <p className="font-semibold">{event.eventType || 'Event'}</p>
+                  <p className="font-semibold">{event.status === 'Live' ? 'Live Event' : 'Event'}</p>
                 </div>
               </div>
 
