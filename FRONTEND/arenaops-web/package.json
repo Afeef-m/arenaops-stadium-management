@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@netlify/plugin-nextjs": "^5.15.9",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@reduxjs/toolkit": "^2.11.2",
@@ -39,6 +38,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.15.9",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
