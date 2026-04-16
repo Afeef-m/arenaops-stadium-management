@@ -130,11 +130,16 @@ public class EventService : IEventService
 
             if (stadiumOwnerDetails != null && eventManagerDetails != null)
             {
+                string ownerEmail = (string)(stadiumOwnerDetails.Email ?? string.Empty);
+                string ownerName = stadium.Name ?? "Unknown Stadium";
+                string eventNameText = eventEntity.Name ?? "Unknown Event";
+                string managerName = (string)(eventManagerDetails.FullName ?? string.Empty);
+
                 await _emailService.SendEventApprovalRequestAsync(
-                    stadiumOwnerDetails.Email,
-                    stadium.Name,
-                    eventEntity.Name,
-                    eventManagerDetails.FullName);
+                    ownerEmail,
+                    ownerName,
+                    eventNameText,
+                    managerName);
             }
         }
         catch (Exception ex)

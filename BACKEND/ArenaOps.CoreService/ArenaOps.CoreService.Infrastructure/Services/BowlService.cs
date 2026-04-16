@@ -71,8 +71,6 @@ public class BowlService : IBowlService
 
             var responses = bowls.Select(MapToBowlResponse).ToList();
             return ApiResponse<List<BowlResponse>>.Ok(responses);
-
-            return ApiResponse<List<BowlResponse>>.Ok(responses);
         }
         catch (OperationCanceledException)
         {

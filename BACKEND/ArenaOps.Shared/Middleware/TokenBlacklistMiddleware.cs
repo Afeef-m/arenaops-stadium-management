@@ -6,7 +6,7 @@ using ArenaOps.Shared.Models;
 namespace ArenaOps.Shared.Middleware;
 
 /// <summary>
-/// Middleware that checks every authenticated request against the Redis token blacklist.
+/// Middleware that checks every authenticated request against the token blacklist.
 /// If the JWT's JTI is blacklisted (user logged out), returns 401 immediately.
 ///
 /// Pipeline position: after UseAuthentication(), before UseAuthorization().
