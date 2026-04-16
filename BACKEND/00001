@@ -1,0 +1,202 @@
+﻿# 🚀 FINAL ARCHITECTURE (What you are building)
+
+Vercel (Frontend)
+        ↓
+   https://api.yourdomain.com
+        ↓
+     AWS EC2
+   ┌───────────────┐
+   │   Nginx       │
+   │ ───────────── │
+   │ AuthService   │
+   │ CoreService   │
+   └───────────────┘
+        ↓
+    MonsterDB
+
+## 🧠 PHASE 0 — Before EC2 (Don’t skip)
+✅ You must confirm locally:
+
+Run Docker locally with ONLY:
+- AuthService
+- CoreService
+- Nginx
+
+👉 No frontend
+👉 No Redis
+
+Test:
+\curl http://localhost/api/auth/health\
+\curl http://localhost/api/core/health\
+
+If this fails → don’t go to AWS yet
+
+## ⚙️ PHASE 1 — Prepare Backend Images
+
+**Step 1: Build .NET services**
+\dotnet publish -c Release\
+Do for:
+- AuthService
+- CoreService
+
+**Step 2: Create Dockerfile (same for both)**
+\\\dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine
+WORKDIR /app
+COPY . .
+ENV ASPNETCORE_URLS=http://+:80
+EXPOSE 80
+ENTRYPOINT ["dotnet", "YourService.dll"]
+\\\
+
+**Step 3: Build images**
+\\\ash
+docker build -t authservice .
+docker build -t coreservice .
+\\\
+
+**Step 4: Save images**
+\\\ash
+docker save authservice -o authservice.tar
+docker save coreservice -o coreservice.tar
+\\\
+
+## ☁️ PHASE 2 — Setup EC2
+
+**Step 1: Create EC2**
+- Instance: t2.micro
+- OS: Ubuntu 22.04
+- Storage: 20GB
+- Open ports: 22 (SSH), 80 (HTTP), 443 (HTTPS)
+
+**Step 2: Connect**
+\ssh -i key.pem ubuntu@YOUR_IP\
+
+**Step 3: Install Docker**
+\\\ash
+sudo apt update
+sudo apt install docker.io docker-compose -y
+sudo usermod -aG docker ubuntu
+\\\
+*Reconnect after this.*
+
+## 📦 PHASE 3 — Upload & Load Images
+
+**From your local machine:**
+\\\ash
+scp -i key.pem authservice.tar ubuntu@YOUR_IP:/home/ubuntu/
+scp -i key.pem coreservice.tar ubuntu@YOUR_IP:/home/ubuntu/
+\\\
+
+**On EC2:**
+\\\ash
+docker load -i authservice.tar
+docker load -i coreservice.tar
+\\\
+
+## ⚙️ PHASE 4 — docker-compose.yml
+
+Create this:
+\\\yaml
+version: '3.8'
+
+services:
+  authservice:
+    image: authservice
+    ports:
+      - "3001:80"
+    environment:
+      ConnectionStrings__DefaultConnection: "YOUR_DB"
+      ASPNETCORE_ENVIRONMENT: "Production"
+    restart: unless-stopped
+    mem_limit: 300m
+
+  coreservice:
+    image: coreservice
+    ports:
+      - "3002:80"
+    environment:
+      ConnectionStrings__DefaultConnection: "YOUR_DB"
+      ASPNETCORE_ENVIRONMENT: "Production"
+    restart: unless-stopped
+    mem_limit: 300m
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf:ro"
+    depends_on:
+      - authservice
+      - coreservice
+    restart: unless-stopped
+\\\
+
+## 🌐 PHASE 5 — Nginx Config
+
+Create \
+ginx.conf\:
+\\\
+ginx
+events {}
+
+http {
+    server {
+        listen 80;
+
+        location /api/auth/ {
+            proxy_pass http://authservice/api/auth/;
+        }
+
+        location /api/core/ {
+            proxy_pass http://coreservice/api/core/;
+        }
+    }
+}
+\\\
+
+## ▶️ PHASE 6 — Start Everything
+\docker-compose up -d\
+
+Check:
+\docker ps\
+
+Test:
+\curl http://YOUR_EC2_IP/api/auth/health\
+👉 If this works → backend is LIVE
+
+## 🌍 PHASE 7 — Connect Vercel
+
+In Vercel Environment variables:
+\NEXT_PUBLIC_API_URL=http://YOUR_EC2_IP\
+
+Example API call:
+\etch(\\/api/auth/login\)\
+
+## 🔒 PHASE 8 — (Optional but Recommended)
+Add Domain + HTTPS Later:
+- Buy domain
+- Point to EC2
+- Use Let's Encrypt
+
+## 🚨 FINAL CHECKLIST
+Before calling this “done”:
+- [ ] APIs working via EC2 IP
+- [ ] No Redis running
+- [ ] Memory usage < 700MB (docker stats)
+- [ ] Frontend calling correct API URL
+- [ ] No secrets in code
+
+## 🧠 What You Just Built (Understand This)
+You now have:
+- Clean separation (frontend vs backend)
+- Low-cost infra (~)
+- Scalable base
+- No unnecessary components
+
+👉 This is how a real production starter system looks.
+
+## 🔥 My Final Advice
+Don’t rush to add Redis, microservices, or complexity.
+👉 First make this: stable → monitored → understood

@@ -4,9 +4,6 @@ using ArenaOps.CoreService.Application.DTOs;
 using ArenaOps.CoreService.Application.Interfaces;
 using ArenaOps.CoreService.Domain.Entities;
 using ArenaOps.Shared.Models;
-using Microsoft.AspNetCore.Http;
-using System.Net.Http.Json;
-using System.Net.Http.Headers;
 
 namespace ArenaOps.CoreService.Infrastructure.Services;
 
@@ -16,23 +13,17 @@ public class AdminService : IAdminService
     private readonly IEventRepository _eventRepository;
     private readonly IAdminActivityRepository _activityRepository;
     private readonly HealthCheckService _healthCheckService;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public AdminService(
         IStadiumRepository stadiumRepository,
         IEventRepository eventRepository,
         IAdminActivityRepository activityRepository,
-        HealthCheckService healthCheckService,
-        IHttpClientFactory httpClientFactory,
-        IHttpContextAccessor httpContextAccessor)
+        HealthCheckService healthCheckService)
     {
         _stadiumRepository = stadiumRepository;
         _eventRepository = eventRepository;
         _activityRepository = activityRepository;
         _healthCheckService = healthCheckService;
-        _httpClientFactory = httpClientFactory;
-        _httpContextAccessor = httpContextAccessor;
     }
 
     #region Stadium Approval
@@ -106,7 +97,7 @@ public class AdminService : IAdminService
             ActiveEvents = eventList.Count(e => e.Status == EventStatuses.Live),
             UpcomingEvents = eventList.Count(e => e.Status == EventStatuses.Approved || e.Status == EventStatuses.Draft),
 
-            // User metrics
+            // User metrics - placeholder values (would need to call Auth Service)
             TotalUsers = 0,
             ActiveUsers = 0,
             NewUsersToday = 0,
@@ -130,67 +121,7 @@ public class AdminService : IAdminService
             SystemHealth = systemHealth
         };
 
-        // Fetch User Metrics from Auth Service
-        try
-        {
-            var client = _httpClientFactory.CreateClient("AuthServiceClient");
-            var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Replace("Bearer ", "");
-            
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            var response = await client.GetAsync("/api/auth/users/stats", cancellationToken);
-            if (response.IsSuccessStatusCode)
-            {
-                var responseContent = await response.Content.ReadFromJsonAsync<ApiResponse<UserStatsResponse>>(cancellationToken: cancellationToken);
-                if (responseContent != null && responseContent.Success && responseContent.Data != null)
-                {
-                    var userStats = responseContent.Data;
-                    metrics.TotalUsers = userStats.TotalUsers;
-                    metrics.ActiveUsers = userStats.ActiveUsers;
-                    metrics.NewUsersToday = userStats.NewUsersToday;
-                    metrics.NewUsersThisWeek = userStats.NewUsersThisWeek;
-                    metrics.NewUsersThisMonth = userStats.NewUsersThisMonth;
-                    
-                    if (userStats.UsersByRole != null)
-                    {
-                        metrics.UsersByRole = new UsersByRoleDto
-                        {
-                            Admins = userStats.UsersByRole.Admins,
-                            EventManagers = userStats.UsersByRole.EventManagers,
-                            RegularUsers = userStats.UsersByRole.RegularUsers,
-                            StadiumOwners = userStats.UsersByRole.StadiumOwners
-                        };
-                    }
-                }
-            }
-        }
-        catch (Exception)
-        {
-            // Log exception or handle it, but don't fail the whole dashboard
-        }
-
         return ApiResponse<AdminDashboardMetricsDto>.Ok(metrics);
-    }
-
-    private class UserStatsResponse
-    {
-        public int TotalUsers { get; set; }
-        public int ActiveUsers { get; set; }
-        public int NewUsersToday { get; set; }
-        public int NewUsersThisWeek { get; set; }
-        public int NewUsersThisMonth { get; set; }
-        public UsersByRoleResponse? UsersByRole { get; set; }
-    }
-
-    private class UsersByRoleResponse
-    {
-        public int Admins { get; set; }
-        public int StadiumOwners { get; set; }
-        public int EventManagers { get; set; }
-        public int RegularUsers { get; set; }
     }
 
     public async Task<ApiResponse<AdminQuickStatsDto>> GetQuickStatsAsync(CancellationToken cancellationToken = default)
