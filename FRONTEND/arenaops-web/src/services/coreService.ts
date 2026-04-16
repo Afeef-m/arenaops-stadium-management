@@ -43,6 +43,7 @@ export interface CreateStadiumPayload {
     longitude: number;
     imageUrl?: string;
     imagePublicId?: string;
+    isActive?: boolean;
 }
 
 // Seating Plan

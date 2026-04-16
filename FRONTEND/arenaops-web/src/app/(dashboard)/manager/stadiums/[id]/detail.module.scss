@@ -530,3 +530,77 @@ $text-muted: #64748b;
     background: #1f2937;
     border: 1px solid $border-color;
 }
+ 
+.statusToggleContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+ 
+    @media (min-width: 640px) {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+ 
+.statusInfo {
+    flex: 1;
+}
+ 
+.statusLabel {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0 0 0.375rem;
+    color: $text-primary;
+}
+ 
+.statusValue {
+    margin-left: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.1);
+}
+ 
+.active {
+    color: $primary-accent-light;
+    background: rgba($primary-accent, 0.15);
+}
+ 
+.inactive {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.15);
+}
+ 
+.statusDescription {
+    font-size: 0.75rem;
+    color: $text-muted;
+    margin: 0;
+    max-width: 25rem;
+}
+ 
+.toggleButton {
+    min-width: 12rem;
+    justify-content: center !important;
+}
+ 
+.toggleActive {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    color: #fca5a5 !important;
+ 
+    &:hover {
+        background: rgba(239, 68, 68, 0.2) !important;
+    }
+}
+ 
+.toggleInactive {
+    background: rgba($primary-accent, 0.1) !important;
+    border: 1px solid rgba($primary-accent, 0.3) !important;
+    color: $primary-accent-light !important;
+ 
+    &:hover {
+        background: rgba($primary-accent, 0.2) !important;
+    }
+}
