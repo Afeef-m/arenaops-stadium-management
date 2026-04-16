@@ -3,7 +3,7 @@ namespace ArenaOps.Shared.Interfaces;
 /// <summary>
 /// Service to blacklist JWT access tokens after logout.
 /// Tokens are stored by their JTI (unique ID) until they naturally expire.
-/// Uses Redis so the blacklist is shared across all microservices.
+/// Uses in-memory cache for token blacklisting.
 /// </summary>
 public interface ITokenBlacklistService
 {

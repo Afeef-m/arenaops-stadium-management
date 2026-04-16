@@ -128,7 +128,7 @@ public class AdminService : IAdminService
     {
         var stats = new AdminQuickStatsDto
         {
-            ActiveUserSessions = 0, // Would need Redis to track sessions
+            ActiveUserSessions = 0, // Would need metadata service or state to track sessions
             OngoingBookings = 0,    // Would need Booking repository
             SystemAlerts = 0,       // Would need monitoring system
             SystemLoad = 0.0        // Would need system metrics
@@ -157,8 +157,8 @@ public class AdminService : IAdminService
             health.Status = report.Status.ToString();
             health.DatabaseConnected = report.Entries.ContainsKey("SQL Server") &&
                                        report.Entries["SQL Server"].Status == HealthStatus.Healthy;
-            health.RedisConnected = report.Entries.ContainsKey("Redis") &&
-                                    report.Entries["Redis"].Status == HealthStatus.Healthy;
+            health.DatabaseConnected = report.Entries.ContainsKey("SQL Server") &&
+                                       report.Entries["SQL Server"].Status == HealthStatus.Healthy;
 
             // Get response times if available
             if (report.Entries.TryGetValue("SQL Server", out var sqlEntry) &&
@@ -167,11 +167,7 @@ public class AdminService : IAdminService
                 health.DatabaseResponseTimeMs = Convert.ToDouble(sqlTime);
             }
 
-            if (report.Entries.TryGetValue("Redis", out var redisEntry) &&
-                redisEntry.Data.TryGetValue("ResponseTimeMs", out var redisTime))
-            {
-                health.RedisResponseTimeMs = Convert.ToDouble(redisTime);
-            }
+
         }
         catch
         {

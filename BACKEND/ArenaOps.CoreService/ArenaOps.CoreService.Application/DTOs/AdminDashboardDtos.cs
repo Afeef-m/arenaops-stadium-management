@@ -51,11 +51,9 @@ public class SystemHealthDto
 {
     public string Status { get; set; } = "Healthy";
     public bool DatabaseConnected { get; set; } = true;
-    public bool RedisConnected { get; set; } = true;
     public bool AuthServiceHealthy { get; set; } = true;
     public DateTime LastChecked { get; set; } = DateTime.UtcNow;
     public double DatabaseResponseTimeMs { get; set; }
-    public double RedisResponseTimeMs { get; set; }
 }
 
 /// <summary>

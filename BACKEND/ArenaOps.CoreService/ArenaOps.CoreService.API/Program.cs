@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Cryptography;
-using StackExchange.Redis;
 using ArenaOps.CoreService.Infrastructure.Data;
 using ArenaOps.CoreService.Application.Interfaces;
 using ArenaOps.CoreService.Application.Models;
@@ -73,28 +72,17 @@ builder.Services.AddHttpClient("AuthServiceClient", client =>
     client.BaseAddress = new Uri("http://localhost:5001");
 });
 
-// 3a-redis. Redis Cache
-var redisConnectionString = builder.Configuration.GetValue<string>("Redis:ConnectionString") ?? "localhost:6379";
-var redisInstanceName = builder.Configuration.GetValue<string>("Redis:InstanceName") ?? "ArenaOps_";
-
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = redisConnectionString;
-    options.InstanceName = redisInstanceName;
-});
-
-builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
-    ConnectionMultiplexer.Connect(redisConnectionString));
-
+// 3a-cache. In-Memory Cache
+builder.Services.AddMemoryCache();
 builder.Services.Configure<CacheSettings>(builder.Configuration.GetSection("CacheSettings"));
-builder.Services.AddScoped<ICacheService, RedisCacheService>();
+builder.Services.AddScoped<ICacheService, InMemoryCacheService>();
 
 // Rate Limiting — Redis-backed, config-driven
 builder.Services.Configure<ArenaOps.Shared.Models.RateLimitSettings>(
     builder.Configuration.GetSection("RateLimiting"));
 
-// Token Blacklist — Redis-backed, shared with AuthService
-builder.Services.AddSingleton<ITokenBlacklistService, RedisTokenBlacklistService>();
+// Token Blacklist — In-Memory, shared with AuthService (conceptually)
+builder.Services.AddSingleton<ITokenBlacklistService, InMemoryTokenBlacklistService>();
 
 // 3a. Register EF Core DbContext
 builder.Services.AddDbContext<CoreDbContext>(options =>
@@ -196,8 +184,7 @@ builder.Services.AddSwaggerGen(options =>
 
 // 4. Add Health Checks
 builder.Services.AddHealthChecks()
-    .AddSqlServer(connectionString!, name: "SQL Server")
-    .AddRedis(redisConnectionString, name: "Redis");
+    .AddSqlServer(connectionString!, name: "SQL Server");
 
 // 5. CORS
 builder.Services.AddCors(options =>
@@ -217,8 +204,8 @@ var app = builder.Build();
 app.UseSerilogRequestLogging();
 app.UseCors("AllowFrontend");
 
-// Rate limiting — Redis-backed, before Auth
-app.UseMiddleware<ArenaOps.Shared.Middleware.RedisRateLimitMiddleware>();
+// Rate limiting — In-Memory, before Auth
+app.UseMiddleware<ArenaOps.Shared.Middleware.RateLimitMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI(options =>

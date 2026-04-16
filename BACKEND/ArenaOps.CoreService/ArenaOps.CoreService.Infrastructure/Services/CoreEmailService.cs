@@ -17,11 +17,11 @@ public class CoreEmailService : ICoreEmailService
         _logger.LogInformation(
             "==========================================================\n" +
             "MOCK EMAIL SENT TO STADIUM MANAGER\n" +
-            "To: {Email}\n" +
-            "Subject: Action Required - New Event Approval for {Stadium}\n" +
+            "To: {EmailTo}\n" +
+            "Subject: Action Required - New Event Approval for {SubjectStadium}\n" +
             "Body:\n" +
             "Hello Stadium Manager,\n" +
-            "Event Manager '{EventManager}' has requested to host the event '{Event}' at '{Stadium}'.\n" +
+            "Event Manager '{EventManagerName}' has requested to host the event '{EventName}' at '{BodyStadium}'.\n" +
             "Please log in to your dashboard to review and either approve or cancel this event.\n" +
             "==========================================================",
             stadiumManagerEmail, stadiumName, eventManagerName, eventName, stadiumName);
@@ -34,14 +34,14 @@ public class CoreEmailService : ICoreEmailService
         _logger.LogInformation(
             "==========================================================\n" +
             "MOCK EMAIL SENT TO EVENT MANAGER\n" +
-            "To: {Email}\n" +
-            "Subject: Your Event '{Event}' is Approved!\n" +
+            "To: {EmailTo}\n" +
+            "Subject: Your Event '{SubjectEvent}' is Approved!\n" +
             "Body:\n" +
             "Hello Event Manager,\n" +
-            "Your event '{Event}' at '{Stadium}' has been approved by the stadium manager.\n" +
+            "Your event '{BodyEvent}' at '{StadiumName}' has been approved by the stadium manager.\n" +
             "You can now set the event status to 'Live' and start selling tickets.\n" +
             "==========================================================",
-            eventManagerEmail, eventName, stadiumName);
+            eventManagerEmail, eventName, eventName, stadiumName);
 
         return Task.CompletedTask;
     }
@@ -51,15 +51,15 @@ public class CoreEmailService : ICoreEmailService
         _logger.LogInformation(
             "==========================================================\n" +
             "MOCK EMAIL SENT TO EVENT MANAGER\n" +
-            "To: {Email}\n" +
-            "Subject: Your Event '{Event}' was Cancelled\n" +
+            "To: {EmailTo}\n" +
+            "Subject: Your Event '{SubjectEvent}' was Cancelled\n" +
             "Body:\n" +
             "Hello Event Manager,\n" +
-            "Your event '{Event}' at '{Stadium}' has been cancelled.\n" +
+            "Your event '{BodyEvent}' at '{StadiumName}' has been cancelled.\n" +
             "Reason provided: {Reason}\n" +
             "Please contact the stadium administration for details.\n" +
             "==========================================================",
-            eventManagerEmail, eventName, stadiumName, reason ?? "No reason provided.");
+            eventManagerEmail, eventName, eventName, stadiumName, reason ?? "No reason provided.");
 
         return Task.CompletedTask;
     }

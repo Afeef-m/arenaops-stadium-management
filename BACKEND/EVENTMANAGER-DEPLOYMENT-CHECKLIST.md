@@ -36,7 +36,7 @@
 ### 4. Configuration Updates
 - [ ] Update appsettings.json if needed
 - [ ] Verify connection strings
-- [ ] Check Redis configuration
+- [ ] Check In-memory cache configuration (CacheSettings)
 - [ ] Verify JWT settings
 
 ## Testing Checklist
