@@ -1,0 +1,26 @@
+# ============================================================
+#  ArenaOps Frontend — Netlify Configuration
+#  Next.js app with BFF API routes (serverless functions)
+# ============================================================
+
+[build]
+  # The frontend lives in a subdirectory of the monorepo
+  base = "FRONTEND/arenaops-web"
+  command = "npm run build"
+  publish = ".next"
+
+# The Netlify Next.js plugin handles:
+# - Server-side rendering (SSR)
+# - API routes → Netlify Functions (the BFF proxy)
+# - Image optimization
+# - ISR (Incremental Static Regeneration)
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Environment variables are set in the Netlify dashboard (not here).
+# Required vars:
+#   AUTH_SERVICE_URL     = http://13.60.206.243/api/auth
+#   CORE_SERVICE_URL     = http://13.60.206.243/api/core
+#   NEXT_PUBLIC_GOOGLE_CLIENT_ID = your-google-client-id
+
+# Redirects are handled by Next.js routing — no extra config needed.
