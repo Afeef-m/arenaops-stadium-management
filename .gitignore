@@ -23,20 +23,32 @@ bin/
 obj/
 *.dll
 *.pdb
+publish/
 
 # Node
 node_modules/
+.next/
 
-# Environment
+# Environment — never commit credentials
 .env
 .env.local
 .env.*.local
 *.log
 Logs/
 
-# RSA private keys
+# RSA keys — never commit private keys
 Keys/
 *.key
+*.pem
+
+# Docker image tarballs — too large for git
+*.tar
+
+# Deployment sensitive files
+BACKEND/deployement/logs.txt
+BACKEND/deployement/envVars.sh
+BACKEND/deployement/00001
+BACKEND/deployement/00001_backup
 
 # ngrok
 ngrok.yml

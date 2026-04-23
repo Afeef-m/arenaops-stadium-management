@@ -13,7 +13,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
-using StackExchange.Redis;
 
 Console.WriteLine("=== AuthService Starting ===");
 
@@ -35,32 +34,24 @@ try
     // ---------------- SERVICES ----------------
     builder.Services.AddControllers();
 
-    // ---------------- REDIS ----------------
-    Console.WriteLine("Configuring Redis...");
-    var redisConnectionString = builder.Configuration.GetValue<string>("Redis:ConnectionString") ?? "localhost:6379";
-
-    builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-    {
-        var options = ConfigurationOptions.Parse(redisConnectionString);
-        options.AbortOnConnectFail = false;  // Don't throw if Redis is unavailable
-        options.ConnectTimeout = 5000;       // 5 second timeout
-        options.SyncTimeout = 3000;          // 3 second sync timeout
-        return ConnectionMultiplexer.Connect(options);
-    });
+    // ---------------- CACHE ----------------
+    builder.Services.AddMemoryCache();
 
     // ---------------- RATE LIMIT ----------------
     builder.Services.Configure<RateLimitSettings>(
         builder.Configuration.GetSection("RateLimiting"));
 
     // ---------------- CORS ----------------
+    var allowedOrigins = builder.Configuration
+        .GetSection("AllowedOrigins")
+        .Get<string[]>()
+        ?? new[] { "http://localhost:3000", "https://localhost:3000" };
+
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowFrontend", policy =>
         {
-            policy.WithOrigins(
-                    "http://localhost:3000",
-                    "https://arenaops.netlify.app" 
-                )
+            policy.WithOrigins(allowedOrigins)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
@@ -108,7 +99,7 @@ try
     builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
     // ---------------- TOKEN BLACKLIST ----------------
-    builder.Services.AddSingleton<ITokenBlacklistService, RedisTokenBlacklistService>();
+    builder.Services.AddSingleton<ITokenBlacklistService, InMemoryTokenBlacklistService>();
 
     // ---------------- GOOGLE AUTH ----------------
     builder.Services.Configure<GoogleAuthSettings>(
@@ -217,7 +208,7 @@ try
 
     app.UseCors("AllowFrontend");
 
-    app.UseMiddleware<RedisRateLimitMiddleware>();
+    app.UseMiddleware<RateLimitMiddleware>();
 
     app.UseAuthentication();
 

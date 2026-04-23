@@ -11,6 +11,7 @@ export default function EventCreatePage() {
     const { user } = useSelector((state: RootState) => state.auth);
 
     useEffect(() => {
+        // Check if user is EventManager
         // Check if user is EventManager or Admin
         if (user && !user.roles?.includes('EventManager') && !user.roles?.includes('Admin')) {
             router.push('/event-manager/events');

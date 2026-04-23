@@ -1,7 +1,7 @@
 namespace ArenaOps.Shared.Models;
 
 /// <summary>
-/// Configuration for Redis-based rate limiting.
+/// Configuration for in-memory rate limiting.
 /// Bind from "RateLimiting" section in appsettings.json.
 /// </summary>
 public class RateLimitSettings

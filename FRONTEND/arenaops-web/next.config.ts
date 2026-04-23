@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  // NOTE: Do NOT set `output: 'standalone'` — Netlify's build plugin
+  // handles the output mode automatically. 'standalone' breaks Netlify's
+  // serverless function packaging.
   images: {
     remotePatterns: [
       {

@@ -2,8 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, CalendarDays, User, Menu, X, Globe } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { LayoutDashboard, CalendarDays, User, Menu, X, Globe, LogOut } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useAppDispatch } from "@/store/hooks";
+import { logoutUser } from "@/store/authSlice";
 
 const menu = [
   {
@@ -30,7 +42,15 @@ const menu = [
 
 export default function EventManagerSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
+    router.push("/auth/login");
+  };
 
   return (
     <>
@@ -108,7 +128,37 @@ export default function EventManagerSidebar() {
         </nav>
         
         {/* Sidebar Footer */}
-        <div className="p-6 border-t border-white/5 mt-auto">
+        <div className="p-4 border-t border-white/5 mt-auto flex flex-col gap-4">
+            <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+                <button
+                    onClick={() => setLogoutDialogOpen(true)}
+                    className="flex items-center gap-4 py-3 px-4 text-xs font-bold tracking-widest uppercase rounded-xl transition-all duration-200 text-gray-500 hover:bg-red-500/10 hover:text-red-500 border border-transparent hover:border-red-500/20"
+                >
+                    <LogOut size={18} />
+                    Logout
+                </button>
+                <DialogContent className="bg-[#111827] border-white/10 text-white sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-white font-black uppercase tracking-tighter italic">Confirm Logout</DialogTitle>
+                        <DialogDescription className="text-gray-400">
+                            Are you sure you want to logout? You will need to sign in again to access the manager portal.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="sm:justify-end gap-3 mt-4">
+                        <DialogClose asChild>
+                            <Button variant="outline" className="border-white/10 text-gray-300 hover:bg-white/5 hover:text-white font-bold uppercase tracking-widest text-[10px]">
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Button
+                            onClick={handleLogout}
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest text-[10px]"
+                        >
+                            Logout
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             <p className="text-[9px] font-bold uppercase tracking-widest text-gray-600 text-center">
                 ArenaOps Core Systems<br/>v4.2.0
             </p>

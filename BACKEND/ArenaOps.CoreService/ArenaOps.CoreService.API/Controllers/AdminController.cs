@@ -44,7 +44,7 @@ public class AdminController : ControllerBase
     }
 
     /// <summary>
-    /// Get system health status (database, Redis, services)
+    /// Get system health status (database, services)
     /// </summary>
     [HttpGet("system/health")]
     public async Task<IActionResult> GetSystemHealth(CancellationToken cancellationToken)

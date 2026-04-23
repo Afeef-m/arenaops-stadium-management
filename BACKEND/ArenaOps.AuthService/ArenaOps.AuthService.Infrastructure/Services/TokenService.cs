@@ -16,31 +16,43 @@ public class TokenService : ITokenService, IDisposable
     private readonly JwtSettings _jwtSettings;
     private readonly RsaSecurityKey _signingKey;
 
-    public TokenService(IOptions<JwtSettings> jwtSettings)
+    public TokenService(IOptions<JwtSettings> jwtSettings, IWebHostEnvironment env)
     {
         _jwtSettings = jwtSettings.Value;
         _rsa = RSA.Create(2048);
 
-        // Load or generate RSA key pair
         var keyPath = _jwtSettings.KeyFilePath;
-        var keyDir = Path.GetDirectoryName(keyPath);
-
-        if (!string.IsNullOrEmpty(keyDir) && !Directory.Exists(keyDir))
-        {
-            Directory.CreateDirectory(keyDir);
-        }
 
         if (File.Exists(keyPath))
         {
-            // Load existing private key
+            // Load existing private key from mounted volume
             var keyPem = File.ReadAllText(keyPath);
             _rsa.ImportFromPem(keyPem);
         }
+        else if (env.IsProduction())
+        {
+            // In Production the key MUST exist — fail fast with a clear message.
+            // The rsa-private.key must be present in the Keys/ directory that is
+            // volume-mounted into the container. See docker-compose.yml volumes section.
+            throw new InvalidOperationException(
+                $"RSA private key not found at '{keyPath}'. " +
+                $"In Production, the key file must be pre-generated and placed in the " +
+                $"Keys/ directory BEFORE starting the container. " +
+                $"Run: dotnet run --generate-keys (or copy your existing rsa-private.key).");
+        }
         else
         {
-            // Generate new key pair and save private key
+            // Development only — auto-generate and save the key pair
+            var keyDir = Path.GetDirectoryName(keyPath);
+            if (!string.IsNullOrEmpty(keyDir) && !Directory.Exists(keyDir))
+                Directory.CreateDirectory(keyDir);
+
             var privateKeyPem = _rsa.ExportRSAPrivateKeyPem();
             File.WriteAllText(keyPath, privateKeyPem);
+
+            // Also export the public key so CoreService can use it in dev
+            var publicKeyPath = Path.Combine(keyDir ?? "Keys", "rsa-public.key");
+            File.WriteAllText(publicKeyPath, _rsa.ExportSubjectPublicKeyInfoPem());
         }
 
         _signingKey = new RsaSecurityKey(_rsa);

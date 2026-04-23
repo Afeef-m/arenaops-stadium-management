@@ -17,6 +17,7 @@ import {
     Calendar,
     Users,
     Grid3X3,
+    Power,
 } from "lucide-react";
 import {
     coreService,
@@ -71,6 +72,7 @@ export default function StadiumDetailPage() {
         pincode: "",
         latitude: 0,
         longitude: 0,
+        isActive: true,
     });
 
     useEffect(() => {
@@ -98,6 +100,7 @@ export default function StadiumDetailPage() {
                     pincode: s.pincode || "",
                     latitude: s.latitude || 0,
                     longitude: s.longitude || 0,
+                    isActive: s.isActive ?? true,
                 });
             }
 
@@ -328,6 +331,14 @@ export default function StadiumDetailPage() {
                             >
                                 {stadium.isApproved ? "Approved" : "Pending Approval"}
                             </span>
+                            <span
+                                className={cn(
+                                    styles.statusBadge,
+                                    (stadium.isActive ?? true) ? styles.approved : styles.pending
+                                )}
+                            >
+                                {(stadium.isActive ?? true) ? "Active" : "Hidden"}
+                            </span>
                             {stadium.capacity && (
                                 <span className={styles.capacityBadge}>
                                     <Users size={14} />
@@ -505,6 +516,39 @@ export default function StadiumDetailPage() {
                                         step="any"
                                     />
                                 </div>
+                            </div>
+                        </div>
+ 
+                        {/* Status Toggle */}
+                        <div className={styles.section}>
+                            <h2 className={styles.sectionTitle}>
+                                <Power size={18} />
+                                Availability Status
+                            </h2>
+                            <div className={styles.statusToggleContainer}>
+                                <div className={styles.statusInfo}>
+                                    <p className={styles.statusLabel}>
+                                        Currently: <span className={cn(styles.statusValue, formData.isActive ? styles.active : styles.inactive)}>
+                                            {formData.isActive ? "Active" : "Non-Active"}
+                                        </span>
+                                    </p>
+                                    <p className={styles.statusDescription}>
+                                        {formData.isActive 
+                                            ? "This stadium is visible to event managers and can host new events."
+                                            : "This stadium is hidden from venue discovery and cannot host new events."}
+                                    </p>
+                                </div>
+                                <Button 
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
+                                    className={cn(
+                                        styles.toggleButton,
+                                        formData.isActive ? styles.toggleActive : styles.toggleInactive
+                                    )}
+                                >
+                                    <Power size={16} className="mr-2" />
+                                    {formData.isActive ? "Deactivate Stadium" : "Activate Stadium"}
+                                </Button>
                             </div>
                         </div>
 

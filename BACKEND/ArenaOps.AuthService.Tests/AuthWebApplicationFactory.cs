@@ -2,6 +2,7 @@ using ArenaOps.AuthService.Infrastructure.Data;
 using ArenaOps.AuthService.Infrastructure.Services;
 using ArenaOps.AuthService.Core.Interfaces;
 using ArenaOps.Shared.Interfaces;
+using ArenaOps.Shared.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
