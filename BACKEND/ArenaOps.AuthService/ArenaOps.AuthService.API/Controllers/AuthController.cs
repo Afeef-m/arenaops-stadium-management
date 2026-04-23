@@ -47,11 +47,13 @@ public class AuthController : ControllerBase
         var isProduction = !HttpContext.RequestServices
             .GetRequiredService<IWebHostEnvironment>().IsDevelopment();
 
+        // Cross-origin deployments (Netlify → AWS) require SameSite=None; Secure=true
+        // SameSite=Strict would block cookies entirely when frontend and backend are on different domains
         Response.Cookies.Append("accessToken", result.AccessToken, new CookieOptions
         {
             HttpOnly = true,
-            Secure = isProduction,
-            SameSite = isProduction ? SameSiteMode.Strict : SameSiteMode.Lax,
+            Secure = isProduction,          // must be true for SameSite=None to work
+            SameSite = isProduction ? SameSiteMode.None : SameSiteMode.Lax,
             Path = "/",
             Expires = DateTimeOffset.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpiryMinutes)
         });
@@ -60,7 +62,7 @@ public class AuthController : ControllerBase
         {
             HttpOnly = true,
             Secure = isProduction,
-            SameSite = isProduction ? SameSiteMode.Strict : SameSiteMode.Lax,
+            SameSite = isProduction ? SameSiteMode.None : SameSiteMode.Lax,
             Path = "/api/auth",
             Expires = DateTimeOffset.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiryDays)
         });
