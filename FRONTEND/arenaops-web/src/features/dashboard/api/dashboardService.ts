@@ -116,7 +116,7 @@ function normalizeRecentBookings(payload: unknown): RecentBooking[] {
 
 export const dashboardService = {
   async getManagerDashboardMetrics(): Promise<ManagerDashboardMetrics> {
-    const response = await api.get<ApiEnvelope<unknown>>("/api/core/admin/dashboard");
+    const response = await api.get<ApiEnvelope<unknown>>("/core/admin/dashboard");
 
     if (!response.data?.success) {
       const message =
@@ -132,7 +132,7 @@ export const dashboardService = {
   async getRecentBookings(limit: number = 5): Promise<RecentBooking[]> {
     const pageSize = Math.max(1, Math.min(20, Math.floor(limit)));
     const response = await api.get<ApiEnvelope<unknown>>(
-      `/api/core/admin/bookings?page=1&pageSize=${pageSize}`
+      `/core/admin/bookings?page=1&pageSize=${pageSize}`
     );
 
     if (!response.data?.success) {

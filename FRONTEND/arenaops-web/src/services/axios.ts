@@ -75,7 +75,7 @@ api.interceptors.response.use(
 
       try {
         // 🔁 Refresh token (IMPORTANT: direct backend call)
-        await axios.post(`${API}/api/auth/refresh`, {}, {
+        await axios.post(`${API}/auth/refresh`, {}, {
           withCredentials: true,
         });
 

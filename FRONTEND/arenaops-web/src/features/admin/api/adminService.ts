@@ -22,7 +22,7 @@ import type {
 export const adminDashboardService = {
   async getDashboardMetrics(): Promise<AdminDashboardMetrics> {
     const response = await api.get<ApiEnvelope<AdminDashboardMetrics>>(
-      "/api/core/admin/dashboard"
+      "/core/admin/dashboard"
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -34,7 +34,7 @@ export const adminDashboardService = {
 
   async getQuickStats(): Promise<QuickStats> {
     const response = await api.get<ApiEnvelope<QuickStats>>(
-      "/api/core/admin/dashboard/quick-stats"
+      "/core/admin/dashboard/quick-stats"
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -46,7 +46,7 @@ export const adminDashboardService = {
 
   async getSystemHealth(): Promise<SystemHealth> {
     const response = await api.get<ApiEnvelope<SystemHealth>>(
-      "/api/core/admin/system/health"
+      "/core/admin/system/health"
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -58,7 +58,7 @@ export const adminDashboardService = {
 
   async getRecentActivities(count: number = 20): Promise<AdminActivity[]> {
     const response = await api.get<ApiEnvelope<AdminActivity[]>>(
-      `/api/core/admin/activities/recent?count=${count}`
+      `/core/admin/activities/recent?count=${count}`
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -77,7 +77,7 @@ export const adminDashboardService = {
     if (filter.pageSize) params.append("pageSize", filter.pageSize.toString());
 
     const response = await api.get<ApiEnvelope<PaginatedResult<AdminActivity>>>(
-      `/api/core/admin/activities?${params.toString()}`
+      `/core/admin/activities?${params.toString()}`
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -90,7 +90,7 @@ export const adminDashboardService = {
   // Stadium Approval
   async getPendingStadiums(): Promise<PendingStadium[]> {
     const response = await api.get<ApiEnvelope<PendingStadium[]>>(
-      "/api/core/admin/stadiums"
+      "/core/admin/stadiums"
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -102,7 +102,7 @@ export const adminDashboardService = {
 
   async approveStadium(stadiumId: string): Promise<void> {
     const response = await api.post<ApiEnvelope<unknown>>(
-      `/api/core/admin/stadiums/${stadiumId}/approve`
+      `/core/admin/stadiums/${stadiumId}/approve`
     );
 
     if (!response.data?.success) {
@@ -112,7 +112,7 @@ export const adminDashboardService = {
 
   async rejectStadium(stadiumId: string, reason: string): Promise<void> {
     const response = await api.post<ApiEnvelope<unknown>>(
-      `/api/core/admin/stadiums/${stadiumId}/reject`,
+      `/core/admin/stadiums/${stadiumId}/reject`,
       { reason }
     );
 
@@ -137,7 +137,7 @@ export const userManagementService = {
     if (filter.pageSize) params.append("pageSize", filter.pageSize.toString());
 
     const response = await api.get<{ success: boolean; data: PaginatedResult<UserListItem> }>(
-      `/api/auth/users?${params.toString()}`
+      `/auth/users?${params.toString()}`
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -149,7 +149,7 @@ export const userManagementService = {
 
   async getUserById(userId: string): Promise<UserDetail> {
     const response = await api.get<{ success: boolean; data: UserDetail }>(
-      `/api/auth/users/${userId}`
+      `/auth/users/${userId}`
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -161,7 +161,7 @@ export const userManagementService = {
 
   async getUserStats(): Promise<UserStats> {
     const response = await api.get<{ success: boolean; data: UserStats }>(
-      "/api/auth/users/stats"
+      "/auth/users/stats"
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -173,7 +173,7 @@ export const userManagementService = {
 
   async getRoles(): Promise<string[]> {
     const response = await api.get<{ success: boolean; data: string[] }>(
-      "/api/auth/users/roles"
+      "/auth/users/roles"
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -185,7 +185,7 @@ export const userManagementService = {
 
   async updateUserRoles(userId: string, roles: string[]): Promise<void> {
     const response = await api.put<{ success: boolean }>(
-      `/api/auth/users/${userId}/roles`,
+      `/auth/users/${userId}/roles`,
       { roles }
     );
 
@@ -196,7 +196,7 @@ export const userManagementService = {
 
   async updateUserStatus(userId: string, isActive: boolean): Promise<void> {
     const response = await api.put<{ success: boolean }>(
-      `/api/auth/users/${userId}/status`,
+      `/auth/users/${userId}/status`,
       { isActive }
     );
 
@@ -207,7 +207,7 @@ export const userManagementService = {
 
   async deleteUser(userId: string): Promise<void> {
     const response = await api.delete<{ success: boolean }>(
-      `/api/auth/users/${userId}`
+      `/auth/users/${userId}`
     );
 
     if (!response.data?.success) {
@@ -217,7 +217,7 @@ export const userManagementService = {
 
   async bulkAction(request: BulkActionRequest): Promise<BulkActionResult> {
     const response = await api.post<{ success: boolean; data: BulkActionResult }>(
-      "/api/auth/users/bulk-action",
+      "/auth/users/bulk-action",
       request
     );
 
@@ -236,7 +236,7 @@ export const eventManagementService = {
     if (status) params.append("status", status);
 
     const response = await api.get<ApiEnvelope<EventListItem[]>>(
-      `/api/core/events${params.toString() ? `?${params.toString()}` : ""}`
+      `/core/events${params.toString() ? `?${params.toString()}` : ""}`
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -248,7 +248,7 @@ export const eventManagementService = {
 
   async getEventById(eventId: string): Promise<EventListItem> {
     const response = await api.get<ApiEnvelope<EventListItem>>(
-      `/api/core/events/${eventId}`
+      `/core/events/${eventId}`
     );
 
     if (!response.data?.success || !response.data.data) {
@@ -260,7 +260,7 @@ export const eventManagementService = {
 
   async updateEventStatus(eventId: string, statusData: UpdateEventStatusRequest): Promise<void> {
     const response = await api.patch<ApiEnvelope<unknown>>(
-      `/api/core/events/${eventId}/status`,
+      `/core/events/${eventId}/status`,
       statusData
     );
 
@@ -271,7 +271,7 @@ export const eventManagementService = {
 
   async deleteEvent(eventId: string): Promise<void> {
     const response = await api.delete<ApiEnvelope<unknown>>(
-      `/api/core/events/${eventId}`
+      `/core/events/${eventId}`
     );
 
     if (!response.data?.success) {
