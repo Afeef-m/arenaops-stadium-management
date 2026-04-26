@@ -24,3 +24,9 @@
 #   NEXT_PUBLIC_GOOGLE_CLIENT_ID = your-google-client-id
 
 # Redirects are handled by Next.js routing — no extra config needed.
+
+[[redirects]]
+  from = "/api/*"
+  to = "http://13.60.206.243/api/:splat"
+  status = 200
+  force = true
